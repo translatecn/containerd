@@ -30,7 +30,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/console"
+	"github.com/containerd/containerd/3rd/console"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/pkg/transfer/registry"
 	"github.com/containerd/containerd/remotes"

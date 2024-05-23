@@ -21,9 +21,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/containerd/nri"
-	v1 "github.com/containerd/nri/types/v1"
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/nri"
+	v1 "github.com/containerd/containerd/3rd/nri/types/v1"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/selinux/go-selinux"

@@ -22,8 +22,8 @@ import (
 	"fmt"
 
 	"github.com/containerd/containerd"
+	cni "github.com/containerd/containerd/3rd/go-cni"
 	"github.com/containerd/containerd/errdefs"
-	cni "github.com/containerd/go-cni"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 

@@ -26,7 +26,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/containerd/3rd/cgroups/v3"
 	"github.com/moby/sys/mountinfo"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"

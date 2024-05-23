@@ -22,7 +22,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/containerd/containerd/content"

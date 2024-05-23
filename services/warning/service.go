@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/log"
+	"github.com/containerd/containerd/3rd/log"
 
 	deprecation "github.com/containerd/containerd/pkg/deprecation"
 	"github.com/containerd/containerd/plugin"

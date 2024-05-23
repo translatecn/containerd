@@ -3,7 +3,7 @@ This document describes the method to configure encrypted container image decryp
 
 ## Encrypted Container Images
 
-Encrypted container images are OCI images which contain encrypted blobs. These encrypted images can be created through the use of [containerd/imgcrypt project](https://github.com/containerd/imgcrypt). To decrypt these images, the `containerd` runtime uses information passed from the `cri` such as keys, options and encryption metadata.
+Encrypted container images are OCI images which contain encrypted blobs. These encrypted images can be created through the use of [containerd/imgcrypt project](https://github.com/containerd/containerd/3rd/imgcrypt). To decrypt these images, the `containerd` runtime uses information passed from the `cri` such as keys, options and encryption metadata.
 
 ## The "node" Key Model
 
@@ -11,7 +11,7 @@ Encryption ties trust to an entity based on the model in which a key is associat
 
 ### "node" Key Model Usecase
 
-In this model encryption is tied to worker nodes. The usecase here revolves around the idea that an image should be decryptable only on trusted host. Using this model, various node based technologies which help bootstrap trust in worker nodes and perform secure key distribution (i.e. TPM, host attestation, secure/measured boot). In this scenario, runtimes are capable of fetching the necessary decryption keys. An example of this is using the [`--decryption-keys-path` flag in imgcrypt](https://github.com/containerd/imgcrypt).
+In this model encryption is tied to worker nodes. The usecase here revolves around the idea that an image should be decryptable only on trusted host. Using this model, various node based technologies which help bootstrap trust in worker nodes and perform secure key distribution (i.e. TPM, host attestation, secure/measured boot). In this scenario, runtimes are capable of fetching the necessary decryption keys. An example of this is using the [`--decryption-keys-path` flag in imgcrypt](https://github.com/containerd/containerd/3rd/imgcrypt).
 
 ### Configuring image decryption for "node" key model
 
@@ -40,6 +40,6 @@ version = 2
 ```
 
 In this example, container image decryption is set to use the "node" key model.
-In addition, the decryption [`stream_processors`](https://github.com/containerd/containerd/blob/main/docs/stream_processors.md) are configured as specified in [containerd/imgcrypt project](https://github.com/containerd/imgcrypt), with the additional field `--decryption-keys-path` configured to specify where decryption keys are located locally in the node.
+In addition, the decryption [`stream_processors`](https://github.com/containerd/containerd/blob/main/docs/stream_processors.md) are configured as specified in [containerd/imgcrypt project](https://github.com/containerd/containerd/3rd/imgcrypt), with the additional field `--decryption-keys-path` configured to specify where decryption keys are located locally in the node.
 
 The `$OCICRYPT_KEYPROVIDER_CONFIG` environment variable is used for [ocicrypt keyprovider protocol](https://github.com/containers/ocicrypt/blob/main/docs/keyprovider.md).

@@ -22,9 +22,9 @@ import (
 	"context"
 	"runtime"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/pkg/shutdown"
-	"github.com/containerd/ttrpc"
 	log "github.com/sirupsen/logrus"
 
 	api "github.com/containerd/containerd/api/runtime/sandbox/v1"

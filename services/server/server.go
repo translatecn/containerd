@@ -23,6 +23,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"github.com/containerd/containerd/pkg/dialer_over"
 	"io"
 	"net"
 	"net/http"
@@ -34,7 +35,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containerd/ttrpc"
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/docker/go-metrics"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -56,7 +57,6 @@ import (
 	"github.com/containerd/containerd/events/exchange"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/pkg/dialer"
 	"github.com/containerd/containerd/pkg/timeout"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/plugin"
@@ -542,14 +542,14 @@ func (pc *proxyClients) getClient(address string) (*grpc.ClientConn, error) {
 	gopts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithConnectParams(connParams),
-		grpc.WithContextDialer(dialer.ContextDialer),
+		grpc.WithContextDialer(dialer_over.ContextDialer),
 
 		// TODO(stevvooe): We may need to allow configuration of this on the client.
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(defaults.DefaultMaxRecvMsgSize)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(defaults.DefaultMaxSendMsgSize)),
 	}
 
-	conn, err := grpc.Dial(dialer.DialAddress(address), gopts...)
+	conn, err := grpc.Dial(dialer_over.DialAddress(address), gopts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial %q: %w", address, err)
 	}

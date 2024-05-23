@@ -27,8 +27,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/containerd/containerd/3rd/fifo"
 	"github.com/containerd/containerd/sys/reaper"
-	"github.com/containerd/fifo"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -40,6 +40,8 @@ func setupSignals(config Config) (chan os.Signal, error) {
 	smp := []os.Signal{unix.SIGTERM, unix.SIGINT, unix.SIGPIPE}
 	if !config.NoReaper {
 		smp = append(smp, unix.SIGCHLD)
+		// 在一个进程终止或者停止时，将SIGCHLD信号发送给其父进程，按系统默认将忽略此信号，
+		// 如果父进程希望被告知其子系统的这种状态，则应捕捉此信号
 	}
 	signal.Notify(signals, smp...)
 	return signals, nil

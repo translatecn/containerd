@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 

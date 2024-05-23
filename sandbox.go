@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/protobuf/types"
 	api "github.com/containerd/containerd/sandbox"
-	"github.com/containerd/typeurl/v2"
 )
 
 // Sandbox is a high level client to containerd's sandboxes.
@@ -217,31 +217,6 @@ func WithSandboxSpec(s *oci.Spec, opts ...oci.SpecOpts) NewSandboxOpts {
 		}
 
 		sandbox.Spec = spec
-		return nil
-	}
-}
-
-// WithSandboxExtension attaches an extension to sandbox
-func WithSandboxExtension(name string, ext interface{}) NewSandboxOpts {
-	return func(ctx context.Context, client *Client, s *api.Sandbox) error {
-		if s.Extensions == nil {
-			s.Extensions = make(map[string]typeurl.Any)
-		}
-
-		any, err := typeurl.MarshalAny(ext)
-		if err != nil {
-			return fmt.Errorf("failed to marshal sandbox extension: %w", err)
-		}
-
-		s.Extensions[name] = any
-		return err
-	}
-}
-
-// WithSandboxLabels attaches map of labels to sandbox
-func WithSandboxLabels(labels map[string]string) NewSandboxOpts {
-	return func(ctx context.Context, client *Client, sandbox *api.Sandbox) error {
-		sandbox.Labels = labels
 		return nil
 	}
 }

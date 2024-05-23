@@ -53,7 +53,7 @@ import (
 	"github.com/containerd/containerd/services"
 	"github.com/containerd/containerd/services/warning"
 
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"google.golang.org/grpc"

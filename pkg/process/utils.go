@@ -30,8 +30,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	runc "github.com/containerd/containerd/3rd/go-runc"
 	"github.com/containerd/containerd/errdefs"
-	runc "github.com/containerd/go-runc"
 	"golang.org/x/sys/unix"
 )
 

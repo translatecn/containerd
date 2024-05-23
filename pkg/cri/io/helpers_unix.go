@@ -23,7 +23,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/containerd/fifo"
+	"github.com/containerd/containerd/3rd/fifo"
 )
 
 func openPipe(ctx context.Context, fn string, flag int, perm os.FileMode) (io.ReadWriteCloser, error) {

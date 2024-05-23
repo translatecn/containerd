@@ -74,12 +74,12 @@ func SocketAddress(ctx context.Context, socketPath, id string) (string, error) {
 	return fmt.Sprintf("unix://%s/%x", filepath.Join(socketRoot, "s"), d), nil
 }
 
-// AnonDialer returns a dialer for a socket
+// AnonDialer returns a dialer_over for a socket
 func AnonDialer(address string, timeout time.Duration) (net.Conn, error) {
 	return net.DialTimeout("unix", socket(address).path(), timeout)
 }
 
-// AnonReconnectDialer returns a dialer for an existing socket on reconnection
+// AnonReconnectDialer returns a dialer_over for an existing socket on reconnection
 func AnonReconnectDialer(address string, timeout time.Duration) (net.Conn, error) {
 	return AnonDialer(address, timeout)
 }

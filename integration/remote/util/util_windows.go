@@ -68,7 +68,7 @@ func CreateListener(endpoint string) (net.Listener, error) {
 	}
 }
 
-// GetAddressAndDialer returns the address parsed from the given endpoint and a context dialer.
+// GetAddressAndDialer returns the address parsed from the given endpoint and a context dialer_over.
 func GetAddressAndDialer(endpoint string) (string, func(ctx context.Context, addr string) (net.Conn, error), error) {
 	protocol, addr, err := parseEndpoint(endpoint)
 	if err != nil {

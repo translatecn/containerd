@@ -19,8 +19,8 @@ package server
 import (
 	"context"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	srvconfig "github.com/containerd/containerd/services/server/config"
-	"github.com/containerd/ttrpc"
 )
 
 func apply(_ context.Context, _ *srvconfig.Config) error {

@@ -433,7 +433,7 @@ version = 2
     #
     # Additional information:
     # * Stream processors: https://github.com/containerd/containerd/blob/main/docs/stream_processors.md
-    # * Containerd imgcrypt: https://github.com/containerd/imgcrypt
+    # * Containerd imgcrypt: https://github.com/containerd/containerd/3rd/imgcrypt
     key_model = "node"
 
   # 'plugins."io.containerd.grpc.v1.cri".registry' contains config related to

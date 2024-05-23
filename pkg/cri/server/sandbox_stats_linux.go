@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containerd/cgroups/v3"
-	"github.com/containerd/cgroups/v3/cgroup1"
-	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
+	"github.com/containerd/containerd/3rd/cgroups/v3"
+	"github.com/containerd/containerd/3rd/cgroups/v3/cgroup1"
+	cgroupsv2 "github.com/containerd/containerd/3rd/cgroups/v3/cgroup2"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
 	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"

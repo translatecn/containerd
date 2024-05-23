@@ -16,10 +16,10 @@ Block-based:
 
 Filesystem-specific:
 - `btrfs`: btrfs. Needs the plugin root (`/var/lib/containerd/io.containerd.snapshotter.v1.btrfs`) to be mounted as btrfs.
-- `zfs`: ZFS. Needs the plugin root (`/var/lib/containerd/io.containerd.snapshotter.v1.zfs`) to be mounted as ZFS. See also https://github.com/containerd/zfs .
+- `zfs`: ZFS. Needs the plugin root (`/var/lib/containerd/io.containerd.snapshotter.v1.zfs`) to be mounted as ZFS. See also https://github.com/containerd/containerd/3rd/zfs .
 
 [Deprecated](https://github.com/containerd/containerd/blob/main/RELEASES.md#deprecated-features):
-- `aufs`: AUFS. Deprecated since containerd 1.5. Planned to be removed in containerd 2.0. See also https://github.com/containerd/aufs .
+- `aufs`: AUFS. Deprecated since containerd 1.5. Planned to be removed in containerd 2.0. See also https://github.com/containerd/containerd/3rd/aufs .
 
 ## Non-core snapshotter plugins
 

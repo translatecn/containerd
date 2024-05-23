@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/typeurl/v2"
 )
 
 type CreateOptions struct {

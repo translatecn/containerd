@@ -9,3 +9,5 @@ releases/*.tar.gz.sha256sum
 _output/
 .vagrant/
 .idea
+.DS_Store
+vendor

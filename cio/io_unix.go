@@ -27,7 +27,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/fifo"
+	"github.com/containerd/containerd/3rd/fifo"
 )
 
 // NewFIFOSetInDir returns a new FIFOSet with paths in a temporary directory under root

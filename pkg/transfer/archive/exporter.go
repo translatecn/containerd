@@ -20,7 +20,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/containerd/containerd/api/types"

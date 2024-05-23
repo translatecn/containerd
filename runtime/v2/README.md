@@ -356,7 +356,7 @@ Messages will automatically be output in the containerd's daemon logs with the c
 
 #### ttrpc
 
-[ttrpc](https://github.com/containerd/ttrpc) is one of the supported protocols for shims.
+[ttrpc](https://github.com/containerd/containerd/3rd/ttrpc) is one of the supported protocols for shims.
 It works with standard protobufs and GRPC services as well as generating clients.
 The only difference between grpc and ttrpc is the wire protocol.
 ttrpc removes the http stack in order to save memory and binary size to keep shims small.

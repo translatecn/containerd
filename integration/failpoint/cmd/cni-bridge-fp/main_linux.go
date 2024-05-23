@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/containerd/containerd/3rd/continuity"
 	"github.com/containerd/containerd/pkg/failpoint"
-	"github.com/containerd/continuity"
 	"github.com/containernetworking/cni/pkg/invoke"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/version"

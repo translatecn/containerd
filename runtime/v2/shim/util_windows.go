@@ -33,7 +33,7 @@ func getSysProcAttr() *syscall.SysProcAttr {
 	return nil
 }
 
-// AnonReconnectDialer returns a dialer for an existing npipe on containerd reconnection
+// AnonReconnectDialer returns a dialer_over for an existing npipe on containerd reconnection
 func AnonReconnectDialer(address string, timeout time.Duration) (net.Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -49,7 +49,7 @@ func AnonReconnectDialer(address string, timeout time.Duration) (net.Conn, error
 	return c, nil
 }
 
-// AnonDialer returns a dialer for a npipe
+// AnonDialer returns a dialer_over for a npipe
 func AnonDialer(address string, timeout time.Duration) (net.Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

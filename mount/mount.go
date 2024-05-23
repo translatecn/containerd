@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containerd/continuity/fs"
+	"github.com/containerd/containerd/3rd/continuity/fs"
 )
 
 // Mount is the lingua franca of containerd. A mount represents a

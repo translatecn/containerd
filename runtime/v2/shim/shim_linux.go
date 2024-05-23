@@ -17,8 +17,8 @@
 package shim
 
 import (
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/containerd/containerd/sys/reaper"
-	"github.com/containerd/ttrpc"
 )
 
 func newServer(opts ...ttrpc.ServerOpt) (*ttrpc.Server, error) {

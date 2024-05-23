@@ -19,6 +19,7 @@ package transfer
 import (
 	"context"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
 	transferTypes "github.com/containerd/containerd/api/types/transfer"
 	"github.com/containerd/containerd/errdefs"
@@ -28,7 +29,6 @@ import (
 	"github.com/containerd/containerd/pkg/transfer/plugins"
 	"github.com/containerd/containerd/plugin"
 	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/typeurl/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

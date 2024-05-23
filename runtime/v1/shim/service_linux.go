@@ -26,10 +26,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/console"
+	"github.com/containerd/containerd/3rd/console"
+	"github.com/containerd/containerd/3rd/fifo"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/fifo"
 )
 
 type linuxPlatform struct {

@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	containersapi "github.com/containerd/containerd/api/services/containers/v1"
 	contentapi "github.com/containerd/containerd/api/services/content/v1"
 	diffapi "github.com/containerd/containerd/api/services/diff/v1"
@@ -50,7 +51,7 @@ import (
 	"github.com/containerd/containerd/leases"
 	leasesproxy "github.com/containerd/containerd/leases/proxy"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/dialer"
+	"github.com/containerd/containerd/pkg/dialer_over"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/plugin"
 	ptypes "github.com/containerd/containerd/protobuf/types"
@@ -61,7 +62,6 @@ import (
 	"github.com/containerd/containerd/services/introspection"
 	"github.com/containerd/containerd/snapshots"
 	snproxy "github.com/containerd/containerd/snapshots/proxy"
-	"github.com/containerd/typeurl/v2"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sync/semaphore"
@@ -124,7 +124,7 @@ func New(address string, opts ...ClientOpt) (*Client, error) {
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.FailOnNonTempDialError(true),
 			grpc.WithConnectParams(connParams),
-			grpc.WithContextDialer(dialer.ContextDialer),
+			grpc.WithContextDialer(dialer_over.ContextDialer),
 			grpc.WithReturnConnectionError(),
 		}
 		if len(copts.dialOptions) > 0 {
@@ -145,7 +145,7 @@ func New(address string, opts ...ClientOpt) (*Client, error) {
 		connector := func() (*grpc.ClientConn, error) {
 			ctx, cancel := context.WithTimeout(context.Background(), copts.timeout)
 			defer cancel()
-			conn, err := grpc.DialContext(ctx, dialer.DialAddress(address), gopts...)
+			conn, err := grpc.DialContext(ctx, dialer_over.DialAddress(address), gopts...)
 			if err != nil {
 				return nil, fmt.Errorf("failed to dial %q: %w", address, err)
 			}

@@ -30,7 +30,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/containerd/log"
+	"github.com/containerd/containerd/3rd/log"
 )
 
 // NOTE: This code is copied from <github.com/docker/docker/profiles/apparmor>.

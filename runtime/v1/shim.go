@@ -23,7 +23,7 @@ import (
 	"io"
 	"path/filepath"
 
-	"github.com/containerd/fifo"
+	"github.com/containerd/containerd/3rd/fifo"
 	"golang.org/x/sys/unix"
 )
 

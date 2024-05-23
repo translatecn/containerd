@@ -25,8 +25,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/btrfs/v2"
-	"github.com/containerd/continuity/fs"
+	"github.com/containerd/containerd/3rd/continuity/fs"
 
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"

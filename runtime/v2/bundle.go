@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/identifiers"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/containerd/typeurl/v2"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 

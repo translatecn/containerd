@@ -46,7 +46,7 @@ func CreateListener(endpoint string) (net.Listener, error) {
 	return nil, fmt.Errorf("CreateListener is unsupported in this build")
 }
 
-// GetAddressAndDialer returns the address parsed from the given endpoint and a context dialer.
+// GetAddressAndDialer returns the address parsed from the given endpoint and a context dialer_over.
 func GetAddressAndDialer(endpoint string) (string, func(ctx context.Context, addr string) (net.Conn, error), error) {
 	return "", nil, fmt.Errorf("GetAddressAndDialer is unsupported in this build")
 }

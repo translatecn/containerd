@@ -23,7 +23,7 @@ import (
 )
 
 // SetSubreaper sets the value i as the subreaper setting for the calling process
-func SetSubreaper(i int) error {
+func SetSubreaper(i int) error { // 孤儿进程的父进程设置为此进程
 	return unix.Prctl(unix.PR_SET_CHILD_SUBREAPER, uintptr(i), 0, 0, 0)
 }
 

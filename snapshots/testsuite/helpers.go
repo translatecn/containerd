@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/containerd/containerd/3rd/continuity/fs/fstest"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/pkg/randutil"
 	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/continuity/fs/fstest"
 )
 
 const umountflags int = 0

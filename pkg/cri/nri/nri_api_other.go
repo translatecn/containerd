@@ -31,7 +31,7 @@ import (
 	"github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/containerd/containerd/pkg/nri"
 
-	"github.com/containerd/nri/pkg/api"
+	"github.com/containerd/containerd/3rd/nri/pkg/api"
 )
 
 type API struct {

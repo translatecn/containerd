@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	streamingapi "github.com/containerd/containerd/api/services/streaming/v1"
 	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
 	"github.com/containerd/containerd/errdefs"
@@ -28,7 +29,6 @@ import (
 	"github.com/containerd/containerd/pkg/transfer"
 	"github.com/containerd/containerd/pkg/transfer/proxy"
 	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/typeurl/v2"
 )
 
 func (c *Client) Transfer(ctx context.Context, src interface{}, dest interface{}, opts ...transfer.Opt) error {

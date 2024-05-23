@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/ttrpc"
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -41,7 +41,7 @@ import (
 	"github.com/containerd/containerd/events/exchange"
 	"github.com/containerd/containerd/identifiers"
 	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/dialer"
+	"github.com/containerd/containerd/pkg/dialer_over"
 	"github.com/containerd/containerd/pkg/timeout"
 	"github.com/containerd/containerd/protobuf"
 	ptypes "github.com/containerd/containerd/protobuf/types"
@@ -287,7 +287,7 @@ func grpcDialContext(
 	}
 	conn.Close()
 
-	target := dialer.DialAddress(address)
+	target := dialer_over.DialAddress(address)
 	client, err := grpc.DialContext(ctx, target, gopts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GRPC connection: %w", err)

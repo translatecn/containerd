@@ -19,7 +19,7 @@ package nri
 import (
 	"time"
 
-	nri "github.com/containerd/nri/pkg/adaptation"
+	nri "github.com/containerd/containerd/3rd/nri/pkg/adaptation"
 )
 
 // Config data for NRI.

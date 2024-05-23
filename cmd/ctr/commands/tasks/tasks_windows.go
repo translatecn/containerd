@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/containerd/console"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/3rd/console"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/log"
 	"github.com/urfave/cli"

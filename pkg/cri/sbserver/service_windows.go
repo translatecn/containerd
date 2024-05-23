@@ -18,8 +18,6 @@ package sbserver
 
 import (
 	"fmt"
-
-	"github.com/containerd/go-cni"
 )
 
 // windowsNetworkAttachCount is the minimum number of networks the PodSandbox

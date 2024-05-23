@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/containerd/console"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/3rd/console"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/cmd/ctr/commands"
 	"github.com/containerd/containerd/oci"

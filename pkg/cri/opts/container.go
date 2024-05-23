@@ -23,7 +23,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/continuity/fs"
+	"github.com/containerd/containerd/3rd/continuity/fs"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/containers"

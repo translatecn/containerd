@@ -13,7 +13,7 @@ use to integrate to and interact with NRI and plugins. In principle
 any NRI plugin should be able to work with NRI-enabled runtimes.
 
 For a detailed description of NRI and its capabilities please take a
-look at the [NRI respository](https://github.com/containerd/nri).
+look at the [NRI respository](https://github.com/containerd/containerd/3rd/nri).
 
 ## Containerd NRI Integration
 
@@ -109,11 +109,11 @@ the NRI socket path in one of the runtimes.
 
 You can verify that NRI integration is properly enabled and functional by
 configuring containerd and NRI as described above, taking the NRI
-logger plugin from the [NRI repository](https://github.com/containerd/nri/tree/main/plugins/logger)
+logger plugin from the [NRI repository](https://github.com/containerd/containerd/3rd/nri/tree/main/plugins/logger)
 on github, compiling it and starting it up.
 
 ```bash
-git clone https://github.com/containerd/nri
+git clone https://github.com/containerd/containerd/3rd/nri
 cd nri
 git checkout pr/proto/draft
 make
@@ -128,10 +128,10 @@ events printed by the logger.
 ## NRI Compatibility With v0.1.0 Plugins
 
 You can enable backward compatibility with NRI v0.1.0 plugins using the
-[v010-adapter plugin](https://github.com/containerd/nri/tree/main/plugins/v010-adapter).
+[v010-adapter plugin](https://github.com/containerd/containerd/3rd/nri/tree/main/plugins/v010-adapter).
 
 ```bash
-git clone https://github.com/containerd/nri
+git clone https://github.com/containerd/containerd/3rd/nri
 cd nri
 make
 sudo cp build/bin/v010-adapter /usr/local/bin

@@ -19,6 +19,7 @@ package command
 import (
 	gocontext "context"
 	"fmt"
+	"github.com/containerd/containerd/pkg/dialer_over"
 	"io"
 	"net"
 	"os"
@@ -27,7 +28,6 @@ import (
 	eventsapi "github.com/containerd/containerd/api/services/events/v1"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/dialer"
 	"github.com/containerd/containerd/protobuf/proto"
 	"github.com/containerd/containerd/protobuf/types"
 	"github.com/urfave/cli"
@@ -86,7 +86,7 @@ func getEventPayload(r io.Reader) (*types.Any, error) {
 }
 
 func connectEvents(address string) (eventsapi.EventsClient, error) {
-	conn, err := connect(address, dialer.ContextDialer)
+	conn, err := connect(address, dialer_over.ContextDialer)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial %q: %w", address, err)
 	}
@@ -108,7 +108,7 @@ func connect(address string, d func(gocontext.Context, string) (net.Conn, error)
 	}
 	ctx, cancel := gocontext.WithTimeout(gocontext.Background(), 2*time.Second)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, dialer.DialAddress(address), gopts...)
+	conn, err := grpc.DialContext(ctx, dialer_over.DialAddress(address), gopts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial %q: %w", address, err)
 	}

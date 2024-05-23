@@ -33,6 +33,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/log"
 	ptypes "github.com/containerd/containerd/protobuf/types"
@@ -40,7 +41,6 @@ import (
 	"github.com/containerd/containerd/runtime/v1/shim"
 	shimapi "github.com/containerd/containerd/runtime/v1/shim/v1"
 	"github.com/containerd/containerd/sys"
-	"github.com/containerd/ttrpc"
 	"golang.org/x/sys/unix"
 )
 
@@ -292,7 +292,7 @@ func RemoveSocket(address string) error {
 	return nil
 }
 
-// AnonDialer returns a dialer for a socket
+// AnonDialer returns a dialer_over for a socket
 //
 // NOTE: It is only used for testing.
 func AnonDialer(address string, timeout time.Duration) (net.Conn, error) {

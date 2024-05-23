@@ -19,9 +19,9 @@ package sbserver
 import (
 	"fmt"
 
+	"github.com/containerd/containerd/3rd/go-cni"
 	"github.com/containerd/containerd/pkg/cap"
 	"github.com/containerd/containerd/pkg/userns"
-	"github.com/containerd/go-cni"
 	"github.com/opencontainers/selinux/go-selinux"
 	"github.com/sirupsen/logrus"
 	"tags.cncf.io/container-device-interface/pkg/cdi"

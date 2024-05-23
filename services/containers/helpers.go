@@ -17,11 +17,11 @@
 package containers
 
 import (
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	api "github.com/containerd/containerd/api/services/containers/v1"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/protobuf"
 	"github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/typeurl/v2"
 )
 
 func containersToProto(containers []containers.Container) []*api.Container {

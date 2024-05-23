@@ -23,13 +23,13 @@ import (
 
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
 	transfertypes "github.com/containerd/containerd/api/types/transfer"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/pkg/streaming"
 	"github.com/containerd/containerd/pkg/transfer"
 	tstreaming "github.com/containerd/containerd/pkg/transfer/streaming"
-	"github.com/containerd/typeurl/v2"
 )
 
 type proxyTransferrer struct {

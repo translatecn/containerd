@@ -27,8 +27,8 @@ import (
 	"strings"
 	"time"
 
-	cni "github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
+	cni "github.com/containerd/containerd/3rd/go-cni"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/davecgh/go-spew/spew"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"github.com/sirupsen/logrus"

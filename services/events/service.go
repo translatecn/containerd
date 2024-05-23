@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	api "github.com/containerd/containerd/api/services/events/v1"
 	apittrpc "github.com/containerd/containerd/api/services/ttrpc/events/v1"
 	"github.com/containerd/containerd/errdefs"
@@ -28,7 +29,6 @@ import (
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/protobuf"
 	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/ttrpc"
 	"google.golang.org/grpc"
 )
 

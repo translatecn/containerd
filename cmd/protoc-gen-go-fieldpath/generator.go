@@ -82,7 +82,7 @@ func (gen *generator) genFieldMethod(m *protogen.Message) {
 				p.P("return value, ok")
 			case isAnyField(f):
 				typeurlUnmarshalAny := gen.out.QualifiedGoIdent(protogen.GoIdent{
-					GoImportPath: "github.com/containerd/typeurl/v2",
+					GoImportPath: "github.com/containerd/containerd/3rd/typeurl/v2",
 					GoName:       "UnmarshalAny",
 				})
 

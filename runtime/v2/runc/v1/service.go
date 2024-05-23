@@ -30,7 +30,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/containerd/3rd/cgroups/v3/cgroup1"
+	runcC "github.com/containerd/containerd/3rd/go-runc"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	eventstypes "github.com/containerd/containerd/api/events"
 	taskAPI "github.com/containerd/containerd/api/runtime/task/v2"
 	"github.com/containerd/containerd/api/types/task"
@@ -49,8 +51,6 @@ import (
 	"github.com/containerd/containerd/runtime/v2/runc/options"
 	"github.com/containerd/containerd/runtime/v2/shim"
 	"github.com/containerd/containerd/sys/reaper"
-	runcC "github.com/containerd/go-runc"
-	"github.com/containerd/typeurl/v2"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )

@@ -18,4 +18,4 @@
 
 package builtins
 
-import _ "github.com/containerd/aufs/plugin"
+import _ "github.com/containerd/containerd/3rd/aufs/plugin"

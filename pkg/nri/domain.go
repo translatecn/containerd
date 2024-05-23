@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"sync"
 
+	nri "github.com/containerd/containerd/3rd/nri/pkg/adaptation"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
-	nri "github.com/containerd/nri/pkg/adaptation"
 	"github.com/sirupsen/logrus"
 )
 

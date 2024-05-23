@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	v1 "github.com/containerd/containerd/api/services/ttrpc/events/v1"
-	"github.com/containerd/containerd/pkg/dialer"
-	"github.com/containerd/ttrpc"
+	"github.com/containerd/containerd/pkg/dialer_over"
 )
 
 const ttrpcDialTimeout = 5 * time.Second
@@ -38,25 +38,6 @@ type Client struct {
 	connector ttrpcConnector
 	client    *ttrpc.Client
 	closed    bool
-}
-
-// NewClient returns a new containerd TTRPC client that is connected to the containerd instance provided by address
-func NewClient(address string, opts ...ttrpc.ClientOpts) (*Client, error) {
-	connector := func() (*ttrpc.Client, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), ttrpcDialTimeout)
-		defer cancel()
-		conn, err := dialer.ContextDialer(ctx, address)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect: %w", err)
-		}
-
-		client := ttrpc.NewClient(conn, opts...)
-		return client, nil
-	}
-
-	return &Client{
-		connector: connector,
-	}, nil
 }
 
 // Reconnect re-establishes the TTRPC connection to the containerd daemon
@@ -120,4 +101,23 @@ func (c *Client) Close() error {
 		return c.client.Close()
 	}
 	return nil
+}
+
+// NewClient returns a new containerd TTRPC client that is connected to the containerd instance provided by address
+func NewClient(address string, opts ...ttrpc.ClientOpts) (*Client, error) {
+	connector := func() (*ttrpc.Client, error) {
+		ctx, cancel := context.WithTimeout(context.Background(), ttrpcDialTimeout)
+		defer cancel()
+		conn, err := dialer_over.ContextDialer(ctx, address)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect: %w", err)
+		}
+
+		client := ttrpc.NewClient(conn, opts...)
+		return client, nil
+	}
+
+	return &Client{
+		connector: connector,
+	}, nil
 }

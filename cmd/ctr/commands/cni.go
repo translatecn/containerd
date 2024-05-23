@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/typeurl/v2"
 )
 
 func init() {

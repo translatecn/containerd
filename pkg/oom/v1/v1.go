@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/containerd/3rd/cgroups/v3/cgroup1"
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/pkg/oom"
 	"github.com/containerd/containerd/runtime"

@@ -26,9 +26,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"time"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	shimapi "github.com/containerd/containerd/api/runtime/task/v2"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/log"
@@ -38,7 +38,6 @@ import (
 	"github.com/containerd/containerd/protobuf"
 	"github.com/containerd/containerd/protobuf/proto"
 	"github.com/containerd/containerd/version"
-	"github.com/containerd/ttrpc"
 	"github.com/sirupsen/logrus"
 )
 
@@ -106,10 +105,8 @@ type BinaryOpts func(*Config)
 
 // Config of shim binary options provided by shim implementations
 type Config struct {
-	// NoSubreaper disables setting the shim as a child subreaper
-	NoSubreaper bool
-	// NoReaper disables the shim binary from reaping any child process implicitly
-	NoReaper bool
+	NoSubreaper bool // 禁用将shim设置为子收割者
+	NoReaper    bool // 禁用shim二进制文件隐式获取任何子进程
 	// NoSetupLogger disables automatic configuration of logrus to use the shim FIFO
 	NoSetupLogger bool
 }
@@ -167,20 +164,6 @@ func parseFlags() {
 
 	flag.Parse()
 	action = flag.Arg(0)
-}
-
-func setRuntime() {
-	debug.SetGCPercent(40)
-	go func() {
-		for range time.Tick(30 * time.Second) {
-			debug.FreeOSMemory()
-		}
-	}()
-	if os.Getenv("GOMAXPROCS") == "" {
-		// If GOMAXPROCS hasn't been set, we default to a value of 2 to reduce
-		// the number of Go stacks present in the shim.
-		runtime.GOMAXPROCS(2)
-	}
 }
 
 func setLogger(ctx context.Context, id string) (context.Context, error) {
@@ -275,8 +258,6 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 	if namespaceFlag == "" {
 		return fmt.Errorf("shim namespace cannot be empty")
 	}
-
-	setRuntime()
 
 	signals, err := setupSignals(config)
 	if err != nil {

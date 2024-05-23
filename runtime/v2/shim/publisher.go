@@ -21,12 +21,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	v1 "github.com/containerd/containerd/api/services/ttrpc/events/v1"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/pkg/ttrpcutil"
 	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/ttrpc"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,23 +39,6 @@ type item struct {
 	ev    *v1.Envelope
 	ctx   context.Context
 	count int
-}
-
-// NewPublisher creates a new remote events publisher
-func NewPublisher(address string) (*RemoteEventsPublisher, error) {
-	client, err := ttrpcutil.NewClient(address)
-	if err != nil {
-		return nil, err
-	}
-
-	l := &RemoteEventsPublisher{
-		client:  client,
-		closed:  make(chan struct{}),
-		requeue: make(chan *item, queueSize),
-	}
-
-	go l.processQueue()
-	return l, nil
 }
 
 // RemoteEventsPublisher forwards events to a ttrpc server
@@ -166,4 +149,21 @@ func (l *RemoteEventsPublisher) forwardRequest(ctx context.Context, req *v1.Forw
 	}
 
 	return nil
+}
+
+// NewPublisher creates a new remote events publisher
+func NewPublisher(address string) (*RemoteEventsPublisher, error) {
+	client, err := ttrpcutil.NewClient(address)
+	if err != nil {
+		return nil, err
+	}
+
+	l := &RemoteEventsPublisher{
+		client:  client,
+		closed:  make(chan struct{}),
+		requeue: make(chan *item, queueSize),
+	}
+
+	go l.processQueue()
+	return l, nil
 }

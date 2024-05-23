@@ -118,4 +118,4 @@ Improved multi-arch image support using more precise matching and ranking"""
 [rename_deps]
 	[rename_deps.ttrpc]
 	old = "github.com/stevvooe/ttrpc"
-	new = "github.com/containerd/ttrpc"
+	new = "github.com/containerd/containerd/3rd/ttrpc"

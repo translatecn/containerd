@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/containerd/continuity"
+	"github.com/containerd/containerd/3rd/continuity"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 

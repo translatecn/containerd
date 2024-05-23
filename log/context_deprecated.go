@@ -19,7 +19,7 @@ package log
 import (
 	"context"
 
-	"github.com/containerd/log"
+	"github.com/containerd/containerd/3rd/log"
 )
 
 // G is a shorthand for [GetLogger].

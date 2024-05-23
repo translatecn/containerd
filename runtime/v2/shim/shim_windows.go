@@ -22,8 +22,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/ttrpc"
 	"github.com/sirupsen/logrus"
 )
 

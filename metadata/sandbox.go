@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/filters"
 	"github.com/containerd/containerd/identifiers"
 	"github.com/containerd/containerd/metadata/boltutil"
 	"github.com/containerd/containerd/namespaces"
 	api "github.com/containerd/containerd/sandbox"
-	"github.com/containerd/typeurl/v2"
 	"go.etcd.io/bbolt"
 )
 

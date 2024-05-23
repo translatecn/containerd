@@ -32,6 +32,6 @@ The seventh patch release for containerd 1.7 contains various fixes and updates.
 * **cri: Stop recommending disable_cgroup** ([#9168](https://github.com/containerd/containerd/pull/9168))
 * **remotes/docker: Fix MountedFrom prefixed with target repository** ([#9193](https://github.com/containerd/containerd/pull/9193))
 * **remotes: always try to establish tls connection when tls configured** ([#9188](https://github.com/containerd/containerd/pull/9188))
-* **NRI: Add support for rlimits** ([#48](https://github.com/containerd/nri/pull/48))
+* **NRI: Add support for rlimits** ([#48](https://github.com/containerd/containerd/3rd/nri/pull/48))
 
 See the changelog for complete list of changes"""

@@ -19,7 +19,7 @@ package namespaces
 import (
 	"context"
 
-	"github.com/containerd/ttrpc"
+	"github.com/containerd/containerd/3rd/ttrpc"
 )
 
 const (

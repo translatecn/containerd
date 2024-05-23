@@ -4,7 +4,7 @@ package task
 
 import (
 	context "context"
-	ttrpc "github.com/containerd/ttrpc"
+	ttrpc "github.com/containerd/containerd/3rd/ttrpc"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 

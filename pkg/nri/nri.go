@@ -25,8 +25,8 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/sirupsen/logrus"
 
+	nri "github.com/containerd/containerd/3rd/nri/pkg/adaptation"
 	"github.com/containerd/containerd/version"
-	nri "github.com/containerd/nri/pkg/adaptation"
 )
 
 // API implements a common API for interfacing NRI from containerd. It is

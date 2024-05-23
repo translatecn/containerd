@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	cni "github.com/containerd/go-cni"
+	cni "github.com/containerd/containerd/3rd/go-cni"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )

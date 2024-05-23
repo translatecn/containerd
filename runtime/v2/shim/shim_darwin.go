@@ -16,7 +16,7 @@
 
 package shim
 
-import "github.com/containerd/ttrpc"
+import "github.com/containerd/containerd/3rd/ttrpc"
 
 func newServer(opts ...ttrpc.ServerOpt) (*ttrpc.Server, error) {
 	return ttrpc.NewServer(opts...)

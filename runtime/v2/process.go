@@ -20,12 +20,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/containerd/containerd/3rd/ttrpc"
 	"github.com/containerd/containerd/api/runtime/task/v2"
 	tasktypes "github.com/containerd/containerd/api/types/task"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/protobuf"
 	"github.com/containerd/containerd/runtime"
-	"github.com/containerd/ttrpc"
 )
 
 type process struct {

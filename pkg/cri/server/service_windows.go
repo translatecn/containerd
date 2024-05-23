@@ -19,7 +19,7 @@ package server
 import (
 	"fmt"
 
-	cni "github.com/containerd/go-cni"
+	cni "github.com/containerd/containerd/3rd/go-cni"
 )
 
 // windowsNetworkAttachCount is the minimum number of networks the PodSandbox

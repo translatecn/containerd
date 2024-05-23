@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	clabels "github.com/containerd/containerd/labels"
@@ -39,7 +40,6 @@ import (
 	"github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/runtime/linux/runctypes"
 	runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
-	"github.com/containerd/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 

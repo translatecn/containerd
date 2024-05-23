@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/containerd/3rd/cgroups/v3"
 	"github.com/containerd/containerd/contrib/apparmor"
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"

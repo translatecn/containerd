@@ -28,6 +28,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/containerd/3rd/continuity/fs/fstest"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log/logtest"
 	"github.com/containerd/containerd/mount"
@@ -35,7 +36,6 @@ import (
 	"github.com/containerd/containerd/pkg/randutil"
 	"github.com/containerd/containerd/pkg/testutil"
 	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/continuity/fs/fstest"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -26,10 +26,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	transferapi "github.com/containerd/containerd/api/types/transfer"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/typeurl/v2"
 )
 
 const maxRead = 32 * 1024

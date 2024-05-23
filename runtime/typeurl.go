@@ -19,7 +19,7 @@ package runtime
 import (
 	"strconv"
 
-	"github.com/containerd/typeurl/v2"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 

@@ -20,7 +20,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containerd/log/logtest"
+	"github.com/containerd/containerd/3rd/log/logtest"
 )
 
 // WithT adds a logging hook for the given test

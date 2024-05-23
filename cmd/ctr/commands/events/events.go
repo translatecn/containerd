@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/cmd/ctr/commands"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/log"
-	"github.com/containerd/typeurl/v2"
 	"github.com/urfave/cli"
 
 	// Register grpc event types

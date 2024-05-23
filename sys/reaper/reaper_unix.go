@@ -26,7 +26,7 @@ import (
 	"syscall"
 	"time"
 
-	runc "github.com/containerd/go-runc"
+	runc "github.com/containerd/containerd/3rd/go-runc"
 	"golang.org/x/sys/unix"
 )
 

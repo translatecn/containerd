@@ -27,7 +27,7 @@ import (
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/containerd/snapshots/storage"
 
-	"github.com/containerd/continuity/fs"
+	"github.com/containerd/containerd/3rd/continuity/fs"
 )
 
 type snapshotter struct {

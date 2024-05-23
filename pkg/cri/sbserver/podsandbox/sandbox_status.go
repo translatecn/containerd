@@ -22,12 +22,12 @@ import (
 	"fmt"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/3rd/go-cni"
+	"github.com/containerd/containerd/3rd/typeurl/v2"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
 	"github.com/containerd/containerd/sandbox"
-	"github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )

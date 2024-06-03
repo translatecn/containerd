@@ -17,9 +17,9 @@
 package tasks
 
 import (
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/cmd/ctr/commands"
+	"demo/cmd/ctr/commands"
+	"demo/others/console"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

@@ -20,39 +20,39 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/snapshots"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
+	"demo/pkg/cri/annotations"
+	customopts "demo/pkg/cri/opts"
 )
 
 func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig, nsPath string, runtimePodAnnotations []string) (*runtimespec.Spec, error) {
 	// Creates a spec Generator with the default spec.
-	specOpts := []oci.SpecOpts{
-		oci.WithEnv(imageConfig.Env),
-		oci.WithHostname(config.GetHostname()),
+	specOpts := []over_oci.SpecOpts{
+		over_oci.WithEnv(imageConfig.Env),
+		over_oci.WithHostname(config.GetHostname()),
 	}
 	if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if len(imageConfig.Entrypoint) == 0 && len(imageConfig.Cmd) == 0 {
 		// Pause image must have entrypoint or cmd.
 		return nil, fmt.Errorf("invalid empty entrypoint and cmd in image config %+v", imageConfig)
 	}
-	specOpts = append(specOpts, oci.WithProcessArgs(append(imageConfig.Entrypoint, imageConfig.Cmd...)...))
+	specOpts = append(specOpts, over_oci.WithProcessArgs(append(imageConfig.Entrypoint, imageConfig.Cmd...)...))
 
 	specOpts = append(specOpts,
 		// Clear the root location since hcsshim expects it.
 		// NOTE: readonly rootfs doesn't work on windows.
 		customopts.WithoutRoot,
-		oci.WithWindowsNetworkNamespace(nsPath),
+		over_oci.WithWindowsNetworkNamespace(nsPath),
 	)
 
 	specOpts = append(specOpts, customopts.WithWindowsDefaultSandboxShares)
@@ -74,7 +74,7 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 	// image as early as here like there is for Linux. Later on in the stack hcsshim
 	// will handle the behavior of erroring out if the user isn't available in the image
 	// when trying to run the init process.
-	specOpts = append(specOpts, oci.WithUser(username))
+	specOpts = append(specOpts, over_oci.WithUser(username))
 
 	for pKey, pValue := range getPassthroughAnnotations(config.Annotations,
 		runtimePodAnnotations) {
@@ -90,7 +90,7 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 }
 
 // No sandbox container spec options for windows yet.
-func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
 	return nil, nil
 }
 

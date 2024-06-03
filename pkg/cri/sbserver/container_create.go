@@ -18,6 +18,8 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -25,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
 	"github.com/davecgh/go-spew/spew"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
@@ -33,18 +34,17 @@ import (
 	"github.com/opencontainers/selinux/go-selinux/label"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/blockio"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	"github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/platforms"
+	"demo/containerd"
+	"demo/containers"
+	"demo/over/oci"
+	"demo/over/platforms"
+	"demo/pkg/blockio"
+	"demo/pkg/cri/annotations"
+	criconfig "demo/pkg/cri/config"
+	cio "demo/pkg/cri/io"
+	customopts "demo/pkg/cri/opts"
+	containerstore "demo/pkg/cri/store/container"
+	"demo/pkg/cri/util"
 )
 
 func init() {
@@ -338,7 +338,7 @@ func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 // volumeMounts sets up image volumes for container. Rely on the removal of container
 // root directory to do cleanup. Note that image volume will be skipped, if there is criMounts
 // specified with the same destination.
-func (c *criService) volumeMounts(platform platforms.Platform, containerRootDir string, criMounts []*runtime.Mount, config *imagespec.ImageConfig) []*runtime.Mount {
+func (c *criService) volumeMounts(platform over_platforms.Platform, containerRootDir string, criMounts []*runtime.Mount, config *imagespec.ImageConfig) []*runtime.Mount {
 	if len(config.Volumes) == 0 {
 		return nil
 	}
@@ -374,7 +374,7 @@ func (c *criService) volumeMounts(platform platforms.Platform, containerRootDir 
 }
 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *criService) runtimeSpec(id string, platform platforms.Platform, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *criService) runtimeSpec(id string, platform over_platforms.Platform, baseSpecFile string, opts ...over_oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := util.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -385,22 +385,22 @@ func (c *criService) runtimeSpec(id string, platform platforms.Platform, baseSpe
 			return nil, fmt.Errorf("can't find base OCI spec %q", baseSpecFile)
 		}
 
-		spec := oci.Spec{}
+		spec := over_oci.Spec{}
 		if err := util.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
 		// Fix up cgroups path
-		applyOpts := append([]oci.SpecOpts{oci.WithNamespacedCgroup()}, opts...)
+		applyOpts := append([]over_oci.SpecOpts{over_oci.WithNamespacedCgroup()}, opts...)
 
-		if err := oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
+		if err := over_oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
 			return nil, fmt.Errorf("failed to apply OCI options: %w", err)
 		}
 
 		return &spec, nil
 	}
 
-	spec, err := oci.GenerateSpecWithPlatform(ctx, nil, platforms.Format(platform), container, opts...)
+	spec, err := over_oci.GenerateSpecWithPlatform(ctx, nil, over_platforms.Format(platform), container, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate spec: %w", err)
 	}
@@ -409,7 +409,7 @@ func (c *criService) runtimeSpec(id string, platform platforms.Platform, baseSpe
 }
 
 // Overrides the default snapshotter if Snapshotter is set for this runtime.
-// See https://github.com/containerd/containerd/issues/6657
+// See https://github.com/containerd/issues/6657
 func (c *criService) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
 	if ociRuntime.Snapshotter == "" {
 		return c.config.ContainerdConfig.Snapshotter
@@ -468,11 +468,11 @@ func generateUserString(username string, uid, gid *runtime.Int64Value) (string, 
 // runtime information (rootfs mounted), or platform specific checks with
 // no defined workaround (yet) to specify for other platforms.
 func (c *criService) platformSpecOpts(
-	platform platforms.Platform,
+	platform over_platforms.Platform,
 	config *runtime.ContainerConfig,
 	imageConfig *imagespec.ImageConfig,
-) ([]oci.SpecOpts, error) {
-	var specOpts []oci.SpecOpts
+) ([]over_oci.SpecOpts, error) {
+	var specOpts []over_oci.SpecOpts
 
 	// First deal with the set of options we can use across platforms currently.
 	// Linux user strings have workarounds on other platforms to avoid needing to
@@ -498,7 +498,7 @@ func (c *criService) platformSpecOpts(
 			userstr = imageConfig.User
 		}
 		if userstr != "" {
-			specOpts = append(specOpts, oci.WithUser(userstr))
+			specOpts = append(specOpts, over_oci.WithUser(userstr))
 		}
 	}
 
@@ -515,7 +515,7 @@ func (c *criService) platformSpecOpts(
 
 // buildContainerSpec build container's OCI spec depending on controller's target platform OS.
 func (c *criService) buildContainerSpec(
-	platform platforms.Platform,
+	platform over_platforms.Platform,
 	id string,
 	sandboxID string,
 	sandboxPid uint32,
@@ -529,7 +529,7 @@ func (c *criService) buildContainerSpec(
 	ociRuntime criconfig.Runtime,
 ) (_ *runtimespec.Spec, retErr error) {
 	var (
-		specOpts []oci.SpecOpts
+		specOpts []over_oci.SpecOpts
 		err      error
 
 		// Platform helpers
@@ -606,9 +606,9 @@ func (c *criService) buildLinuxSpec(
 	imageConfig *imagespec.ImageConfig,
 	extraMounts []*runtime.Mount,
 	ociRuntime criconfig.Runtime,
-) (_ []oci.SpecOpts, retErr error) {
-	specOpts := []oci.SpecOpts{
-		oci.WithoutRunMount,
+) (_ []over_oci.SpecOpts, retErr error) {
+	specOpts := []over_oci.SpecOpts{
+		over_oci.WithoutRunMount,
 	}
 	// only clear the default security settings if the runtime does not have a custom
 	// base runtime spec spec.  Admins can use this functionality to define
@@ -620,19 +620,19 @@ func (c *criService) buildLinuxSpec(
 	specOpts = append(specOpts,
 		customopts.WithRelativeRoot(relativeRootfsPath),
 		customopts.WithProcessArgs(config, imageConfig),
-		oci.WithDefaultPathEnv,
+		over_oci.WithDefaultPathEnv,
 		// this will be set based on the security context below
-		oci.WithNewPrivileges,
+		over_oci.WithNewPrivileges,
 	)
 
 	if config.GetWorkingDir() != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(config.GetWorkingDir()))
 	} else if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if config.GetTty() {
-		specOpts = append(specOpts, oci.WithTTY)
+		specOpts = append(specOpts, over_oci.WithTTY)
 	}
 
 	// Add HOSTNAME env.
@@ -645,7 +645,7 @@ func (c *criService) buildLinuxSpec(
 			return nil, err
 		}
 	}
-	specOpts = append(specOpts, oci.WithEnv([]string{hostnameEnv + "=" + hostname}))
+	specOpts = append(specOpts, over_oci.WithEnv([]string{hostnameEnv + "=" + hostname}))
 
 	// Apply envs from image config first, so that envs from container config
 	// can override them.
@@ -653,7 +653,7 @@ func (c *criService) buildLinuxSpec(
 	for _, e := range config.GetEnvs() {
 		env = append(env, e.GetKey()+"="+e.GetValue())
 	}
-	specOpts = append(specOpts, oci.WithEnv(env))
+	specOpts = append(specOpts, over_oci.WithEnv(env))
 
 	securityContext := config.GetLinux().GetSecurityContext()
 	labelOptions, err := toLabel(securityContext.GetSelinuxOptions())
@@ -684,20 +684,20 @@ func (c *criService) buildLinuxSpec(
 
 	if !c.config.DisableProcMount {
 		// Change the default masked/readonly paths to empty slices
-		// See https://github.com/containerd/containerd/issues/5029
+		// See https://github.com/containerd/issues/5029
 		// TODO: Provide an option to set default paths to the ones in oci.populateDefaultUnixSpec()
-		specOpts = append(specOpts, oci.WithMaskedPaths([]string{}), oci.WithReadonlyPaths([]string{}))
+		specOpts = append(specOpts, over_oci.WithMaskedPaths([]string{}), over_oci.WithReadonlyPaths([]string{}))
 
 		// Apply masked paths if specified.
 		// If the container is privileged, this will be cleared later on.
 		if maskedPaths := securityContext.GetMaskedPaths(); maskedPaths != nil {
-			specOpts = append(specOpts, oci.WithMaskedPaths(maskedPaths))
+			specOpts = append(specOpts, over_oci.WithMaskedPaths(maskedPaths))
 		}
 
 		// Apply readonly paths if specified.
 		// If the container is privileged, this will be cleared later on.
 		if readonlyPaths := securityContext.GetReadonlyPaths(); readonlyPaths != nil {
-			specOpts = append(specOpts, oci.WithReadonlyPaths(readonlyPaths))
+			specOpts = append(specOpts, over_oci.WithReadonlyPaths(readonlyPaths))
 		}
 	}
 
@@ -708,12 +708,12 @@ func (c *criService) buildLinuxSpec(
 		if !sandboxConfig.GetLinux().GetSecurityContext().GetPrivileged() {
 			return nil, errors.New("no privileged container allowed in sandbox")
 		}
-		specOpts = append(specOpts, oci.WithPrivileged)
+		specOpts = append(specOpts, over_oci.WithPrivileged)
 		if !ociRuntime.PrivilegedWithoutHostDevices {
-			specOpts = append(specOpts, oci.WithHostDevices, oci.WithAllDevicesAllowed)
+			specOpts = append(specOpts, over_oci.WithHostDevices, over_oci.WithAllDevicesAllowed)
 		} else if ociRuntime.PrivilegedWithoutHostDevicesAllDevicesAllowed {
 			// allow rwm on all devices for the container
-			specOpts = append(specOpts, oci.WithAllDevicesAllowed)
+			specOpts = append(specOpts, over_oci.WithAllDevicesAllowed)
 		}
 	}
 
@@ -728,11 +728,11 @@ func (c *criService) buildLinuxSpec(
 
 	// TODO: Figure out whether we should set no new privilege for sandbox container by default
 	if securityContext.GetNoNewPrivs() {
-		specOpts = append(specOpts, oci.WithNoNewPrivileges)
+		specOpts = append(specOpts, over_oci.WithNoNewPrivileges)
 	}
 	// TODO(random-liu): [P1] Set selinux options (privileged or not).
 	if securityContext.GetReadonlyRootfs() {
-		specOpts = append(specOpts, oci.WithRootFSReadonly())
+		specOpts = append(specOpts, over_oci.WithRootFSReadonly())
 	}
 
 	if c.config.DisableCgroup {
@@ -741,7 +741,7 @@ func (c *criService) buildLinuxSpec(
 		specOpts = append(specOpts, customopts.WithResources(config.GetLinux().GetResources(), c.config.TolerateMissingHugetlbController, c.config.DisableHugetlbController))
 		if sandboxConfig.GetLinux().GetCgroupParent() != "" {
 			cgroupsPath := getCgroupsPath(sandboxConfig.GetLinux().GetCgroupParent(), id)
-			specOpts = append(specOpts, oci.WithCgroup(cgroupsPath))
+			specOpts = append(specOpts, over_oci.WithCgroup(cgroupsPath))
 		}
 	}
 
@@ -754,7 +754,7 @@ func (c *criService) buildLinuxSpec(
 	}
 	if blockIOClass != "" {
 		if linuxBlockIO, err := blockio.ClassNameToLinuxOCI(blockIOClass); err == nil {
-			specOpts = append(specOpts, oci.WithBlockIO(linuxBlockIO))
+			specOpts = append(specOpts, over_oci.WithBlockIO(linuxBlockIO))
 		} else {
 			return nil, err
 		}
@@ -766,7 +766,7 @@ func (c *criService) buildLinuxSpec(
 		return nil, fmt.Errorf("failed to set RDT class: %w", err)
 	}
 	if rdtClass != "" {
-		specOpts = append(specOpts, oci.WithRdt(rdtClass, "", ""))
+		specOpts = append(specOpts, over_oci.WithRdt(rdtClass, "", ""))
 	}
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
@@ -820,7 +820,7 @@ func (c *criService) buildLinuxSpec(
 	// https://github.com/containers/libpod/issues/4363
 	// https://github.com/kubernetes/enhancements/blob/0e409b47497e398b369c281074485c8de129694f/keps/sig-node/20191118-cgroups-v2.md#cgroup-namespace
 	if isUnifiedCgroupsMode() && !securityContext.GetPrivileged() {
-		specOpts = append(specOpts, oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.CgroupNamespace}))
+		specOpts = append(specOpts, over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.CgroupNamespace}))
 	}
 
 	return specOpts, nil
@@ -838,8 +838,8 @@ func (c *criService) buildWindowsSpec(
 	imageConfig *imagespec.ImageConfig,
 	extraMounts []*runtime.Mount,
 	ociRuntime criconfig.Runtime,
-) (_ []oci.SpecOpts, retErr error) {
-	var specOpts []oci.SpecOpts
+) (_ []over_oci.SpecOpts, retErr error) {
+	var specOpts []over_oci.SpecOpts
 	specOpts = append(specOpts, customopts.WithProcessCommandLineOrArgsForWindows(config, imageConfig))
 
 	// All containers in a pod need to have HostProcess set if it was set on the pod,
@@ -852,15 +852,15 @@ func (c *criService) buildWindowsSpec(
 	}
 
 	if config.GetWorkingDir() != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(config.GetWorkingDir()))
 	} else if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	} else if cntrHpc {
-		specOpts = append(specOpts, oci.WithProcessCwd(`C:\hpc`))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(`C:\hpc`))
 	}
 
 	if config.GetTty() {
-		specOpts = append(specOpts, oci.WithTTY)
+		specOpts = append(specOpts, over_oci.WithTTY)
 	}
 
 	// Apply envs from image config first, so that envs from container config
@@ -869,14 +869,14 @@ func (c *criService) buildWindowsSpec(
 	for _, e := range config.GetEnvs() {
 		env = append(env, e.GetKey()+"="+e.GetValue())
 	}
-	specOpts = append(specOpts, oci.WithEnv(env))
+	specOpts = append(specOpts, over_oci.WithEnv(env))
 
 	specOpts = append(specOpts,
 		// Clear the root location since hcsshim expects it.
 		// NOTE: readonly rootfs doesn't work on windows.
 		customopts.WithoutRoot,
-		oci.WithWindowsNetworkNamespace(netNSPath),
-		oci.WithHostname(sandboxConfig.GetHostname()),
+		over_oci.WithWindowsNetworkNamespace(netNSPath),
+		over_oci.WithHostname(sandboxConfig.GetHostname()),
 	)
 
 	specOpts = append(specOpts, customopts.WithWindowsMounts(c.os, config, extraMounts), customopts.WithWindowsDevices(config))
@@ -904,7 +904,7 @@ func (c *criService) buildWindowsSpec(
 	// image as early as here like there is for Linux. Later on in the stack hcsshim
 	// will handle the behavior of erroring out if the user isn't available in the image
 	// when trying to run the init process.
-	specOpts = append(specOpts, oci.WithUser(username))
+	specOpts = append(specOpts, over_oci.WithUser(username))
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
 		ociRuntime.PodAnnotations) {
@@ -934,19 +934,19 @@ func (c *criService) buildDarwinSpec(
 	imageConfig *imagespec.ImageConfig,
 	extraMounts []*runtime.Mount,
 	ociRuntime criconfig.Runtime,
-) (_ []oci.SpecOpts, retErr error) {
-	specOpts := []oci.SpecOpts{
+) (_ []over_oci.SpecOpts, retErr error) {
+	specOpts := []over_oci.SpecOpts{
 		customopts.WithProcessArgs(config, imageConfig),
 	}
 
 	if config.GetWorkingDir() != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(config.GetWorkingDir()))
 	} else if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if config.GetTty() {
-		specOpts = append(specOpts, oci.WithTTY)
+		specOpts = append(specOpts, over_oci.WithTTY)
 	}
 
 	// Apply envs from image config first, so that envs from container config
@@ -955,7 +955,7 @@ func (c *criService) buildDarwinSpec(
 	for _, e := range config.GetEnvs() {
 		env = append(env, e.GetKey()+"="+e.GetValue())
 	}
-	specOpts = append(specOpts, oci.WithEnv(env))
+	specOpts = append(specOpts, over_oci.WithEnv(env))
 
 	specOpts = append(specOpts, customopts.WithDarwinMounts(c.os, config, extraMounts))
 

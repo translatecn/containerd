@@ -18,6 +18,8 @@ package sbserver
 
 import (
 	"context"
+	"demo/over/plugin"
+	docker2 "demo/pkg/reference/docker"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -27,24 +29,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	clabels "github.com/containerd/containerd/labels"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	imagestore "github.com/containerd/containerd/pkg/cri/store/image"
-	runtimeoptions "github.com/containerd/containerd/pkg/runtimeoptions/v1"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/reference/docker"
-	"github.com/containerd/containerd/runtime/linux/runctypes"
-	runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
+	"demo/containerd"
+	"demo/containers"
+	"demo/over/errdefs"
+	criconfig "demo/pkg/cri/config"
+	containerstore "demo/pkg/cri/store/container"
+	imagestore "demo/pkg/cri/store/image"
+	clabels "demo/pkg/labels"
+	runtimeoptions "demo/pkg/runtimeoptions/v1"
+	"demo/runtime/linux/runctypes"
+	runcoptions "demo/runtime/v2/runc/options"
 
-	runhcsoptions "github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
+	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
 	"github.com/pelletier/go-toml"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -177,12 +177,12 @@ func criContainerStateToString(state runtime.ContainerState) string {
 }
 
 // getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
-func getRepoDigestAndTag(namedRef docker.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
+func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
 	var repoTag, repoDigest string
-	if _, ok := namedRef.(docker.NamedTagged); ok {
+	if _, ok := namedRef.(docker2.NamedTagged); ok {
 		repoTag = namedRef.String()
 	}
-	if _, ok := namedRef.(docker.Canonical); ok {
+	if _, ok := namedRef.(docker2.Canonical); ok {
 		repoDigest = namedRef.String()
 	} else if !schema1 {
 		// digest is not actual repo digest for schema1 image.
@@ -192,7 +192,7 @@ func getRepoDigestAndTag(namedRef docker.Named, digest imagedigest.Digest, schem
 }
 
 // localResolve resolves image reference locally and returns corresponding image metadata. It
-// returns errdefs.ErrNotFound if the reference doesn't exist.
+// returns over_errdefs.ErrNotFound if the reference doesn't exist.
 func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 	getImageID := func(refOrId string) string {
 		if _, err := imagedigest.Parse(refOrID); err == nil {
@@ -201,7 +201,7 @@ func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 		return func(ref string) string {
 			// ref is not image id, try to resolve it locally.
 			// TODO(random-liu): Handle this error better for debugging.
-			normalized, err := docker.ParseDockerRef(ref)
+			normalized, err := docker2.ParseDockerRef(ref)
 			if err != nil {
 				return ""
 			}
@@ -253,7 +253,7 @@ func getUserFromImage(user string) (*int64, string) {
 // pulled yet, the function will pull the image.
 func (c *criService) EnsureImageExists(ctx context.Context, ref string, config *runtime.PodSandboxConfig) (*imagestore.Image, error) {
 	image, err := c.localResolve(ref)
-	if err != nil && !errdefs.IsNotFound(err) {
+	if err != nil && !over_errdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get image %q: %w", ref, err)
 	}
 	if err == nil {
@@ -349,13 +349,13 @@ func toRuntimeAuthConfig(a criconfig.AuthConfig) *runtime.AuthConfig {
 func parseImageReferences(refs []string) ([]string, []string) {
 	var tags, digests []string
 	for _, ref := range refs {
-		parsed, err := docker.ParseAnyReference(ref)
+		parsed, err := docker2.ParseAnyReference(ref)
 		if err != nil {
 			continue
 		}
-		if _, ok := parsed.(docker.Canonical); ok {
+		if _, ok := parsed.(docker2.Canonical); ok {
 			digests = append(digests, parsed.String())
-		} else if _, ok := parsed.(docker.Tagged); ok {
+		} else if _, ok := parsed.(docker2.Tagged); ok {
 			tags = append(tags, parsed.String())
 		}
 	}
@@ -365,7 +365,7 @@ func parseImageReferences(refs []string) ([]string, []string) {
 // generateRuntimeOptions generates runtime options from cri plugin config.
 func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{}, error) {
 	if r.Options == nil {
-		if r.Type != plugin.RuntimeLinuxV1 {
+		if r.Type != over_plugin.RuntimeLinuxV1 {
 			return nil, nil
 		}
 		// This is a legacy config, generate runctypes.RuncOptions.
@@ -399,11 +399,11 @@ func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{
 // getRuntimeOptionsType gets empty runtime options by the runtime type name.
 func getRuntimeOptionsType(t string) interface{} {
 	switch t {
-	case plugin.RuntimeRuncV1:
+	case over_plugin.RuntimeRuncV1:
 		fallthrough
-	case plugin.RuntimeRuncV2:
+	case over_plugin.RuntimeRuncV2:
 		return &runcoptions.Options{}
-	case plugin.RuntimeLinuxV1:
+	case over_plugin.RuntimeLinuxV1:
 		return &runctypes.RuncOptions{}
 	case runtimeRunhcsV1:
 		return &runhcsoptions.Options{}
@@ -599,7 +599,7 @@ func (c *criService) getContainerStatuses(ctx context.Context, podSandboxID stri
 			Verbose:     false,
 		})
 		if err != nil {
-			if errdefs.IsNotFound(err) {
+			if over_errdefs.IsNotFound(err) {
 				continue
 			}
 			return nil, err

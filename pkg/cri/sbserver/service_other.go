@@ -18,10 +18,6 @@
 
 package sbserver
 
-import (
-	"github.com/containerd/go-cni"
-)
-
 // initPlatform handles initialization of the CRI service for non-windows
 // and non-linux platforms.
 func (c *criService) initPlatform() error {

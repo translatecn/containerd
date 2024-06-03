@@ -21,18 +21,17 @@ package server
 import (
 	"context"
 	gocontext "context"
+	"demo/containerd"
+	"demo/containers"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
 	"fmt"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
+	containerstore "demo/pkg/cri/store/container"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 // UpdateContainerResources updates ContainerConfig of the container.
@@ -123,7 +122,7 @@ func (c *criService) updateContainerResources(ctx context.Context,
 
 	task, err := cntr.Container.Task(ctx, nil)
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			// Task exited already.
 			return newStatus, nil
 		}
@@ -131,7 +130,7 @@ func (c *criService) updateContainerResources(ctx context.Context,
 	}
 	// newSpec.Linux / newSpec.Windows won't be nil
 	if err := task.Update(ctx, containerd.WithResources(getResources(newSpec))); err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			// Task exited already.
 			return newStatus, nil
 		}

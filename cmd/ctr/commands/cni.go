@@ -18,16 +18,16 @@ package commands
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/typeurl/v2"
+	"demo/containerd"
+	"demo/others/typeurl/v2"
 )
 
 func init() {
 	typeurl.Register(&NetworkMetaData{},
-		"github.com/containerd/containerd/cmd/ctr/commands", "NetworkMetaData")
+		"demo/cmd/ctr/commands", "NetworkMetaData")
 }
 
 const (

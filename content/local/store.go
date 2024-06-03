@@ -18,6 +18,8 @@ package local
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"io"
 	"os"
@@ -27,11 +29,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/filters"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/randutil"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/pkg/filters"
+	"demo/pkg/randutil"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opencontainers/go-digest"
@@ -79,7 +80,7 @@ func NewStore(root string) (content.Store, error) {
 // require labels and should use `NewStore`. `NewLabeledStore` is primarily
 // useful for tests or standalone implementations.
 func NewLabeledStore(root string, ls LabelStore) (content.Store, error) {
-	if err := os.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
+	if err := my_mk.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +99,7 @@ func (s *store) Info(ctx context.Context, dgst digest.Digest) (content.Info, err
 	fi, err := os.Stat(p)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
+			err = fmt.Errorf("content %v: %w", dgst, over_errdefs.ErrNotFound)
 		}
 
 		return content.Info{}, err
@@ -153,7 +154,7 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 			return err
 		}
 
-		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
+		return fmt.Errorf("content %v: %w", dgst, over_errdefs.ErrNotFound)
 	}
 
 	return nil
@@ -161,7 +162,7 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 
 func (s *store) Update(ctx context.Context, info content.Info, fieldpaths ...string) (content.Info, error) {
 	if s.ls == nil {
-		return content.Info{}, fmt.Errorf("update not supported on immutable content store: %w", errdefs.ErrFailedPrecondition)
+		return content.Info{}, fmt.Errorf("update not supported on immutable content store: %w", over_errdefs.ErrFailedPrecondition)
 	}
 
 	p, err := s.blobPath(info.Digest)
@@ -172,7 +173,7 @@ func (s *store) Update(ctx context.Context, info content.Info, fieldpaths ...str
 	fi, err := os.Stat(p)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = fmt.Errorf("content %v: %w", info.Digest, errdefs.ErrNotFound)
+			err = fmt.Errorf("content %v: %w", info.Digest, over_errdefs.ErrNotFound)
 		}
 
 		return content.Info{}, err
@@ -199,7 +200,7 @@ func (s *store) Update(ctx context.Context, info content.Info, fieldpaths ...str
 				all = true
 				labels = info.Labels
 			default:
-				return content.Info{}, fmt.Errorf("cannot update %q field on content info %q: %w", path, info.Digest, errdefs.ErrInvalidArgument)
+				return content.Info{}, fmt.Errorf("cannot update %q field on content info %q: %w", path, info.Digest, over_errdefs.ErrInvalidArgument)
 			}
 		}
 	} else {
@@ -376,7 +377,7 @@ func (s *store) status(ingestPath string) (content.Status, error) {
 	fi, err := os.Stat(dp)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = fmt.Errorf("%s: %w", err.Error(), errdefs.ErrNotFound)
+			err = fmt.Errorf("%s: %w", err.Error(), over_errdefs.ErrNotFound)
 		}
 		return content.Status{}, err
 	}
@@ -384,7 +385,7 @@ func (s *store) status(ingestPath string) (content.Status, error) {
 	ref, err := readFileString(filepath.Join(ingestPath, "ref"))
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = fmt.Errorf("%s: %w", err.Error(), errdefs.ErrNotFound)
+			err = fmt.Errorf("%s: %w", err.Error(), over_errdefs.ErrNotFound)
 		}
 		return content.Status{}, err
 	}
@@ -457,14 +458,14 @@ func (s *store) Writer(ctx context.Context, opts ...content.WriterOpt) (content.
 		}
 	}
 	// TODO(AkihiroSuda): we could create a random string or one calculated based on the context
-	// https://github.com/containerd/containerd/issues/2129#issuecomment-380255019
+	// https://github.com/containerd/issues/2129#issuecomment-380255019
 	if wOpts.Ref == "" {
-		return nil, fmt.Errorf("ref must not be empty: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("ref must not be empty: %w", over_errdefs.ErrInvalidArgument)
 	}
 	var lockErr error
 	for count := uint64(0); count < 10; count++ {
 		if err := tryLock(wOpts.Ref); err != nil {
-			if !errdefs.IsUnavailable(err) {
+			if !over_errdefs.IsUnavailable(err) {
 				return nil, err
 			}
 
@@ -530,7 +531,7 @@ func (s *store) writer(ctx context.Context, ref string, total int64, expected di
 			return nil, fmt.Errorf("calculating expected blob path for writer: %w", err)
 		}
 		if _, err := os.Stat(p); err == nil {
-			return nil, fmt.Errorf("content %v: %w", expected, errdefs.ErrAlreadyExists)
+			return nil, fmt.Errorf("content %v: %w", expected, over_errdefs.ErrAlreadyExists)
 		}
 	}
 
@@ -545,7 +546,7 @@ func (s *store) writer(ctx context.Context, ref string, total int64, expected di
 
 	foundValidIngest := false
 	// ensure that the ingest path has been created.
-	if err := os.Mkdir(path, 0755); err != nil {
+	if err := my_mk.Mkdir(path, 0755); err != nil {
 		if !os.IsExist(err) {
 			return nil, err
 		}
@@ -615,7 +616,7 @@ func (s *store) Abort(ctx context.Context, ref string) error {
 	root := s.ingestRoot(ref)
 	if err := os.RemoveAll(root); err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("ingest ref %q: %w", ref, errdefs.ErrNotFound)
+			return fmt.Errorf("ingest ref %q: %w", ref, over_errdefs.ErrNotFound)
 		}
 
 		return err
@@ -626,7 +627,7 @@ func (s *store) Abort(ctx context.Context, ref string) error {
 
 func (s *store) blobPath(dgst digest.Digest) (string, error) {
 	if err := dgst.Validate(); err != nil {
-		return "", fmt.Errorf("cannot calculate blob path from invalid digest: %v: %w", err, errdefs.ErrInvalidArgument)
+		return "", fmt.Errorf("cannot calculate blob path from invalid digest: %v: %w", err, over_errdefs.ErrInvalidArgument)
 	}
 
 	return filepath.Join(s.root, "blobs", dgst.Algorithm().String(), dgst.Encoded()), nil
@@ -664,7 +665,7 @@ func readFileTimestamp(p string) (time.Time, error) {
 	b, err := os.ReadFile(p)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = fmt.Errorf("%s: %w", err.Error(), errdefs.ErrNotFound)
+			err = fmt.Errorf("%s: %w", err.Error(), over_errdefs.ErrNotFound)
 		}
 		return time.Time{}, err
 	}

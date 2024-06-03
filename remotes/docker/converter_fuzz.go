@@ -20,11 +20,10 @@ package docker
 
 import (
 	"context"
-	"os"
-
+	"demo/content/local"
+	"demo/others/log"
+	"demo/over/my_mk"
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
-	"github.com/containerd/containerd/content/local"
-	"github.com/containerd/containerd/log"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 )
@@ -42,7 +41,7 @@ func FuzzConvertManifest(data []byte) int {
 	if err != nil {
 		return 0
 	}
-	tmpdir, err := os.MkdirTemp("", "fuzzing-")
+	tmpdir, err := my_mk.MkdirTemp("", "fuzzing-")
 	if err != nil {
 		return 0
 	}

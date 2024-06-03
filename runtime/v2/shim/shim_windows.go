@@ -22,37 +22,37 @@ import (
 	"net"
 	"os"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	"demo/over/errdefs"
 	"github.com/sirupsen/logrus"
 )
 
 func setupSignals(config Config) (chan os.Signal, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 func newServer(opts ...ttrpc.ServerOpt) (*ttrpc.Server, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 func subreaper() error {
-	return errdefs.ErrNotImplemented
+	return over_errdefs.ErrNotImplemented
 }
 
 func setupDumpStacks(dump chan<- os.Signal) {
 }
 
 func serveListener(path string) (net.Listener, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 func reap(ctx context.Context, logger *logrus.Entry, signals chan os.Signal) error {
-	return errdefs.ErrNotImplemented
+	return over_errdefs.ErrNotImplemented
 }
 
 func handleExitSignals(ctx context.Context, logger *logrus.Entry, cancel context.CancelFunc) {
 }
 
 func openLog(ctx context.Context, _ string) (io.Writer, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }

@@ -23,9 +23,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	v2 "github.com/containerd/containerd/api/runtime/task/v2"
-	v3 "github.com/containerd/containerd/api/runtime/task/v3"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	v2 "demo/pkg/api/runtime/task/v2"
+	v3 "demo/pkg/api/runtime/task/v3"
 )
 
 // NewTaskClient returns a new task client interface which handles both GRPC and TTRPC servers depending on the

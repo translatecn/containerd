@@ -20,7 +20,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/containerd/console"
+	"demo/others/console"
 )
 
 // Platform handles platform-specific behavior that may differs across

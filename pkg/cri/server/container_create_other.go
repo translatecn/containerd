@@ -19,14 +19,14 @@
 package server
 
 import (
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
+	"demo/over/oci"
+	"demo/snapshots"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	"github.com/containerd/containerd/pkg/cri/config"
+	"demo/pkg/cri/annotations"
+	"demo/pkg/cri/config"
 )
 
 // containerMounts sets up necessary container system file mounts
@@ -52,8 +52,8 @@ func (c *criService) containerSpec(
 	return c.runtimeSpec(sandboxID, ociRuntime.BaseRuntimeSpec, specOpts...)
 }
 
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
-	return []oci.SpecOpts{}, nil
+func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
+	return []over_oci.SpecOpts{}, nil
 }
 
 // snapshotterOpts returns snapshotter options for the rootfs snapshot

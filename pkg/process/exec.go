@@ -30,11 +30,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/pkg/stdio"
-	"github.com/containerd/fifo"
-	runc "github.com/containerd/go-runc"
+	"demo/others/console"
+	"demo/others/fifo"
+	runc "demo/others/go-runc"
+	"demo/over/errdefs"
+	"demo/pkg/stdio"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -144,9 +144,9 @@ func (e *execProcess) kill(ctx context.Context, sig uint32, _ bool) error {
 	pid := e.pid.get()
 	switch {
 	case pid == 0:
-		return fmt.Errorf("process not created: %w", errdefs.ErrFailedPrecondition)
+		return fmt.Errorf("process not created: %w", over_errdefs.ErrFailedPrecondition)
 	case !e.exited.IsZero():
-		return fmt.Errorf("process already finished: %w", errdefs.ErrNotFound)
+		return fmt.Errorf("process already finished: %w", over_errdefs.ErrNotFound)
 	default:
 		if err := unix.Kill(pid, syscall.Signal(sig)); err != nil {
 			return fmt.Errorf("exec kill error: %w", checkKillError(err))

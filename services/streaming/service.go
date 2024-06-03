@@ -17,29 +17,29 @@
 package streaming
 
 import (
+	"demo/others/log"
+	"demo/others/typeurl/v2"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 	"errors"
 	"io"
 
-	api "github.com/containerd/containerd/api/services/streaming/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/typeurl/v2"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/streaming/v1"
+	"demo/pkg/streaming"
 	"google.golang.org/grpc"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "streaming",
-		Requires: []plugin.Type{
-			plugin.StreamingPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.StreamingPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			i, err := ic.GetByID(plugin.StreamingPlugin, "manager")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			i, err := ic.GetByID(over_plugin2.StreamingPlugin, "manager")
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +87,7 @@ func (s *service) Stream(srv api.Streaming_StreamServer) error {
 	}
 
 	// Send response packet after registering stream
-	if err := srv.Send(protobuf.FromAny(response)); err != nil {
+	if err := srv.Send(over_protobuf.FromAny(response)); err != nil {
 		return err
 	}
 
@@ -106,9 +106,9 @@ type serviceStream struct {
 }
 
 func (ss *serviceStream) Send(a typeurl.Any) (err error) {
-	err = errdefs.FromGRPC(ss.s.Send(protobuf.FromAny(a)))
+	err = over_errdefs.FromGRPC(ss.s.Send(over_protobuf.FromAny(a)))
 	if !errors.Is(err, io.EOF) {
-		err = errdefs.FromGRPC(err)
+		err = over_errdefs.FromGRPC(err)
 	}
 	return
 }
@@ -116,7 +116,7 @@ func (ss *serviceStream) Send(a typeurl.Any) (err error) {
 func (ss *serviceStream) Recv() (a typeurl.Any, err error) {
 	a, err = ss.s.Recv()
 	if !errors.Is(err, io.EOF) {
-		err = errdefs.FromGRPC(err)
+		err = over_errdefs.FromGRPC(err)
 	}
 	return
 }

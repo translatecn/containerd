@@ -18,29 +18,29 @@ package events
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
+	over_protobuf2 "demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 	"fmt"
 
-	api "github.com/containerd/containerd/api/services/events/v1"
-	apittrpc "github.com/containerd/containerd/api/services/ttrpc/events/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/events/exchange"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/events/v1"
+	apittrpc "demo/pkg/api/services/ttrpc/events/v1"
+	"demo/pkg/events"
+	"demo/pkg/events/exchange"
 	"google.golang.org/grpc"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "events",
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.EventPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ep, err := ic.GetByID(plugin.EventPlugin, "exchange")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ep, err := ic.GetByID(over_plugin2.EventPlugin, "exchange")
 			if err != nil {
 				return nil, err
 			}
@@ -77,7 +77,7 @@ func (s *service) RegisterTTRPC(server *ttrpc.Server) error {
 
 func (s *service) Publish(ctx context.Context, r *api.PublishRequest) (*ptypes.Empty, error) {
 	if err := s.events.Publish(ctx, r.Topic, r.Event); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &ptypes.Empty{}, nil
@@ -85,7 +85,7 @@ func (s *service) Publish(ctx context.Context, r *api.PublishRequest) (*ptypes.E
 
 func (s *service) Forward(ctx context.Context, r *api.ForwardRequest) (*ptypes.Empty, error) {
 	if err := s.events.Forward(ctx, fromProto(r.Envelope)); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &ptypes.Empty{}, nil
@@ -114,16 +114,16 @@ func (s *service) Subscribe(req *api.SubscribeRequest, srv api.Events_SubscribeS
 
 func toProto(env *events.Envelope) *api.Envelope {
 	return &api.Envelope{
-		Timestamp: protobuf.ToTimestamp(env.Timestamp),
+		Timestamp: over_protobuf2.ToTimestamp(env.Timestamp),
 		Namespace: env.Namespace,
 		Topic:     env.Topic,
-		Event:     protobuf.FromAny(env.Event),
+		Event:     over_protobuf2.FromAny(env.Event),
 	}
 }
 
 func fromProto(env *api.Envelope) *events.Envelope {
 	return &events.Envelope{
-		Timestamp: protobuf.FromTimestamp(env.Timestamp),
+		Timestamp: over_protobuf2.FromTimestamp(env.Timestamp),
 		Namespace: env.Namespace,
 		Topic:     env.Topic,
 		Event:     env.Event,

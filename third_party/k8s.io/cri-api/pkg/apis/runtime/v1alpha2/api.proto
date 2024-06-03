@@ -18,7 +18,7 @@ limitations under the License.
 syntax = "proto3";
 
 package runtime.v1alpha2;
-option go_package = "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2";
+option go_package = "demo/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2";
 
 // Runtime service defines the public APIs for remote container runtimes
 service RuntimeService {

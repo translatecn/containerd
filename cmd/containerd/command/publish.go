@@ -18,20 +18,20 @@ package command
 
 import (
 	gocontext "context"
+	"demo/over/protobuf/proto"
+	"demo/over/protobuf/types"
+	"demo/pkg/namespaces"
 	"fmt"
+	"github.com/urfave/cli"
+	"google.golang.org/grpc"
 	"io"
 	"net"
 	"os"
 	"time"
 
-	eventsapi "github.com/containerd/containerd/api/services/events/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/dialer"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/containerd/protobuf/types"
-	"github.com/urfave/cli"
-	"google.golang.org/grpc"
+	"demo/over/errdefs"
+	eventsapi "demo/pkg/api/services/events/v1"
+	"demo/pkg/dialer"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -53,7 +53,7 @@ var publishCommand = cli.Command{
 		ctx := namespaces.WithNamespace(gocontext.Background(), context.String("namespace"))
 		topic := context.String("topic")
 		if topic == "" {
-			return fmt.Errorf("topic required to publish event: %w", errdefs.ErrInvalidArgument)
+			return fmt.Errorf("topic required to publish event: %w", over_errdefs.ErrInvalidArgument)
 		}
 		payload, err := getEventPayload(os.Stdin)
 		if err != nil {
@@ -67,7 +67,7 @@ var publishCommand = cli.Command{
 			Topic: topic,
 			Event: payload,
 		}); err != nil {
-			return errdefs.FromGRPC(err)
+			return over_errdefs.FromGRPC(err)
 		}
 		return nil
 	},

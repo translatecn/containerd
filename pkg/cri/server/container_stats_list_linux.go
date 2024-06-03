@@ -17,20 +17,20 @@
 package server
 
 import (
+	"demo/over/protobuf"
 	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
-	wstats "github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
-	v2 "github.com/containerd/cgroups/v3/cgroup2/stats"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/typeurl/v2"
+	v1 "demo/others/cgroups/v3/cgroup1/stats"
+	v2 "demo/others/cgroups/v3/cgroup2/stats"
+	"demo/others/typeurl/v2"
+	"demo/pkg/api/types"
+	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
+	containerstore "demo/pkg/cri/store/container"
 )
 
 func (c *criService) containerMetrics(
@@ -78,13 +78,13 @@ func (c *criService) containerMetrics(
 			return nil, fmt.Errorf("failed to extract container metrics: %w", err)
 		}
 
-		cpuStats, err := c.cpuContainerStats(meta.ID, false /* isSandbox */, data, protobuf.FromTimestamp(stats.Timestamp))
+		cpuStats, err := c.cpuContainerStats(meta.ID, false /* isSandbox */, data, over_protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain cpu stats: %w", err)
 		}
 		cs.Cpu = cpuStats
 
-		memoryStats, err := c.memoryContainerStats(meta.ID, data, protobuf.FromTimestamp(stats.Timestamp))
+		memoryStats, err := c.memoryContainerStats(meta.ID, data, over_protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain memory stats: %w", err)
 		}

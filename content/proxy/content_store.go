@@ -18,13 +18,13 @@ package proxy
 
 import (
 	"context"
+	"demo/over/protobuf"
+	protobuftypes "demo/over/protobuf/types"
 	"io"
 
-	contentapi "github.com/containerd/containerd/api/services/content/v1"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/protobuf"
-	protobuftypes "github.com/containerd/containerd/protobuf/types"
+	"demo/content"
+	"demo/over/errdefs"
+	contentapi "demo/pkg/api/services/content/v1"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -46,7 +46,7 @@ func (pcs *proxyContentStore) Info(ctx context.Context, dgst digest.Digest) (con
 		Digest: dgst.String(),
 	})
 	if err != nil {
-		return content.Info{}, errdefs.FromGRPC(err)
+		return content.Info{}, over_errdefs.FromGRPC(err)
 	}
 
 	return infoFromGRPC(resp.Info), nil
@@ -57,14 +57,14 @@ func (pcs *proxyContentStore) Walk(ctx context.Context, fn content.WalkFunc, fil
 		Filters: filters,
 	})
 	if err != nil {
-		return errdefs.FromGRPC(err)
+		return over_errdefs.FromGRPC(err)
 	}
 
 	for {
 		msg, err := session.Recv()
 		if err != nil {
 			if err != io.EOF {
-				return errdefs.FromGRPC(err)
+				return over_errdefs.FromGRPC(err)
 			}
 
 			break
@@ -84,7 +84,7 @@ func (pcs *proxyContentStore) Delete(ctx context.Context, dgst digest.Digest) er
 	if _, err := pcs.client.Delete(ctx, &contentapi.DeleteContentRequest{
 		Digest: dgst.String(),
 	}); err != nil {
-		return errdefs.FromGRPC(err)
+		return over_errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -110,14 +110,14 @@ func (pcs *proxyContentStore) Status(ctx context.Context, ref string) (content.S
 		Ref: ref,
 	})
 	if err != nil {
-		return content.Status{}, errdefs.FromGRPC(err)
+		return content.Status{}, over_errdefs.FromGRPC(err)
 	}
 
 	status := resp.Status
 	return content.Status{
 		Ref:       status.Ref,
-		StartedAt: protobuf.FromTimestamp(status.StartedAt),
-		UpdatedAt: protobuf.FromTimestamp(status.UpdatedAt),
+		StartedAt: over_protobuf.FromTimestamp(status.StartedAt),
+		UpdatedAt: over_protobuf.FromTimestamp(status.UpdatedAt),
 		Offset:    status.Offset,
 		Total:     status.Total,
 		Expected:  digest.Digest(status.Expected),
@@ -132,7 +132,7 @@ func (pcs *proxyContentStore) Update(ctx context.Context, info content.Info, fie
 		},
 	})
 	if err != nil {
-		return content.Info{}, errdefs.FromGRPC(err)
+		return content.Info{}, over_errdefs.FromGRPC(err)
 	}
 	return infoFromGRPC(resp.Info), nil
 }
@@ -142,15 +142,15 @@ func (pcs *proxyContentStore) ListStatuses(ctx context.Context, filters ...strin
 		Filters: filters,
 	})
 	if err != nil {
-		return nil, errdefs.FromGRPC(err)
+		return nil, over_errdefs.FromGRPC(err)
 	}
 
 	var statuses []content.Status
 	for _, status := range resp.Statuses {
 		statuses = append(statuses, content.Status{
 			Ref:       status.Ref,
-			StartedAt: protobuf.FromTimestamp(status.StartedAt),
-			UpdatedAt: protobuf.FromTimestamp(status.UpdatedAt),
+			StartedAt: over_protobuf.FromTimestamp(status.StartedAt),
+			UpdatedAt: over_protobuf.FromTimestamp(status.UpdatedAt),
 			Offset:    status.Offset,
 			Total:     status.Total,
 			Expected:  digest.Digest(status.Expected),
@@ -170,7 +170,7 @@ func (pcs *proxyContentStore) Writer(ctx context.Context, opts ...content.Writer
 	}
 	wrclient, offset, err := pcs.negotiate(ctx, wOpts.Ref, wOpts.Desc.Size, wOpts.Desc.Digest)
 	if err != nil {
-		return nil, errdefs.FromGRPC(err)
+		return nil, over_errdefs.FromGRPC(err)
 	}
 
 	return &remoteWriter{
@@ -185,7 +185,7 @@ func (pcs *proxyContentStore) Abort(ctx context.Context, ref string) error {
 	if _, err := pcs.client.Abort(ctx, &contentapi.AbortRequest{
 		Ref: ref,
 	}); err != nil {
-		return errdefs.FromGRPC(err)
+		return over_errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -218,8 +218,8 @@ func infoToGRPC(info *content.Info) *contentapi.Info {
 	return &contentapi.Info{
 		Digest:    info.Digest.String(),
 		Size:      info.Size,
-		CreatedAt: protobuf.ToTimestamp(info.CreatedAt),
-		UpdatedAt: protobuf.ToTimestamp(info.UpdatedAt),
+		CreatedAt: over_protobuf.ToTimestamp(info.CreatedAt),
+		UpdatedAt: over_protobuf.ToTimestamp(info.UpdatedAt),
 		Labels:    info.Labels,
 	}
 }
@@ -228,8 +228,8 @@ func infoFromGRPC(info *contentapi.Info) content.Info {
 	return content.Info{
 		Digest:    digest.Digest(info.Digest),
 		Size:      info.Size,
-		CreatedAt: protobuf.FromTimestamp(info.CreatedAt),
-		UpdatedAt: protobuf.FromTimestamp(info.UpdatedAt),
+		CreatedAt: over_protobuf.FromTimestamp(info.CreatedAt),
+		UpdatedAt: over_protobuf.FromTimestamp(info.UpdatedAt),
 		Labels:    info.Labels,
 	}
 }

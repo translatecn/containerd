@@ -20,15 +20,15 @@ package tasks
 
 import (
 	gocontext "context"
+	"demo/others/log"
 	"errors"
 	"net/url"
 	"os"
 	"os/signal"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/log"
+	"demo/containerd"
+	"demo/others/console"
+	"demo/pkg/cio"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 )

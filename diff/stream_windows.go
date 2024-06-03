@@ -19,6 +19,9 @@ package diff
 import (
 	"bytes"
 	"context"
+	"demo/over/my_mk"
+	"demo/over/protobuf"
+	"demo/over/protobuf/proto"
 	"errors"
 	"fmt"
 	"io"
@@ -27,10 +30,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"demo/others/typeurl/v2"
 	winio "github.com/Microsoft/go-winio"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/typeurl/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,7 +44,7 @@ func NewBinaryProcessor(ctx context.Context, imt, rmt string, stream StreamProce
 	cmd.Env = append(cmd.Env, env...)
 
 	if payload != nil {
-		pb := protobuf.FromAny(payload)
+		pb := over_protobuf.FromAny(payload)
 		data, err := proto.Marshal(pb)
 		if err != nil {
 			return nil, err
@@ -172,7 +173,7 @@ func (c *binaryProcessor) Close() error {
 }
 
 func getUiqPath() (string, error) {
-	dir, err := os.MkdirTemp("", "")
+	dir, err := my_mk.MkdirTemp("", "")
 	if err != nil {
 		return "", err
 	}

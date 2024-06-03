@@ -20,12 +20,12 @@ package example
 
 import (
 	"context"
+	ptypes "demo/over/protobuf/types"
 	"os"
 
-	taskAPI "github.com/containerd/containerd/api/runtime/task/v2"
-	"github.com/containerd/containerd/errdefs"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/runtime/v2/shim"
+	"demo/over/errdefs"
+	taskAPI "demo/pkg/api/runtime/task/v2"
+	"demo/runtime/v2/shim"
 )
 
 var (
@@ -48,72 +48,72 @@ func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (string, e
 
 // Cleanup is a binary call that cleans up any resources used by the shim when the service crashes
 func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Create a new container
 func (s *service) Create(ctx context.Context, r *taskAPI.CreateTaskRequest) (_ *taskAPI.CreateTaskResponse, err error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Start the primary user process inside the container
 func (s *service) Start(ctx context.Context, r *taskAPI.StartRequest) (*taskAPI.StartResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Delete a process or container
 func (s *service) Delete(ctx context.Context, r *taskAPI.DeleteRequest) (*taskAPI.DeleteResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Exec an additional process inside the container
 func (s *service) Exec(ctx context.Context, r *taskAPI.ExecProcessRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // ResizePty of a process
 func (s *service) ResizePty(ctx context.Context, r *taskAPI.ResizePtyRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // State returns runtime state of a process
 func (s *service) State(ctx context.Context, r *taskAPI.StateRequest) (*taskAPI.StateResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Pause the container
 func (s *service) Pause(ctx context.Context, r *taskAPI.PauseRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Resume the container
 func (s *service) Resume(ctx context.Context, r *taskAPI.ResumeRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Kill a process
 func (s *service) Kill(ctx context.Context, r *taskAPI.KillRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Pids returns all pids inside the container
 func (s *service) Pids(ctx context.Context, r *taskAPI.PidsRequest) (*taskAPI.PidsResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // CloseIO of a process
 func (s *service) CloseIO(ctx context.Context, r *taskAPI.CloseIORequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Checkpoint the container
 func (s *service) Checkpoint(ctx context.Context, r *taskAPI.CheckpointTaskRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Connect returns shim information of the underlying service
 func (s *service) Connect(ctx context.Context, r *taskAPI.ConnectRequest) (*taskAPI.ConnectResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Shutdown is called after the underlying resources of the shim are cleaned up and the service can be stopped
@@ -124,15 +124,15 @@ func (s *service) Shutdown(ctx context.Context, r *taskAPI.ShutdownRequest) (*pt
 
 // Stats returns container level system stats for a container and its processes
 func (s *service) Stats(ctx context.Context, r *taskAPI.StatsRequest) (*taskAPI.StatsResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Update the live container
 func (s *service) Update(ctx context.Context, r *taskAPI.UpdateTaskRequest) (*ptypes.Empty, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }
 
 // Wait for a process to exit
 func (s *service) Wait(ctx context.Context, r *taskAPI.WaitRequest) (*taskAPI.WaitResponse, error) {
-	return nil, errdefs.ErrNotImplemented
+	return nil, over_errdefs.ErrNotImplemented
 }

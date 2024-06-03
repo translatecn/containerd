@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"demo/pkg/namespaces"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,10 +30,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -98,9 +98,9 @@ var densityCommand = cli.Command{
 					containerd.WithSnapshotter(config.Snapshotter),
 					containerd.WithNewSnapshot(id, image),
 					containerd.WithNewSpec(
-						oci.WithImageConfig(image),
-						oci.WithProcessArgs("sleep", "120m"),
-						oci.WithUsername("games")),
+						over_oci.WithImageConfig(image),
+						over_oci.WithProcessArgs("sleep", "120m"),
+						over_oci.WithUsername("games")),
 				)
 				if err != nil {
 					return err

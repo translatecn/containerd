@@ -21,6 +21,8 @@ package diff
 import (
 	"bytes"
 	"context"
+	"demo/over/protobuf"
+	"demo/over/protobuf/proto"
 	"errors"
 	"fmt"
 	"io"
@@ -28,9 +30,7 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
 )
 
 // NewBinaryProcessor returns a binary processor for use with processing content streams
@@ -41,7 +41,7 @@ func NewBinaryProcessor(ctx context.Context, imt, rmt string, stream StreamProce
 
 	var payloadC io.Closer
 	if payload != nil {
-		pb := protobuf.FromAny(payload)
+		pb := over_protobuf.FromAny(payload)
 		data, err := proto.Marshal(pb)
 		if err != nil {
 			return nil, err

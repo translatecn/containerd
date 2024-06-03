@@ -17,9 +17,9 @@
 package server
 
 import (
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	cstore "github.com/containerd/containerd/pkg/cri/store/container"
-	sstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
+	criconfig "demo/pkg/cri/config"
+	cstore "demo/pkg/cri/store/container"
+	sstore "demo/pkg/cri/store/sandbox"
 )
 
 type criImplementation struct {

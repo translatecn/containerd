@@ -22,11 +22,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containerd/containerd/cio"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd/pkg/cri/util"
-	cioutil "github.com/containerd/containerd/pkg/ioutil"
+	"demo/pkg/cri/util"
+	cioutil "demo/pkg/ioutil"
 )
 
 // streamKey generates a key for the stream.

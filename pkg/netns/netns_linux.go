@@ -33,15 +33,17 @@ package netns
 
 import (
 	"crypto/rand"
+	"demo/over/my_mk"
+	"demo/over/my_mount"
 	"fmt"
+	"github.com/moby/sys/symlink"
 	"os"
 	"path"
 	"runtime"
 	"sync"
 
-	"github.com/containerd/containerd/mount"
+	"demo/over/mount"
 	cnins "github.com/containernetworking/plugins/pkg/ns"
-	"github.com/moby/sys/symlink"
 	"golang.org/x/sys/unix"
 )
 
@@ -63,7 +65,7 @@ func newNS(baseDir string, pid uint32) (nsPath string, err error) {
 	// Create the directory for mounting network namespaces
 	// This needs to be a shared mountpoint in case it is mounted in to
 	// other namespaces (containers)
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+	if err := my_mk.MkdirAll(baseDir, 0755); err != nil {
 		return "", err
 	}
 
@@ -87,7 +89,7 @@ func newNS(baseDir string, pid uint32) (nsPath string, err error) {
 		procNsPath := getNetNSPathFromPID(pid)
 		// bind mount the netns onto the mount point. This causes the namespace
 		// to persist, even when there are no threads in the ns.
-		if err = unix.Mount(procNsPath, nsPath, "none", unix.MS_BIND, ""); err != nil {
+		if err = my_mount.Mount(procNsPath, nsPath, "none", unix.MS_BIND, ""); err != nil {
 			return "", fmt.Errorf("failed to bind mount ns src: %v at %s: %w", procNsPath, nsPath, err)
 		}
 		return nsPath, nil
@@ -124,7 +126,7 @@ func newNS(baseDir string, pid uint32) (nsPath string, err error) {
 		// bind mount the netns from the current thread (from /proc) onto the
 		// mount point. This causes the namespace to persist, even when there
 		// are no threads in the ns.
-		err = unix.Mount(getCurrentThreadNetNSPath(), nsPath, "none", unix.MS_BIND, "")
+		err = my_mount.Mount(getCurrentThreadNetNSPath(), nsPath, "none", unix.MS_BIND, "")
 		if err != nil {
 			err = fmt.Errorf("failed to bind mount ns at %s: %w", nsPath, err)
 		}

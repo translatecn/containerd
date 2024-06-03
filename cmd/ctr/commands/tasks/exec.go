@@ -17,16 +17,16 @@
 package tasks
 
 import (
+	"demo/containerd"
 	"errors"
 	"io"
 	"net/url"
 	"os"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/oci"
+	"demo/cmd/ctr/commands"
+	"demo/others/console"
+	"demo/over/oci"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -95,7 +95,7 @@ var execCommand = cli.Command{
 			if err != nil {
 				return err
 			}
-			if err := oci.WithUser(user)(ctx, client, &c, spec); err != nil {
+			if err := over_oci.WithUser(user)(ctx, client, &c, spec); err != nil {
 				return err
 			}
 		}

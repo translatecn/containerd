@@ -89,7 +89,7 @@ func init() {
 }
 
 // for backwards compatibility with kubelet/dockershim metrics
-// https://github.com/containerd/containerd/issues/7801
+// https://github.com/containerd/issues/7801
 const (
 	networkStatusOp   = "get_pod_network_status"
 	networkSetUpOp    = "set_up_pod"

@@ -20,11 +20,11 @@ package process
 
 import (
 	"context"
+	google_protobuf "demo/over/protobuf/types"
 	"errors"
 	"fmt"
 
-	google_protobuf "github.com/containerd/containerd/protobuf/types"
-	runc "github.com/containerd/go-runc"
+	runc "demo/others/go-runc"
 	"github.com/sirupsen/logrus"
 )
 

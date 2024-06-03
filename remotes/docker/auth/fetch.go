@@ -18,6 +18,7 @@ package auth
 
 import (
 	"context"
+	"demo/others/log"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,9 +27,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/log"
-	remoteserrors "github.com/containerd/containerd/remotes/errors"
-	"github.com/containerd/containerd/version"
+	remoteserrors "demo/remotes/errors"
+	"demo/version"
 )
 
 var (

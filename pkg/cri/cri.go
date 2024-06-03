@@ -17,6 +17,8 @@
 package cri
 
 import (
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
 	"flag"
 	"fmt"
 	"os"
@@ -25,43 +27,41 @@ import (
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	"github.com/containerd/containerd/pkg/cri/constants"
-	"github.com/containerd/containerd/pkg/cri/nri"
-	"github.com/containerd/containerd/pkg/cri/sbserver"
-	"github.com/containerd/containerd/pkg/cri/server"
-	nriservice "github.com/containerd/containerd/pkg/nri"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/services/warning"
+	"demo/containerd"
+	"demo/over/platforms"
+	criconfig "demo/pkg/cri/config"
+	"demo/pkg/cri/constants"
+	"demo/pkg/cri/nri"
+	"demo/pkg/cri/sbserver"
+	"demo/pkg/cri/server"
+	nriservice "demo/pkg/nri"
+	"demo/services/warning"
 )
 
 // Register CRI service plugin
 func init() {
 	config := criconfig.DefaultConfig()
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.GRPCPlugin,
 		ID:     "cri",
 		Config: &config,
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
-			plugin.ServicePlugin,
-			plugin.NRIApiPlugin,
-			plugin.WarningPlugin,
-			plugin.SnapshotPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.EventPlugin,
+			over_plugin2.ServicePlugin,
+			over_plugin2.NRIApiPlugin,
+			over_plugin2.WarningPlugin,
+			over_plugin2.SnapshotPlugin,
 		},
 		InitFn: initCRIService,
 	})
 }
 
-func initCRIService(ic *plugin.InitContext) (interface{}, error) {
-	ic.Meta.Platforms = []imagespec.Platform{platforms.DefaultSpec()}
+func initCRIService(ic *over_plugin2.InitContext) (interface{}, error) {
+	ic.Meta.Platforms = []imagespec.Platform{over_platforms.DefaultSpec()}
 	ic.Meta.Exports = map[string]string{"CRIVersion": constants.CRIVersion, "CRIVersionAlpha": constants.CRIVersionAlpha}
 	ctx := ic.Context
 	pluginConfig := ic.Config.(*criconfig.PluginConfig)
-	ws, err := ic.Get(plugin.WarningPlugin)
+	ws, err := ic.Get(over_plugin2.WarningPlugin)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func initCRIService(ic *plugin.InitContext) (interface{}, error) {
 	client, err := containerd.New(
 		"",
 		containerd.WithDefaultNamespace(constants.K8sContainerdNamespace),
-		containerd.WithDefaultPlatform(platforms.Default()),
+		containerd.WithDefaultPlatform(over_platforms.Default()),
 		containerd.WithInMemoryServices(ic),
 	)
 	if err != nil {
@@ -111,7 +111,7 @@ func initCRIService(ic *plugin.InitContext) (interface{}, error) {
 		return nil, fmt.Errorf("failed to create CRI service: %w", err)
 	}
 
-	// RegisterReadiness() must be called after NewCRIService(): https://github.com/containerd/containerd/issues/9163
+	// RegisterReadiness() must be called after NewCRIService(): https://github.com/containerd/issues/9163
 	ready := ic.RegisterReadiness()
 	go func() {
 		if err := s.Run(ready); err != nil {
@@ -145,9 +145,9 @@ func setGLogLevel() error {
 }
 
 // Get the NRI plugin, and set up our NRI API for it.
-func getNRIAPI(ic *plugin.InitContext) *nri.API {
+func getNRIAPI(ic *over_plugin2.InitContext) *nri.API {
 	const (
-		pluginType = plugin.NRIApiPlugin
+		pluginType = over_plugin2.NRIApiPlugin
 		pluginName = "nri"
 	)
 

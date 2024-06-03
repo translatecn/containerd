@@ -18,18 +18,17 @@ package podsandbox
 
 import (
 	"context"
+	"demo/containerd"
+	"demo/others/log"
+	"demo/over/errdefs"
+	apitasks "demo/pkg/api/services/tasks/v1"
 	"fmt"
-
-	"github.com/containerd/containerd"
-	apitasks "github.com/containerd/containerd/api/services/tasks/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
 )
 
 func (c *Controller) Shutdown(ctx context.Context, sandboxID string) error {
 	sandbox, err := c.sandboxStore.Get(sandboxID)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("an error occurred when try to find sandbox %q: %w", sandboxID, err)
 		}
 		// Do not return error if the id doesn't exist.
@@ -55,7 +54,7 @@ func (c *Controller) Shutdown(ctx context.Context, sandboxID string) error {
 		}
 
 		if err := sandbox.Container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to delete sandbox container %q: %w", sandboxID, err)
 			}
 			log.G(ctx).Tracef("Sandbox controller Delete called for sandbox container %q that does not exist", sandboxID)
@@ -68,12 +67,12 @@ func (c *Controller) Shutdown(ctx context.Context, sandboxID string) error {
 func (c *Controller) cleanupSandboxTask(ctx context.Context, sbCntr containerd.Container) error {
 	task, err := sbCntr.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to load task for sandbox: %w", err)
 		}
 	} else {
 		if _, err = task.Delete(ctx, containerd.WithProcessKill); err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to stop sandbox: %w", err)
 			}
 		}
@@ -110,13 +109,13 @@ func (c *Controller) cleanupSandboxTask(ctx context.Context, sbCntr containerd.C
 	// to ensure that shim instance is shutdown.
 	//
 	// REF:
-	// 1. https://github.com/containerd/containerd/issues/7496#issuecomment-1671100968
-	// 2. https://github.com/containerd/containerd/issues/8931
-	if errdefs.IsNotFound(err) {
+	// 1. https://github.com/containerd/issues/7496#issuecomment-1671100968
+	// 2. https://github.com/containerd/issues/8931
+	if over_errdefs.IsNotFound(err) {
 		_, err = c.client.TaskService().Delete(ctx, &apitasks.DeleteTaskRequest{ContainerID: sbCntr.ID()})
 		if err != nil {
-			err = errdefs.FromGRPC(err)
-			if !errdefs.IsNotFound(err) {
+			err = over_errdefs.FromGRPC(err)
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to cleanup sandbox %s in task-service: %w", sbCntr.ID(), err)
 			}
 		}

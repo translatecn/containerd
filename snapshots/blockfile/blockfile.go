@@ -18,18 +18,19 @@ package blockfile
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	"demo/over/plugin"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/storage"
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/storage"
 )
 
 // viewHookHelper is only used in test for recover the filesystem.
@@ -125,7 +126,7 @@ type snapshotter struct {
 // file system. A metadata file is stored under the root.
 func NewSnapshotter(root string, opts ...Opt) (snapshots.Snapshotter, error) {
 	var config SnapshotterConfig
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 
@@ -145,7 +146,7 @@ func NewSnapshotter(root string, opts ...Opt) (snapshots.Snapshotter, error) {
 	}
 	if createScratch {
 		if config.scratchGenerator == nil {
-			return nil, fmt.Errorf("no scratch file generator: %w", plugin.ErrSkipPlugin)
+			return nil, fmt.Errorf("no scratch file generator: %w", over_plugin.ErrSkipPlugin)
 		}
 		if err := config.scratchGenerator(scratch); err != nil {
 			return nil, fmt.Errorf("failed to generate scratch file: %w", err)
@@ -165,7 +166,7 @@ func NewSnapshotter(root string, opts ...Opt) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 
-	if err := os.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
+	if err := my_mk.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 

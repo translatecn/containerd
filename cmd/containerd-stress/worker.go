@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/oci"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 )
 
@@ -93,7 +93,7 @@ func (w *ctrWorker) runContainer(ctx context.Context, id string) (err error) {
 	c, err := w.client.NewContainer(ctx, id,
 		containerd.WithSnapshotter(w.snapshotter),
 		containerd.WithNewSnapshot(id, w.image),
-		containerd.WithNewSpec(oci.WithImageConfig(w.image), oci.WithUsername("games"), oci.WithProcessArgs("true")),
+		containerd.WithNewSpec(over_oci.WithImageConfig(w.image), over_oci.WithUsername("games"), over_oci.WithProcessArgs("true")),
 	)
 	if err != nil {
 		return err

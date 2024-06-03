@@ -22,8 +22,8 @@ import (
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/images"
+	"demo/content"
+	"demo/over/images"
 )
 
 type Transferrer interface {
@@ -54,30 +54,30 @@ type Pusher interface {
 
 // ImageFilterer is used to filter out child objects of an image
 type ImageFilterer interface {
-	ImageFilter(images.HandlerFunc, content.Store) images.HandlerFunc
+	ImageFilter(over_images.HandlerFunc, content.Store) over_images.HandlerFunc
 }
 
 // ImageStorer is a type which is capable of storing images for
 // the provided descriptor. The descriptor may be any type of manifest
 // including an index with multiple image references.
 type ImageStorer interface {
-	Store(context.Context, ocispec.Descriptor, images.Store) ([]images.Image, error)
+	Store(context.Context, ocispec.Descriptor, over_images.Store) ([]over_images.Image, error)
 }
 
 // ImageGetter is type which returns an image from an image store
 type ImageGetter interface {
-	Get(context.Context, images.Store) (images.Image, error)
+	Get(context.Context, over_images.Store) (over_images.Image, error)
 }
 
 // ImageLookup is a type which returns images from an image store
 // based on names or prefixes
 type ImageLookup interface {
-	Lookup(context.Context, images.Store) ([]images.Image, error)
+	Lookup(context.Context, over_images.Store) ([]over_images.Image, error)
 }
 
 // ImageExporter exports images to a writer
 type ImageExporter interface {
-	Export(context.Context, content.Store, []images.Image) error
+	Export(context.Context, content.Store, []over_images.Image) error
 }
 
 // ImageImporter imports an image into a content store

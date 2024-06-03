@@ -17,20 +17,20 @@
 package plugin
 
 import (
-	"github.com/containerd/containerd/pkg/nri"
-	"github.com/containerd/containerd/plugin"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/nri"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.NRIApiPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.NRIApiPlugin,
 		ID:     "nri",
 		Config: nri.DefaultConfig(),
 		InitFn: initFunc,
 	})
 }
 
-func initFunc(ic *plugin.InitContext) (interface{}, error) {
+func initFunc(ic *over_plugin2.InitContext) (interface{}, error) {
 	l, err := nri.New(ic.Config.(*nri.Config))
 	return l, err
 }

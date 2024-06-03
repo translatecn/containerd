@@ -18,14 +18,16 @@ package commands
 
 import (
 	gocontext "context"
+	"demo/others/log"
+	ptypes "demo/over/protobuf/types"
+	"demo/pkg/namespaces"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"strconv"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/epoch"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/containerd"
+	"demo/pkg/epoch"
 	"github.com/urfave/cli"
 )
 
@@ -60,7 +62,13 @@ func AppContext(context *cli.Context) (gocontext.Context, gocontext.CancelFunc) 
 func NewClient(context *cli.Context, opts ...containerd.ClientOpt) (*containerd.Client, gocontext.Context, gocontext.CancelFunc, error) {
 	timeoutOpt := containerd.WithTimeout(context.GlobalDuration("connect-timeout"))
 	opts = append(opts, timeoutOpt)
-	client, err := containerd.New(context.GlobalString("address"), opts...)
+	conn, err := grpc.Dial(context.GlobalString("address"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	client, err := containerd.NewWithConn(conn)
 	if err != nil {
 		return nil, nil, nil, err
 	}

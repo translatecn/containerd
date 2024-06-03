@@ -23,7 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd/pkg/rdt"
+	"demo/pkg/rdt"
 )
 
 // rdtClassFromAnnotations examines container and pod annotations of a

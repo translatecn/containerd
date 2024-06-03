@@ -28,12 +28,12 @@ import (
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/contrib/apparmor"
-	"github.com/containerd/containerd/contrib/seccomp"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
+	"demo/over/oci"
+	"demo/pkg/contrib/apparmor"
+	"demo/pkg/contrib/seccomp"
+	"demo/snapshots"
 
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
+	customopts "demo/pkg/cri/opts"
 )
 
 const (
@@ -51,9 +51,9 @@ const (
 	seccompDefaultProfile = dockerDefault
 )
 
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
 	var (
-		specOpts []oci.SpecOpts
+		specOpts []over_oci.SpecOpts
 		err      error
 	)
 	securityContext := config.GetLinux().GetSecurityContext()
@@ -150,7 +150,7 @@ func generateSecurityProfile(profilePath string) (*runtime.SecurityProfile, erro
 }
 
 // generateSeccompSpecOpts generates containerd SpecOpts for seccomp.
-func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
+func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (over_oci.SpecOpts, error) {
 	if privileged {
 		// Do not set seccomp profile when container is privileged
 		return nil, nil
@@ -187,7 +187,7 @@ func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privil
 }
 
 // generateApparmorSpecOpts generates containerd SpecOpts for apparmor.
-func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (oci.SpecOpts, error) {
+func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (over_oci.SpecOpts, error) {
 	if !apparmorEnabled {
 		// Should fail loudly if user try to specify apparmor profile
 		// but we don't support it.

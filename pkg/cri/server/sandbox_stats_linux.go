@@ -18,15 +18,15 @@ package server
 
 import (
 	"context"
+	"demo/others/cgroups/v3"
+	"demo/others/log"
 	"fmt"
 	"time"
 
-	"github.com/containerd/cgroups/v3"
-	"github.com/containerd/cgroups/v3/cgroup1"
-	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
+	"demo/others/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	"demo/over/errdefs"
+	sandboxstore "demo/pkg/cri/store/sandbox"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/vishvananda/netlink"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -38,7 +38,7 @@ func (c *criService) podSandboxStats(
 	meta := sandbox.Metadata
 
 	if sandbox.Status.Get().State != sandboxstore.StateReady {
-		return nil, fmt.Errorf("failed to get pod sandbox stats since sandbox container %q is not in ready state: %w", meta.ID, errdefs.ErrUnavailable)
+		return nil, fmt.Errorf("failed to get pod sandbox stats since sandbox container %q is not in ready state: %w", meta.ID, over_errdefs.ErrUnavailable)
 	}
 
 	stats, err := metricsForSandbox(sandbox)

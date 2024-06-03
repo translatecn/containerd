@@ -19,13 +19,12 @@
 package blockio
 
 import (
+	"demo/others/log"
 	"fmt"
 	"sync"
 
 	"github.com/intel/goresctrl/pkg/blockio"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
-
-	"github.com/containerd/containerd/log"
 )
 
 var (

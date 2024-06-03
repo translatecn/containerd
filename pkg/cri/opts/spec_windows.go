@@ -23,8 +23,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/oci"
+	"demo/containers"
+	"demo/over/oci"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/windows"
@@ -43,9 +43,9 @@ func escapeAndCombineArgsWindows(args []string) string {
 // and runtime config
 // If image.ArgsEscaped field is set, this function sets the process command line and if not, it sets the
 // process args field
-func WithProcessCommandLineOrArgsForWindows(config *runtime.ContainerConfig, image *imagespec.ImageConfig) oci.SpecOpts {
+func WithProcessCommandLineOrArgsForWindows(config *runtime.ContainerConfig, image *imagespec.ImageConfig) over_oci.SpecOpts {
 	if image.ArgsEscaped { //nolint:staticcheck // ArgsEscaped is deprecated
-		return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+		return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 			// firstArgFromImg is a flag that is returned to indicate that the first arg in the slice comes from either the
 			// image Entrypoint or Cmd. If the first arg instead comes from the container config (e.g. overriding the image values),
 			// it should be false. This is done to support the non-OCI ArgsEscaped field that Docker used to determine how the image
@@ -66,16 +66,16 @@ func WithProcessCommandLineOrArgsForWindows(config *runtime.ContainerConfig, ima
 				cmdLine = escapeAndCombineArgsWindows(args)
 			}
 
-			return oci.WithProcessCommandLine(cmdLine)(ctx, client, c, s)
+			return over_oci.WithProcessCommandLine(cmdLine)(ctx, client, c, s)
 		}
 	}
 	// if ArgsEscaped is not set
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		args, _, err := getArgs(image.Entrypoint, image.Cmd, config.GetCommand(), config.GetArgs())
 		if err != nil {
 			return err
 		}
-		return oci.WithProcessArgs(args...)(ctx, client, c, s)
+		return over_oci.WithProcessArgs(args...)(ctx, client, c, s)
 	}
 }
 

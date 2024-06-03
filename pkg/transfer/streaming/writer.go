@@ -18,14 +18,14 @@ package streaming
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"errors"
 	"io"
 	"sync/atomic"
 
-	transferapi "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/typeurl/v2"
+	transferapi "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
 )
 
 func WriteByteStream(ctx context.Context, stream streaming.Stream) io.WriteCloser {

@@ -18,6 +18,8 @@ package main
 
 import (
 	"context"
+	"demo/over/plugin"
+	"demo/pkg/namespaces"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,10 +30,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/integration/remote"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/plugin"
+	"demo/containerd"
+	"demo/pkg/integration/remote"
 	metrics "github.com/docker/go-metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -167,7 +167,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "runtime",
 			Usage: "Set the runtime to stress test",
-			Value: plugin.RuntimeRuncV2,
+			Value: over_plugin.RuntimeRuncV2,
 		},
 		cli.StringFlag{
 			Name:  "snapshotter",

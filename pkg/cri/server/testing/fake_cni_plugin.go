@@ -19,7 +19,7 @@ package testing
 import (
 	"context"
 
-	cni "github.com/containerd/go-cni"
+	cni "demo/others/go-cni"
 )
 
 // FakeCNIPlugin is a fake plugin used for test.

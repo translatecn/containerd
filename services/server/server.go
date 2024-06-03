@@ -20,6 +20,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/sys"
 	"errors"
 	"expvar"
 	"fmt"
@@ -34,7 +37,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
 	"github.com/docker/go-metrics"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -45,25 +48,22 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	csapi "github.com/containerd/containerd/api/services/content/v1"
-	diffapi "github.com/containerd/containerd/api/services/diff/v1"
-	ssapi "github.com/containerd/containerd/api/services/snapshots/v1"
-	"github.com/containerd/containerd/content/local"
-	csproxy "github.com/containerd/containerd/content/proxy"
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/diff"
-	diffproxy "github.com/containerd/containerd/diff/proxy"
-	"github.com/containerd/containerd/events/exchange"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/pkg/dialer"
-	"github.com/containerd/containerd/pkg/timeout"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	srvconfig "github.com/containerd/containerd/services/server/config"
-	"github.com/containerd/containerd/services/warning"
-	ssproxy "github.com/containerd/containerd/snapshots/proxy"
-	"github.com/containerd/containerd/sys"
+	"demo/content/local"
+	csproxy "demo/content/proxy"
+	"demo/diff"
+	diffproxy "demo/diff/proxy"
+	"demo/over/platforms"
+	csapi "demo/pkg/api/services/content/v1"
+	diffapi "demo/pkg/api/services/diff/v1"
+	ssapi "demo/pkg/api/services/snapshots/v1"
+	"demo/pkg/defaults"
+	"demo/pkg/deprecation"
+	"demo/pkg/dialer"
+	"demo/pkg/events/exchange"
+	"demo/pkg/timeout"
+	srvconfig "demo/services/server/config"
+	"demo/services/warning"
+	ssproxy "demo/snapshots/proxy"
 )
 
 // CreateTopLevelDirectories creates the top-level root and state directories.
@@ -201,7 +201,7 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 		}
 		// TODO: Remove this in 2.0 and let event plugin crease it
 		events      = exchange.NewExchange()
-		initialized = plugin.NewPluginSet()
+		initialized = over_plugin2.NewPluginSet()
 		required    = make(map[string]struct{})
 	)
 	for _, r := range config.RequiredPlugins {
@@ -216,7 +216,7 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 		log.G(ctx).WithField("type", p.Type).Infof("loading plugin %q...", id)
 		var mustSucceed int32
 
-		initContext := plugin.NewContext(
+		initContext := over_plugin2.NewContext(
 			ctx,
 			p,
 			initialized,
@@ -246,7 +246,7 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 
 		instance, err := result.Instance()
 		if err != nil {
-			if plugin.IsSkipPlugin(err) {
+			if over_plugin2.IsSkipPlugin(err) {
 				log.G(ctx).WithError(err).WithField("type", p.Type).Infof("skip loading plugin %q...", id)
 			} else {
 				log.G(ctx).WithError(err).Warnf("failed to load plugin %s", id)
@@ -305,9 +305,9 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 }
 
 // recordConfigDeprecations attempts to record use of any deprecated config field.  Failures are logged and ignored.
-func recordConfigDeprecations(ctx context.Context, config *srvconfig.Config, set *plugin.Set) {
+func recordConfigDeprecations(ctx context.Context, config *srvconfig.Config, set *over_plugin2.Set) {
 	// record any detected deprecations without blocking server startup
-	plugin, err := set.GetByID(plugin.WarningPlugin, plugin.DeprecationsPlugin)
+	plugin, err := set.GetByID(over_plugin2.WarningPlugin, over_plugin2.DeprecationsPlugin)
 	if err != nil {
 		log.G(ctx).WithError(err).Warn("failed to load warning service to record deprecations")
 		return
@@ -334,7 +334,7 @@ type Server struct {
 	ttrpcServer *ttrpc.Server
 	tcpServer   *grpc.Server
 	config      *srvconfig.Config
-	plugins     []*plugin.Plugin
+	plugins     []*over_plugin2.Plugin
 	ready       sync.WaitGroup
 }
 
@@ -426,23 +426,23 @@ func (s *Server) Wait() {
 
 // LoadPlugins loads all plugins into containerd and generates an ordered graph
 // of all plugins.
-func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Registration, error) {
+func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*over_plugin2.Registration, error) {
 	// load all plugins into containerd
 	path := config.PluginDir
 	if path == "" {
 		path = filepath.Join(config.Root, "plugins")
 	}
-	if count, err := plugin.Load(path); err != nil {
+	if count, err := over_plugin2.Load(path); err != nil {
 		return nil, err
 	} else if count > 0 || config.PluginDir != "" {
 		config.PluginDir = path
 		log.G(ctx).Warningf("loaded %d dynamic plugins. `go_plugin` is deprecated, please use `external plugins` instead", count)
 	}
 	// load additional plugins that don't automatically register themselves
-	plugin.Register(&plugin.Registration{
-		Type: plugin.ContentPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.ContentPlugin,
 		ID:   "content",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			ic.Meta.Exports["root"] = ic.Root
 			return local.NewStore(ic.Root)
 		},
@@ -451,7 +451,7 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Regis
 	clients := &proxyClients{}
 	for name, pp := range config.ProxyPlugins {
 		var (
-			t plugin.Type
+			t over_plugin2.Type
 			f func(*grpc.ClientConn) interface{}
 
 			address = pp.Address
@@ -460,20 +460,20 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Regis
 		)
 
 		switch pp.Type {
-		case string(plugin.SnapshotPlugin), "snapshot":
-			t = plugin.SnapshotPlugin
+		case string(over_plugin2.SnapshotPlugin), "snapshot":
+			t = over_plugin2.SnapshotPlugin
 			ssname := name
 			f = func(conn *grpc.ClientConn) interface{} {
 				return ssproxy.NewSnapshotter(ssapi.NewSnapshotsClient(conn), ssname)
 			}
 
-		case string(plugin.ContentPlugin), "content":
-			t = plugin.ContentPlugin
+		case string(over_plugin2.ContentPlugin), "content":
+			t = over_plugin2.ContentPlugin
 			f = func(conn *grpc.ClientConn) interface{} {
 				return csproxy.NewContentStore(csapi.NewContentClient(conn))
 			}
-		case string(plugin.DiffPlugin), "diff":
-			t = plugin.DiffPlugin
+		case string(over_plugin2.DiffPlugin), "diff":
+			t = over_plugin2.DiffPlugin
 			f = func(conn *grpc.ClientConn) interface{} {
 				return diffproxy.NewDiffApplier(diffapi.NewDiffClient(conn))
 			}
@@ -481,12 +481,12 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Regis
 			log.G(ctx).WithField("type", pp.Type).Warn("unknown proxy plugin type")
 		}
 		if pp.Platform != "" {
-			p, err = platforms.Parse(pp.Platform)
+			p, err = over_platforms.Parse(pp.Platform)
 			if err != nil {
 				log.G(ctx).WithError(err).WithField("plugin", name).Warn("skipping proxy platform with bad platform")
 			}
 		} else {
-			p = platforms.DefaultSpec()
+			p = over_platforms.DefaultSpec()
 		}
 
 		exports := pp.Exports
@@ -495,10 +495,10 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Regis
 		}
 		exports["address"] = address
 
-		plugin.Register(&plugin.Registration{
+		over_plugin2.Register(&over_plugin2.Registration{
 			Type: t,
 			ID:   name,
-			InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+			InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 				ic.Meta.Exports = exports
 				ic.Meta.Platforms = append(ic.Meta.Platforms, p)
 				conn, err := clients.getClient(address)
@@ -516,7 +516,7 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]*plugin.Regis
 		filter = srvconfig.V1DisabledFilter
 	}
 	// return the ordered graph for plugins
-	return plugin.Graph(filter(config.DisabledPlugins)), nil
+	return over_plugin2.Graph(filter(config.DisabledPlugins)), nil
 }
 
 type proxyClients struct {

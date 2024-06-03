@@ -20,19 +20,19 @@ package btrfs
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	"demo/over/plugin"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/btrfs/v2"
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/storage"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/storage"
 
 	"github.com/sirupsen/logrus"
 )
@@ -53,7 +53,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
-		if err := os.Mkdir(root, 0700); err != nil {
+		if err := my_mk.Mkdir(root, 0700); err != nil {
 			return nil, err
 		}
 	} else if st.Mode()&os.ModePerm != 0700 {
@@ -67,7 +67,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 	if mnt.FSType != "btrfs" {
-		return nil, fmt.Errorf("path %s (%s) must be a btrfs filesystem to be used with the btrfs snapshotter: %w", root, mnt.FSType, plugin.ErrSkipPlugin)
+		return nil, fmt.Errorf("path %s (%s) must be a btrfs filesystem to be used with the btrfs snapshotter: %w", root, mnt.FSType, over_plugin.ErrSkipPlugin)
 	}
 	var (
 		active    = filepath.Join(root, "active")
@@ -80,7 +80,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		view,
 		snapshots,
 	} {
-		if err := os.Mkdir(path, 0755); err != nil && !os.IsExist(err) {
+		if err := my_mk.Mkdir(path, 0755); err != nil && !os.IsExist(err) {
 			return nil, err
 		}
 	}

@@ -18,6 +18,7 @@ package docker
 
 import (
 	"context"
+	"demo/others/log"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,9 +27,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
+	"demo/over/errdefs"
+	"demo/over/images"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -42,7 +42,7 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 
 	hosts := r.filterHosts(HostCapabilityPull)
 	if len(hosts) == 0 {
-		return nil, fmt.Errorf("no pull hosts: %w", errdefs.ErrNotFound)
+		return nil, fmt.Errorf("no pull hosts: %w", over_errdefs.ErrNotFound)
 	}
 
 	ctx, err := ContextWithRepositoryScope(ctx, r.refspec, false)
@@ -82,7 +82,7 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 
 			rc, err := r.open(ctx, req, desc.MediaType, offset)
 			if err != nil {
-				if errdefs.IsNotFound(err) {
+				if over_errdefs.IsNotFound(err) {
 					continue // try one of the other urls.
 				}
 
@@ -94,8 +94,8 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 
 		// Try manifests endpoints for manifests types
 		switch desc.MediaType {
-		case images.MediaTypeDockerSchema2Manifest, images.MediaTypeDockerSchema2ManifestList,
-			images.MediaTypeDockerSchema1Manifest,
+		case over_images.MediaTypeDockerSchema2Manifest, over_images.MediaTypeDockerSchema2ManifestList,
+			over_images.MediaTypeDockerSchema1Manifest,
 			ocispec.MediaTypeImageManifest, ocispec.MediaTypeImageIndex:
 
 			var firstErr error
@@ -140,9 +140,9 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 			return rc, nil
 		}
 
-		if errdefs.IsNotFound(firstErr) {
+		if over_errdefs.IsNotFound(firstErr) {
 			firstErr = fmt.Errorf("could not fetch content descriptor %v (%v) from remote: %w",
-				desc.Digest, desc.MediaType, errdefs.ErrNotFound,
+				desc.Digest, desc.MediaType, over_errdefs.ErrNotFound,
 			)
 		}
 
@@ -181,7 +181,7 @@ func (r dockerFetcher) FetchByDigest(ctx context.Context, dgst digest.Digest) (i
 
 	hosts := r.filterHosts(HostCapabilityPull)
 	if len(hosts) == 0 {
-		return nil, desc, fmt.Errorf("no pull hosts: %w", errdefs.ErrNotFound)
+		return nil, desc, fmt.Errorf("no pull hosts: %w", over_errdefs.ErrNotFound)
 	}
 
 	ctx, err := ContextWithRepositoryScope(ctx, r.refspec, false)
@@ -221,8 +221,8 @@ func (r dockerFetcher) FetchByDigest(ctx context.Context, dgst digest.Digest) (i
 	}
 
 	if getReq == nil {
-		if errdefs.IsNotFound(firstErr) {
-			firstErr = fmt.Errorf("could not fetch content %v from remote: %w", dgst, errdefs.ErrNotFound)
+		if over_errdefs.IsNotFound(firstErr) {
+			firstErr = fmt.Errorf("could not fetch content %v from remote: %w", dgst, over_errdefs.ErrNotFound)
 		}
 		if firstErr == nil {
 			firstErr = fmt.Errorf("could not fetch content %v from remote: (unknown)", dgst)
@@ -276,7 +276,7 @@ func (r dockerFetcher) open(ctx context.Context, req *request, mediatype string,
 		// implementation.
 
 		if resp.StatusCode == http.StatusNotFound {
-			return nil, fmt.Errorf("content at %v not found: %w", req.String(), errdefs.ErrNotFound)
+			return nil, fmt.Errorf("content at %v not found: %w", req.String(), over_errdefs.ErrNotFound)
 		}
 		var registryErr Errors
 		if err := json.NewDecoder(resp.Body).Decode(&registryErr); err != nil || registryErr.Len() < 1 {

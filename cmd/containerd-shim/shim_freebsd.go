@@ -17,13 +17,12 @@
 package main
 
 import (
+	"demo/pkg/sys/reaper"
 	"os"
 	"os/signal"
 
-	"github.com/containerd/containerd/sys/reaper"
-
-	runc "github.com/containerd/go-runc"
-	"github.com/containerd/ttrpc"
+	runc "demo/others/go-runc"
+	"demo/others/ttrpc"
 )
 
 // setupSignals creates a new signal handler for all signals and sets the shim as a

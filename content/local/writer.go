@@ -18,6 +18,8 @@ package local
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"errors"
 	"fmt"
 	"io"
@@ -26,9 +28,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
+	"demo/content"
+	"demo/over/errdefs"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -89,7 +90,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	w.fp = nil
 
 	if fp == nil {
-		return fmt.Errorf("cannot commit on closed writer: %w", errdefs.ErrFailedPrecondition)
+		return fmt.Errorf("cannot commit on closed writer: %w", over_errdefs.ErrFailedPrecondition)
 	}
 
 	if err := fp.Sync(); err != nil {
@@ -107,12 +108,12 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	if size > 0 && size != fi.Size() {
-		return fmt.Errorf("unexpected commit size %d, expected %d: %w", fi.Size(), size, errdefs.ErrFailedPrecondition)
+		return fmt.Errorf("unexpected commit size %d, expected %d: %w", fi.Size(), size, over_errdefs.ErrFailedPrecondition)
 	}
 
 	dgst := w.digester.Digest()
 	if expected != "" && expected != dgst {
-		return fmt.Errorf("unexpected commit digest %s, expected %s: %w", dgst, expected, errdefs.ErrFailedPrecondition)
+		return fmt.Errorf("unexpected commit digest %s, expected %s: %w", dgst, expected, over_errdefs.ErrFailedPrecondition)
 	}
 
 	var (
@@ -121,7 +122,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	)
 
 	// make sure parent directories of blob exist
-	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+	if err := my_mk.MkdirAll(filepath.Dir(target), 0755); err != nil {
 		return err
 	}
 
@@ -130,7 +131,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		if err := os.RemoveAll(w.path); err != nil {
 			log.G(ctx).WithField("ref", w.ref).WithField("path", w.path).Error("failed to remove ingest directory")
 		}
-		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrAlreadyExists)
+		return fmt.Errorf("content %v: %w", dgst, over_errdefs.ErrAlreadyExists)
 	}
 
 	if err := os.Rename(ingest, target); err != nil {

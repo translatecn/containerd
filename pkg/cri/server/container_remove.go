@@ -18,14 +18,14 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
+	"demo/containerd"
+	"demo/over/errdefs"
+	containerstore "demo/pkg/cri/store/container"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -36,7 +36,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	ctrID := r.GetContainerId()
 	container, err := c.containerStore.Get(ctrID)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("an error occurred when try to find container %q: %w", ctrID, err)
 		}
 		// Do not return error if container metadata doesn't exist.
@@ -46,7 +46,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	id := container.ID
 	i, err := container.Container.Info(ctx)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("get container info: %w", err)
 		}
 		// Since containerd doesn't see the container and criservice's content store does,
@@ -100,7 +100,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 	// Delete containerd container.
 	if err := container.Container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to delete containerd container %q: %w", id, err)
 		}
 		log.G(ctx).Tracef("Remove called for containerd container %q that does not exist", id)

@@ -17,14 +17,14 @@
 package content
 
 import (
+	"demo/others/log"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/log"
+	"demo/cmd/ctr/commands"
+	"demo/content"
+	"demo/pkg/leases"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

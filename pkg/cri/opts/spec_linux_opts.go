@@ -18,6 +18,7 @@ package opts
 
 import (
 	"context"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"os"
@@ -32,16 +33,15 @@ import (
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/oci"
-	osinterface "github.com/containerd/containerd/pkg/os"
+	"demo/containers"
+	"demo/over/mount"
+	"demo/over/oci"
+	osinterface "demo/over/os"
 )
 
 // WithMounts sorts and adds runtime and CRI mounts to the spec
-func WithMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount, mountLabel string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, _ *containers.Container, s *runtimespec.Spec) (err error) {
+func WithMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount, mountLabel string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, _ *containers.Container, s *runtimespec.Spec) (err error) {
 		// mergeMounts merge CRI mounts with extra mounts. If a mount destination
 		// is mounted by both a CRI mount and an extra mount, the CRI mount will
 		// be kept.
@@ -237,8 +237,8 @@ func getDeviceUserGroupID(runAsVal *runtime.Int64Value) uint32 {
 }
 
 // WithDevices sets the provided devices onto the container spec
-func WithDevices(osi osinterface.OS, config *runtime.ContainerConfig, enableDeviceOwnershipFromSecurityContext bool) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithDevices(osi osinterface.OS, config *runtime.ContainerConfig, enableDeviceOwnershipFromSecurityContext bool) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		if s.Linux == nil {
 			s.Linux = &runtimespec.Linux{}
 		}
@@ -254,7 +254,7 @@ func WithDevices(osi osinterface.OS, config *runtime.ContainerConfig, enableDevi
 				return err
 			}
 
-			o := oci.WithDevices(path, device.ContainerPath, device.Permissions)
+			o := over_oci.WithDevices(path, device.ContainerPath, device.Permissions)
 			if err := o(ctx, client, c, s); err != nil {
 				return err
 			}
@@ -282,8 +282,8 @@ func WithDevices(osi osinterface.OS, config *runtime.ContainerConfig, enableDevi
 }
 
 // WithResources sets the provided resource restrictions
-func WithResources(resources *runtime.LinuxContainerResources, tolerateMissingHugetlbController, disableHugetlbController bool) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithResources(resources *runtime.LinuxContainerResources, tolerateMissingHugetlbController, disableHugetlbController bool) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		if resources == nil {
 			return nil
 		}
@@ -364,8 +364,8 @@ func WithResources(resources *runtime.LinuxContainerResources, tolerateMissingHu
 }
 
 // WithOOMScoreAdj sets the oom score
-func WithOOMScoreAdj(config *runtime.ContainerConfig, restrict bool) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithOOMScoreAdj(config *runtime.ContainerConfig, restrict bool) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Process == nil {
 			s.Process = &runtimespec.Process{}
 		}
@@ -388,8 +388,8 @@ func WithOOMScoreAdj(config *runtime.ContainerConfig, restrict bool) oci.SpecOpt
 }
 
 // WithPodOOMScoreAdj sets the oom score for the pod sandbox
-func WithPodOOMScoreAdj(adj int, restrict bool) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithPodOOMScoreAdj(adj int, restrict bool) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Process == nil {
 			s.Process = &runtimespec.Process{}
 		}

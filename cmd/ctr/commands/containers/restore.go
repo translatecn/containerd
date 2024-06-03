@@ -19,12 +19,12 @@ package containers
 import (
 	"errors"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/cmd/ctr/commands/tasks"
-	"github.com/containerd/containerd/errdefs"
+	"demo/cmd/ctr/commands"
+	"demo/cmd/ctr/commands/tasks"
+	"demo/containerd"
+	"demo/others/console"
+	"demo/over/errdefs"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -60,7 +60,7 @@ var restoreCommand = cli.Command{
 
 		checkpoint, err := client.GetImage(ctx, ref)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return err
 			}
 			// TODO (ehazlett): consider other options (always/never fetch)

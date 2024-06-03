@@ -18,13 +18,13 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	ptypes "demo/over/protobuf/types"
 	"encoding/json"
 	"fmt"
 	goruntime "runtime"
 
-	"github.com/containerd/containerd/api/services/introspection/v1"
-	"github.com/containerd/containerd/log"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/pkg/api/services/introspection/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 

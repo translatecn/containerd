@@ -18,24 +18,24 @@ package podsandbox
 
 import (
 	"context"
+	"demo/over/protobuf"
+	"demo/pkg/sandbox"
 	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	eventtypes "github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/oci"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	imagestore "github.com/containerd/containerd/pkg/cri/store/image"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	osinterface "github.com/containerd/containerd/pkg/os"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/sandbox"
+	"demo/containerd"
+	"demo/over/errdefs"
+	"demo/over/oci"
+	osinterface "demo/over/os"
+	"demo/over/platforms"
+	eventtypes "demo/pkg/api/events"
+	criconfig "demo/pkg/cri/config"
+	imagestore "demo/pkg/cri/store/image"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 // CRIService interface contains things required by controller, but not yet refactored from criService.
@@ -59,7 +59,7 @@ type Controller struct {
 	// cri is CRI service that provides missing gaps needed by controller.
 	cri CRIService
 	// baseOCISpecs contains cached OCI specs loaded via `Runtime.BaseRuntimeSpec`
-	baseOCISpecs map[string]*oci.Spec
+	baseOCISpecs map[string]*over_oci.Spec
 
 	store *Store
 }
@@ -70,7 +70,7 @@ func New(
 	sandboxStore *sandboxstore.Store,
 	os osinterface.OS,
 	cri CRIService,
-	baseOCISpecs map[string]*oci.Spec,
+	baseOCISpecs map[string]*over_oci.Spec,
 ) *Controller {
 	return &Controller{
 		config:       config,
@@ -85,8 +85,8 @@ func New(
 
 var _ sandbox.Controller = (*Controller)(nil)
 
-func (c *Controller) Platform(_ctx context.Context, _sandboxID string) (platforms.Platform, error) {
-	return platforms.DefaultSpec(), nil
+func (c *Controller) Platform(_ctx context.Context, _sandboxID string) (over_platforms.Platform, error) {
+	return over_platforms.DefaultSpec(), nil
 }
 
 func (c *Controller) Wait(ctx context.Context, sandboxID string) (sandbox.ExitStatus, error) {
@@ -124,11 +124,11 @@ func (c *Controller) waitSandboxExit(ctx context.Context, id string, exitCh <-ch
 
 			sb, err := c.sandboxStore.Get(id)
 			if err == nil {
-				if err := handleSandboxExit(dctx, sb, &eventtypes.TaskExit{ExitStatus: exitStatus, ExitedAt: protobuf.ToTimestamp(exitedAt)}); err != nil {
+				if err := handleSandboxExit(dctx, sb, &eventtypes.TaskExit{ExitStatus: exitStatus, ExitedAt: over_protobuf.ToTimestamp(exitedAt)}); err != nil {
 					return err
 				}
 				return nil
-			} else if !errdefs.IsNotFound(err) {
+			} else if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to get sandbox %s: %w", id, err)
 			}
 			return nil
@@ -145,18 +145,18 @@ func (c *Controller) waitSandboxExit(ctx context.Context, id string, exitCh <-ch
 }
 
 // handleSandboxExit handles TaskExit event for sandbox.
-// TODO https://github.com/containerd/containerd/issues/7548
+// TODO https://github.com/containerd/issues/7548
 func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, e *eventtypes.TaskExit) error {
 	// No stream attached to sandbox container.
 	task, err := sb.Container.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to load task for sandbox: %w", err)
 		}
 	} else {
 		// TODO(random-liu): [P1] This may block the loop, we may want to spawn a worker
 		if _, err = task.Delete(ctx, WithNRISandboxDelete(sb.ID), containerd.WithProcessKill); err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to stop sandbox: %w", err)
 			}
 			// Move on to make sure container status is updated.

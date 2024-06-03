@@ -17,18 +17,18 @@
 package tasks
 
 import (
+	"demo/over/protobuf/proto"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
-	wstats "github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
-	v2 "github.com/containerd/cgroups/v3/cgroup2/stats"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/typeurl/v2"
+	"demo/cmd/ctr/commands"
+	v1 "demo/others/cgroups/v3/cgroup1/stats"
+	v2 "demo/others/cgroups/v3/cgroup2/stats"
+	"demo/others/typeurl/v2"
+	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
 	"github.com/urfave/cli"
 )
 

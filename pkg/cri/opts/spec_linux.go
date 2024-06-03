@@ -18,6 +18,8 @@ package opts
 
 import (
 	"context"
+	"demo/others/cgroups/v3"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"os"
@@ -26,16 +28,14 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/cgroups/v3"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"tags.cncf.io/container-device-interface/pkg/cdi"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
+	"demo/containers"
+	"demo/over/oci"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 // Linux dependent OCI spec opts.
@@ -141,8 +141,8 @@ func IsCgroup2UnifiedMode() bool {
 }
 
 // WithCDI updates OCI spec with CDI content
-func WithCDI(annotations map[string]string, CDIDevices []*runtime.CDIDevice) oci.SpecOpts {
-	return func(ctx context.Context, _ oci.Client, c *containers.Container, s *oci.Spec) error {
+func WithCDI(annotations map[string]string, CDIDevices []*runtime.CDIDevice) over_oci.SpecOpts {
+	return func(ctx context.Context, _ over_oci.Client, c *containers.Container, s *over_oci.Spec) error {
 		// Add devices from CDIDevices CRI field
 		var devices []string
 		var err error

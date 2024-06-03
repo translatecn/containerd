@@ -19,7 +19,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.20.1
-// source: github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto
+// source: demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto
 
 package v1alpha2
 

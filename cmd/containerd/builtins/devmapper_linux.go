@@ -18,4 +18,4 @@
 
 package builtins
 
-import _ "github.com/containerd/containerd/snapshots/devmapper/plugin"
+import _ "demo/snapshots/devmapper/plugin"

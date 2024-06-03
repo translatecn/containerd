@@ -18,18 +18,18 @@ package podsandbox
 
 import (
 	"context"
+	"demo/over/protobuf"
+	"demo/pkg/sandbox"
 	"fmt"
 	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
-	eventtypes "github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/errdefs"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/sandbox"
+	"demo/over/errdefs"
+	eventtypes "demo/pkg/api/events"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 func (c *Controller) Stop(ctx context.Context, sandboxID string, _ ...sandbox.StopOpt) error {
@@ -63,7 +63,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	state := sandbox.Status.Get().State
 	task, err := container.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get sandbox container: %w", err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -81,7 +81,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task: %w", err)
 			}
 			return cleanupUnknownSandbox(ctx, id, sandbox)
@@ -96,7 +96,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 				e := &eventtypes.SandboxExit{
 					SandboxID:  id,
 					ExitStatus: exitStatus,
-					ExitedAt:   protobuf.ToTimestamp(exitedAt),
+					ExitedAt:   over_protobuf.ToTimestamp(exitedAt),
 				}
 				logrus.WithError(err).Errorf("Failed to wait sandbox exit %+v", e)
 				// TODO: how to backoff
@@ -113,7 +113,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	}
 
 	// Kill the sandbox container.
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill sandbox container: %w", err)
 	}
 
@@ -134,5 +134,5 @@ func (c *Controller) waitSandboxStop(ctx context.Context, sandbox sandboxstore.S
 // cleanupUnknownSandbox cleanup stopped sandbox in unknown state.
 func cleanupUnknownSandbox(ctx context.Context, id string, sandbox sandboxstore.Sandbox) error {
 	// Reuse handleSandboxExit to do the cleanup.
-	return handleSandboxExit(ctx, sandbox, &eventtypes.TaskExit{ExitStatus: unknownExitCode, ExitedAt: protobuf.ToTimestamp(time.Now())})
+	return handleSandboxExit(ctx, sandbox, &eventtypes.TaskExit{ExitStatus: unknownExitCode, ExitedAt: over_protobuf.ToTimestamp(time.Now())})
 }

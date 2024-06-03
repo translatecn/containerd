@@ -18,29 +18,29 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd"
-	containerdio "github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
-	containerdimages "github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	"github.com/containerd/containerd/pkg/cri/sbserver/podsandbox"
-	"github.com/containerd/containerd/pkg/netns"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/typeurl/v2"
+	"demo/containerd"
+	"demo/over/errdefs"
+	containerdimages "demo/over/images"
+	"demo/over/platforms"
+	containerdio "demo/pkg/cio"
+	criconfig "demo/pkg/cri/config"
+	"demo/pkg/cri/sbserver/podsandbox"
+	"demo/pkg/netns"
 	"golang.org/x/sync/errgroup"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
+	cio "demo/pkg/cri/io"
+	containerstore "demo/pkg/cri/store/container"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 // NOTE: The recovery logic has following assumption: when the cri plugin is down:
@@ -117,7 +117,7 @@ func (c *criService) recover(ctx context.Context) error {
 		status, err := controller.Status(ctx, sbx.ID, false)
 		if err != nil {
 			log.G(ctx).WithError(err).Error("failed to recover sandbox state")
-			if errdefs.IsNotFound(err) {
+			if over_errdefs.IsNotFound(err) {
 				state = sandboxstore.StateNotReady
 			}
 		} else {
@@ -284,12 +284,12 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 			containerIO.Pipe()
 			return containerIO, nil
 		})
-		if err != nil && !errdefs.IsNotFound(err) {
+		if err != nil && !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to load task: %w", err)
 		}
 		var s containerd.Status
 		var notFound bool
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			// Task is not found.
 			notFound = true
 		} else {
@@ -297,7 +297,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 			s, err = t.Status(ctx)
 			if err != nil {
 				// It's still possible that task is deleted during this window.
-				if !errdefs.IsNotFound(err) {
+				if !over_errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get task status: %w", err)
 				}
 				notFound = true
@@ -333,7 +333,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				// Task has been created, but not started yet. This could only happen if containerd
 				// gets restarted during container start.
 				// Container must be in `CREATED` state.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to delete task: %w", err)
 				}
 				if status.State() != runtime.ContainerState_CONTAINER_CREATED {
@@ -356,7 +356,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				// wait is a long running background request, no timeout needed.
 				exitCh, err := t.Wait(ctrdutil.NamespacedContext())
 				if err != nil {
-					if !errdefs.IsNotFound(err) {
+					if !over_errdefs.IsNotFound(err) {
 						return fmt.Errorf("failed to wait for task: %w", err)
 					}
 					// Container was in running state, but its task has been deleted,
@@ -370,7 +370,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				}
 			case containerd.Stopped:
 				// Task is stopped. Update status and delete the task.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to delete task: %w", err)
 				}
 				status.FinishedAt = s.ExitTime.UnixNano()
@@ -421,7 +421,7 @@ func (c *criService) loadImages(ctx context.Context, cImages []containerd.Image)
 		i := i
 		go func() {
 			defer wg.Done()
-			ok, _, _, _, err := containerdimages.Check(ctx, i.ContentStore(), i.Target(), platforms.Default())
+			ok, _, _, _, err := containerdimages.Check(ctx, i.ContentStore(), i.Target(), over_platforms.Default())
 			if err != nil {
 				log.G(ctx).WithError(err).Errorf("Failed to check image content readiness for %q", i.Name())
 				return

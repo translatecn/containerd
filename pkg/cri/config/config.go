@@ -18,14 +18,14 @@ package config
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/plugin"
 	"errors"
 	"fmt"
 	"net/url"
 	"time"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/plugin"
+	"demo/pkg/deprecation"
 )
 
 const (
@@ -109,7 +109,7 @@ type Runtime struct {
 	// Snapshotter setting snapshotter at runtime level instead of making it as a global configuration.
 	// An example use case is to use devmapper or other snapshotters in Kata containers for performance and security
 	// while using default snapshotters for operational simplicity.
-	// See https://github.com/containerd/containerd/issues/6657 for details.
+	// See https://github.com/containerd/issues/6657 for details.
 	Snapshotter string `toml:"snapshotter" json:"snapshotter"`
 	// SandboxMode defines which sandbox runtime to use when scheduling pods
 	// This features requires experimental CRI server to be enabled (use ENABLE_CRI_SANDBOXES=1)
@@ -261,10 +261,10 @@ type ImageDecryption struct {
 	// KeyModel specifies the trust model of where keys should reside.
 	//
 	// Details of field usage can be found in:
-	// https://github.com/containerd/containerd/tree/main/docs/cri/config.md
+	// https://github.com/containerd/tree/main/docs/cri/config.md
 	//
 	// Details of key models can be found in:
-	// https://github.com/containerd/containerd/tree/main/docs/cri/decryption.md
+	// https://github.com/containerd/tree/main/docs/cri/decryption.md
 	KeyModel string `toml:"key_model" json:"keyModel"`
 }
 
@@ -461,30 +461,30 @@ func ValidatePluginConfig(ctx context.Context, c *PluginConfig) ([]deprecation.W
 
 	// Validation for deprecated runtime options.
 	if c.SystemdCgroup {
-		if c.ContainerdConfig.Runtimes[c.ContainerdConfig.DefaultRuntimeName].Type != plugin.RuntimeLinuxV1 {
-			return warnings, fmt.Errorf("`systemd_cgroup` only works for runtime %s", plugin.RuntimeLinuxV1)
+		if c.ContainerdConfig.Runtimes[c.ContainerdConfig.DefaultRuntimeName].Type != over_plugin.RuntimeLinuxV1 {
+			return warnings, fmt.Errorf("`systemd_cgroup` only works for runtime %s", over_plugin.RuntimeLinuxV1)
 		}
 		warnings = append(warnings, deprecation.CRISystemdCgroupV1)
 		log.G(ctx).Warning("`systemd_cgroup` is deprecated, please use runtime `options` instead")
 	}
 	if c.NoPivot {
-		if c.ContainerdConfig.Runtimes[c.ContainerdConfig.DefaultRuntimeName].Type != plugin.RuntimeLinuxV1 {
-			return warnings, fmt.Errorf("`no_pivot` only works for runtime %s", plugin.RuntimeLinuxV1)
+		if c.ContainerdConfig.Runtimes[c.ContainerdConfig.DefaultRuntimeName].Type != over_plugin.RuntimeLinuxV1 {
+			return warnings, fmt.Errorf("`no_pivot` only works for runtime %s", over_plugin.RuntimeLinuxV1)
 		}
 		// NoPivot can't be deprecated yet, because there is no alternative config option
 		// for `io.containerd.runtime.v1.linux`.
 	}
 	for k, r := range c.ContainerdConfig.Runtimes {
 		if r.Engine != "" {
-			if r.Type != plugin.RuntimeLinuxV1 {
-				return warnings, fmt.Errorf("`runtime_engine` only works for runtime %s", plugin.RuntimeLinuxV1)
+			if r.Type != over_plugin.RuntimeLinuxV1 {
+				return warnings, fmt.Errorf("`runtime_engine` only works for runtime %s", over_plugin.RuntimeLinuxV1)
 			}
 			warnings = append(warnings, deprecation.CRIRuntimeEngine)
 			log.G(ctx).Warning("`runtime_engine` is deprecated, please use runtime `options` instead")
 		}
 		if r.Root != "" {
-			if r.Type != plugin.RuntimeLinuxV1 {
-				return warnings, fmt.Errorf("`runtime_root` only works for runtime %s", plugin.RuntimeLinuxV1)
+			if r.Type != over_plugin.RuntimeLinuxV1 {
+				return warnings, fmt.Errorf("`runtime_root` only works for runtime %s", over_plugin.RuntimeLinuxV1)
 			}
 			warnings = append(warnings, deprecation.CRIRuntimeRoot)
 			log.G(ctx).Warning("`runtime_root` is deprecated, please use runtime `options` instead")

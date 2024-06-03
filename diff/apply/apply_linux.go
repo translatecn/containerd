@@ -23,10 +23,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/containerd/archive"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/userns"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/pkg/archive"
+	"demo/pkg/userns"
 
 	"golang.org/x/sys/unix"
 )
@@ -35,13 +35,13 @@ func apply(ctx context.Context, mounts []mount.Mount, r io.Reader, sync bool) (r
 	switch {
 	case len(mounts) == 1 && mounts[0].Type == "overlay":
 		// OverlayConvertWhiteout (mknod c 0 0) doesn't work in userns.
-		// https://github.com/containerd/containerd/issues/3762
+		// https://github.com/containerd/issues/3762
 		if userns.RunningInUserNS() {
 			break
 		}
 		path, parents, err := getOverlayPath(mounts[0].Options)
 		if err != nil {
-			if errdefs.IsInvalidArgument(err) {
+			if over_errdefs.IsInvalidArgument(err) {
 				break
 			}
 			return err
@@ -60,7 +60,7 @@ func apply(ctx context.Context, mounts []mount.Mount, r io.Reader, sync bool) (r
 	case len(mounts) == 1 && mounts[0].Type == "aufs":
 		path, parents, err := getAufsPath(mounts[0].Options)
 		if err != nil {
-			if errdefs.IsInvalidArgument(err) {
+			if over_errdefs.IsInvalidArgument(err) {
 				break
 			}
 			return err
@@ -100,7 +100,7 @@ func getOverlayPath(options []string) (upper string, lower []string, err error) 
 		}
 	}
 	if upper == "" {
-		return "", nil, fmt.Errorf("upperdir not found: %w", errdefs.ErrInvalidArgument)
+		return "", nil, fmt.Errorf("upperdir not found: %w", over_errdefs.ErrInvalidArgument)
 	}
 
 	return
@@ -125,22 +125,22 @@ func getAufsPath(options []string) (upper string, lower []string, err error) {
 		for _, b := range strings.Split(o, sep) {
 			if strings.HasSuffix(b, rwSuffix) {
 				if upper != "" {
-					return "", nil, fmt.Errorf("multiple rw branch found: %w", errdefs.ErrInvalidArgument)
+					return "", nil, fmt.Errorf("multiple rw branch found: %w", over_errdefs.ErrInvalidArgument)
 				}
 				upper = strings.TrimSuffix(b, rwSuffix)
 			} else if strings.HasSuffix(b, roSuffix) {
 				if upper == "" {
-					return "", nil, fmt.Errorf("rw branch be first: %w", errdefs.ErrInvalidArgument)
+					return "", nil, fmt.Errorf("rw branch be first: %w", over_errdefs.ErrInvalidArgument)
 				}
 				lower = append(lower, strings.TrimSuffix(b, roSuffix))
 			} else {
-				return "", nil, fmt.Errorf("unhandled aufs suffix: %w", errdefs.ErrInvalidArgument)
+				return "", nil, fmt.Errorf("unhandled aufs suffix: %w", over_errdefs.ErrInvalidArgument)
 			}
 
 		}
 	}
 	if upper == "" {
-		return "", nil, fmt.Errorf("rw branch not found: %w", errdefs.ErrInvalidArgument)
+		return "", nil, fmt.Errorf("rw branch not found: %w", over_errdefs.ErrInvalidArgument)
 	}
 	return
 }

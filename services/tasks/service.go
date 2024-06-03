@@ -18,12 +18,12 @@ package tasks
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
+	ptypes "demo/over/protobuf/types"
 	"errors"
 
-	api "github.com/containerd/containerd/api/services/tasks/v1"
-	"github.com/containerd/containerd/plugin"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/services"
+	api "demo/pkg/api/services/tasks/v1"
+	"demo/services"
 	"google.golang.org/grpc"
 )
 
@@ -32,14 +32,14 @@ var (
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "tasks",
-		Requires: []plugin.Type{
-			plugin.ServicePlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.ServicePlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			plugins, err := ic.GetByType(plugin.ServicePlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			plugins, err := ic.GetByType(over_plugin2.ServicePlugin)
 			if err != nil {
 				return nil, err
 			}

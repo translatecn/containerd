@@ -18,6 +18,12 @@ package v2
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	"demo/pkg/namespaces"
+	"demo/pkg/sandbox"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,20 +31,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/events/exchange"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/cleanup"
-	"github.com/containerd/containerd/pkg/timeout"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/runtime"
-	shimbinary "github.com/containerd/containerd/runtime/v2/shim"
-	"github.com/containerd/containerd/sandbox"
+	"demo/containers"
+	"demo/over/errdefs"
+	"demo/over/platforms"
+	"demo/pkg/cleanup"
+	"demo/pkg/events/exchange"
+	"demo/pkg/metadata"
+	"demo/pkg/timeout"
+	"demo/runtime"
+	shimbinary "demo/runtime/v2/shim"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -51,17 +52,17 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.RuntimePluginV2,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.RuntimePluginV2,
 		ID:   "task",
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
-			plugin.MetadataPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.EventPlugin,
+			over_plugin2.MetadataPlugin,
 		},
 		Config: &Config{
 			Platforms: defaultPlatforms(),
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			config := ic.Config.(*Config)
 			supportedPlatforms, err := parsePlatforms(config.Platforms)
 			if err != nil {
@@ -70,11 +71,11 @@ func init() {
 
 			ic.Meta.Platforms = supportedPlatforms
 
-			m, err := ic.Get(plugin.MetadataPlugin)
+			m, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}
-			ep, err := ic.GetByID(plugin.EventPlugin, "exchange")
+			ep, err := ic.GetByID(over_plugin2.EventPlugin, "exchange")
 			if err != nil {
 				return nil, err
 			}
@@ -104,11 +105,11 @@ func init() {
 	// However, due to time limits and to avoid migration steps in 1.6 release,
 	// use the following workaround.
 	// This expected to be removed in 1.7.
-	plugin.Register(&plugin.Registration{
-		Type: plugin.RuntimePluginV2,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.RuntimePluginV2,
 		ID:   "shim",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			taskManagerI, err := ic.GetByID(plugin.RuntimePluginV2, "task")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			taskManagerI, err := ic.GetByID(over_plugin2.RuntimePluginV2, "task")
 			if err != nil {
 				return nil, err
 			}
@@ -133,7 +134,7 @@ type ManagerConfig struct {
 // NewShimManager creates a manager for v2 shims
 func NewShimManager(ctx context.Context, config *ManagerConfig) (*ShimManager, error) {
 	for _, d := range []string{config.Root, config.State} {
-		if err := os.MkdirAll(d, 0711); err != nil {
+		if err := my_mk.MkdirAll(d, 0711); err != nil {
 			return nil, err
 		}
 	}
@@ -177,7 +178,7 @@ type ShimManager struct {
 
 // ID of the shim manager
 func (m *ShimManager) ID() string {
-	return fmt.Sprintf("%s.%s", plugin.RuntimePluginV2, "shim")
+	return fmt.Sprintf("%s.%s", over_plugin2.RuntimePluginV2, "shim")
 }
 
 // Start launches a new shim instance
@@ -266,7 +267,7 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 		ttrpcAddress: m.containerdTTRPCAddress,
 		schedCore:    m.schedCore,
 	})
-	shim, err := b.Start(ctx, protobuf.FromAny(topts), func() {
+	shim, err := b.Start(ctx, over_protobuf.FromAny(topts), func() {
 		log.G(ctx).WithField("id", id).Info("shim disconnected")
 
 		cleanupAfterDeadShim(cleanup.Background(ctx), id, m.shims, m.events, b)
@@ -390,7 +391,7 @@ func (m *ShimManager) Delete(ctx context.Context, id string) error {
 func parsePlatforms(platformStr []string) ([]ocispec.Platform, error) {
 	p := make([]ocispec.Platform, len(platformStr))
 	for i, v := range platformStr {
-		parsed, err := platforms.Parse(v)
+		parsed, err := over_platforms.Parse(v)
 		if err != nil {
 			return nil, err
 		}
@@ -413,7 +414,7 @@ func NewTaskManager(shims *ShimManager) *TaskManager {
 
 // ID of the task manager
 func (m *TaskManager) ID() string {
-	return fmt.Sprintf("%s.%s", plugin.RuntimePluginV2, "task")
+	return fmt.Sprintf("%s.%s", over_plugin2.RuntimePluginV2, "task")
 }
 
 // Create launches new shim instance and creates new task
@@ -441,7 +442,7 @@ func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.Cr
 		sandboxed := opts.SandboxID != ""
 		_, errShim := shimTask.delete(dctx, sandboxed, func(context.Context, string) {})
 		if errShim != nil {
-			if errdefs.IsDeadlineExceeded(errShim) {
+			if over_errdefs.IsDeadlineExceeded(errShim) {
 				dctx, cancel = timeout.WithContext(cleanup.Background(ctx), cleanupTimeout)
 				defer cancel()
 			}

@@ -18,13 +18,13 @@ package io
 
 import (
 	"context"
+	"demo/over/my_mk"
 	"io"
-	"os"
 	"path/filepath"
 	"sync"
 	"syscall"
 
-	"github.com/containerd/containerd/cio"
+	"demo/pkg/cio"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -75,7 +75,7 @@ func (g *wgCloser) Cancel() {
 // newFifos creates fifos directory for a container.
 func newFifos(root, id string, tty, stdin bool) (*cio.FIFOSet, error) {
 	root = filepath.Join(root, "io")
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 	fifos, err := cio.NewFIFOSetInDir(root, id, tty)

@@ -19,11 +19,11 @@ package server
 import (
 	"context"
 
-	runtime_alpha "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"github.com/containerd/containerd/version"
+	runtime_alpha "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"demo/version"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/cri/constants"
+	"demo/pkg/cri/constants"
 )
 
 const (

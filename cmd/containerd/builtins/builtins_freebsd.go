@@ -16,4 +16,4 @@
 
 package builtins
 
-import _ "github.com/containerd/zfs/plugin"
+import _ "demo/others/zfs/plugin"

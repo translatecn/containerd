@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.20.1
-// source: github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto
+// source: demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto
 
 package v1alpha2
 
@@ -1033,7 +1033,7 @@ var RuntimeService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto",
+	Metadata: "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto",
 }
 
 // ImageServiceClient is the client API for ImageService service.
@@ -1281,5 +1281,5 @@ var ImageService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto",
+	Metadata: "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto",
 }

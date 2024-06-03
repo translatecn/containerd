@@ -29,9 +29,9 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/cri/util"
+	"demo/containers"
+	"demo/over/oci"
+	"demo/pkg/cri/util"
 )
 
 // DefaultSandboxCPUshares is default cpu shares for sandbox container.
@@ -39,8 +39,8 @@ import (
 const DefaultSandboxCPUshares = 2
 
 // WithRelativeRoot sets the root for the container
-func WithRelativeRoot(root string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithRelativeRoot(root string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		if s.Root == nil {
 			s.Root = &runtimespec.Root{}
 		}
@@ -50,14 +50,14 @@ func WithRelativeRoot(root string) oci.SpecOpts {
 }
 
 // WithoutRoot sets the root to nil for the container.
-func WithoutRoot(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithoutRoot(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	s.Root = nil
 	return nil
 }
 
 // WithProcessArgs sets the process args on the spec based on the image and runtime config
-func WithProcessArgs(config *runtime.ContainerConfig, image *imagespec.ImageConfig) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithProcessArgs(config *runtime.ContainerConfig, image *imagespec.ImageConfig) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		command, args := config.GetCommand(), config.GetArgs()
 		// The following logic is migrated from https://github.com/moby/moby/blob/master/daemon/commit.go
 		// TODO(random-liu): Clearly define the commands overwrite behavior.
@@ -75,7 +75,7 @@ func WithProcessArgs(config *runtime.ContainerConfig, image *imagespec.ImageConf
 		if len(command) == 0 && len(args) == 0 {
 			return errors.New("no command specified")
 		}
-		return oci.WithProcessArgs(append(command, args...)...)(ctx, client, c, s)
+		return over_oci.WithProcessArgs(append(command, args...)...)(ctx, client, c, s)
 	}
 }
 
@@ -108,8 +108,8 @@ func (m orderedMounts) parts(i int) int {
 }
 
 // WithAnnotation sets the provided annotation
-func WithAnnotation(k, v string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithAnnotation(k, v string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Annotations == nil {
 			s.Annotations = make(map[string]string)
 		}
@@ -120,13 +120,13 @@ func WithAnnotation(k, v string) oci.SpecOpts {
 
 // WithAdditionalGIDs adds any additional groups listed for a particular user in the
 // /etc/groups file of the image's root filesystem to the OCI spec's additionalGids array.
-func WithAdditionalGIDs(userstr string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithAdditionalGIDs(userstr string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		if s.Process == nil {
 			s.Process = &runtimespec.Process{}
 		}
 		gids := s.Process.User.AdditionalGids
-		if err := oci.WithAdditionalGIDs(userstr)(ctx, client, c, s); err != nil {
+		if err := over_oci.WithAdditionalGIDs(userstr)(ctx, client, c, s); err != nil {
 			return err
 		}
 		// Merge existing gids and new gids.
@@ -152,7 +152,7 @@ func mergeGids(gids1, gids2 []uint32) []uint32 {
 }
 
 // WithoutDefaultSecuritySettings removes the default security settings generated on a spec
-func WithoutDefaultSecuritySettings(_ context.Context, _ oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithoutDefaultSecuritySettings(_ context.Context, _ over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	if s.Process == nil {
 		s.Process = &runtimespec.Process{}
 	}
@@ -167,22 +167,22 @@ func WithoutDefaultSecuritySettings(_ context.Context, _ oci.Client, c *containe
 }
 
 // WithCapabilities sets the provided capabilities from the security context
-func WithCapabilities(sc *runtime.LinuxContainerSecurityContext, allCaps []string) oci.SpecOpts {
+func WithCapabilities(sc *runtime.LinuxContainerSecurityContext, allCaps []string) over_oci.SpecOpts {
 	capabilities := sc.GetCapabilities()
 	if capabilities == nil {
 		return nullOpt
 	}
 
-	var opts []oci.SpecOpts
+	var opts []over_oci.SpecOpts
 	// Add/drop all capabilities if "all" is specified, so that
 	// following individual add/drop could still work. E.g.
 	// AddCapabilities: []string{"ALL"}, DropCapabilities: []string{"CHOWN"}
 	// will be all capabilities without `CAP_CHOWN`.
 	if util.InStringSlice(capabilities.GetAddCapabilities(), "ALL") {
-		opts = append(opts, oci.WithCapabilities(allCaps))
+		opts = append(opts, over_oci.WithCapabilities(allCaps))
 	}
 	if util.InStringSlice(capabilities.GetDropCapabilities(), "ALL") {
-		opts = append(opts, oci.WithCapabilities(nil))
+		opts = append(opts, over_oci.WithCapabilities(nil))
 	}
 
 	var caps []string
@@ -193,7 +193,7 @@ func WithCapabilities(sc *runtime.LinuxContainerSecurityContext, allCaps []strin
 		// Capabilities in CRI doesn't have `CAP_` prefix, so add it.
 		caps = append(caps, "CAP_"+strings.ToUpper(c))
 	}
-	opts = append(opts, oci.WithAddedCapabilities(caps))
+	opts = append(opts, over_oci.WithAddedCapabilities(caps))
 
 	caps = []string{}
 	for _, c := range capabilities.GetDropCapabilities() {
@@ -202,16 +202,16 @@ func WithCapabilities(sc *runtime.LinuxContainerSecurityContext, allCaps []strin
 		}
 		caps = append(caps, "CAP_"+strings.ToUpper(c))
 	}
-	opts = append(opts, oci.WithDroppedCapabilities(caps))
-	return oci.Compose(opts...)
+	opts = append(opts, over_oci.WithDroppedCapabilities(caps))
+	return over_oci.Compose(opts...)
 }
 
-func nullOpt(_ context.Context, _ oci.Client, _ *containers.Container, _ *runtimespec.Spec) error {
+func nullOpt(_ context.Context, _ over_oci.Client, _ *containers.Container, _ *runtimespec.Spec) error {
 	return nil
 }
 
 // WithoutAmbientCaps removes the ambient caps from the spec
-func WithoutAmbientCaps(_ context.Context, _ oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithoutAmbientCaps(_ context.Context, _ over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	if s.Process == nil {
 		s.Process = &runtimespec.Process{}
 	}
@@ -223,7 +223,7 @@ func WithoutAmbientCaps(_ context.Context, _ oci.Client, c *containers.Container
 }
 
 // WithDisabledCgroups clears the Cgroups Path from the spec
-func WithDisabledCgroups(_ context.Context, _ oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithDisabledCgroups(_ context.Context, _ over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	if s.Linux == nil {
 		s.Linux = &runtimespec.Linux{}
 	}
@@ -232,8 +232,8 @@ func WithDisabledCgroups(_ context.Context, _ oci.Client, c *containers.Containe
 }
 
 // WithSelinuxLabels sets the mount and process labels
-func WithSelinuxLabels(process, mount string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithSelinuxLabels(process, mount string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		if s.Linux == nil {
 			s.Linux = &runtimespec.Linux{}
 		}
@@ -247,8 +247,8 @@ func WithSelinuxLabels(process, mount string) oci.SpecOpts {
 }
 
 // WithSysctls sets the provided sysctls onto the spec
-func WithSysctls(sysctls map[string]string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithSysctls(sysctls map[string]string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Linux == nil {
 			s.Linux = &runtimespec.Linux{}
 		}
@@ -263,8 +263,8 @@ func WithSysctls(sysctls map[string]string) oci.SpecOpts {
 }
 
 // WithSupplementalGroups sets the supplemental groups for the process
-func WithSupplementalGroups(groups []int64) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithSupplementalGroups(groups []int64) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Process == nil {
 			s.Process = &runtimespec.Process{}
 		}
@@ -278,7 +278,7 @@ func WithSupplementalGroups(groups []int64) oci.SpecOpts {
 }
 
 // WithDefaultSandboxShares sets the default sandbox CPU shares
-func WithDefaultSandboxShares(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithDefaultSandboxShares(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	if s.Linux == nil {
 		s.Linux = &runtimespec.Linux{}
 	}
@@ -294,8 +294,8 @@ func WithDefaultSandboxShares(ctx context.Context, client oci.Client, c *contain
 }
 
 // WithoutNamespace removes the provided namespace
-func WithoutNamespace(t runtimespec.LinuxNamespaceType) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithoutNamespace(t runtimespec.LinuxNamespaceType) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Linux == nil {
 			return nil
 		}
@@ -311,16 +311,16 @@ func WithoutNamespace(t runtimespec.LinuxNamespaceType) oci.SpecOpts {
 }
 
 // WithPodNamespaces sets the pod namespaces for the container
-func WithPodNamespaces(config *runtime.LinuxContainerSecurityContext, sandboxPid uint32, targetPid uint32, uids, gids []runtimespec.LinuxIDMapping) oci.SpecOpts {
+func WithPodNamespaces(config *runtime.LinuxContainerSecurityContext, sandboxPid uint32, targetPid uint32, uids, gids []runtimespec.LinuxIDMapping) over_oci.SpecOpts {
 	namespaces := config.GetNamespaceOptions()
 
-	opts := []oci.SpecOpts{
-		oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.NetworkNamespace, Path: GetNetworkNamespace(sandboxPid)}),
-		oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.IPCNamespace, Path: GetIPCNamespace(sandboxPid)}),
-		oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.UTSNamespace, Path: GetUTSNamespace(sandboxPid)}),
+	opts := []over_oci.SpecOpts{
+		over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.NetworkNamespace, Path: GetNetworkNamespace(sandboxPid)}),
+		over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.IPCNamespace, Path: GetIPCNamespace(sandboxPid)}),
+		over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.UTSNamespace, Path: GetUTSNamespace(sandboxPid)}),
 	}
 	if namespaces.GetPid() != runtime.NamespaceMode_CONTAINER {
-		opts = append(opts, oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.PIDNamespace, Path: GetPIDNamespace(targetPid)}))
+		opts = append(opts, over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.PIDNamespace, Path: GetPIDNamespace(targetPid)}))
 	}
 
 	if namespaces.GetUsernsOptions() != nil {
@@ -328,12 +328,12 @@ func WithPodNamespaces(config *runtime.LinuxContainerSecurityContext, sandboxPid
 		case runtime.NamespaceMode_NODE:
 			// Nothing to do. Not adding userns field uses the node userns.
 		case runtime.NamespaceMode_POD:
-			opts = append(opts, oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.UserNamespace, Path: GetUserNamespace(sandboxPid)}))
-			opts = append(opts, oci.WithUserNamespace(uids, gids))
+			opts = append(opts, over_oci.WithLinuxNamespace(runtimespec.LinuxNamespace{Type: runtimespec.UserNamespace, Path: GetUserNamespace(sandboxPid)}))
+			opts = append(opts, over_oci.WithUserNamespace(uids, gids))
 		}
 	}
 
-	return oci.Compose(opts...)
+	return over_oci.Compose(opts...)
 }
 
 const (

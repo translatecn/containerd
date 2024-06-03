@@ -18,10 +18,8 @@ package command
 
 import (
 	"context"
-
+	"demo/others/log"
 	sd "github.com/coreos/go-systemd/v22/daemon"
-
-	"github.com/containerd/containerd/log"
 )
 
 // notifyReady notifies systemd that the daemon is ready to serve requests

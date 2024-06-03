@@ -23,9 +23,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/oci"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/pkg/cio"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 )
@@ -43,7 +43,7 @@ func (w *execWorker) exec(ctx, tctx context.Context) {
 	c, err := w.client.NewContainer(ctx, id,
 		containerd.WithNewSnapshot(id, w.image),
 		containerd.WithSnapshotter(w.snapshotter),
-		containerd.WithNewSpec(oci.WithImageConfig(w.image), oci.WithUsername("games"), oci.WithProcessArgs("sleep", "30d")),
+		containerd.WithNewSpec(over_oci.WithImageConfig(w.image), over_oci.WithUsername("games"), over_oci.WithProcessArgs("sleep", "30d")),
 	)
 	if err != nil {
 		logrus.WithError(err).Error("create exec container")

@@ -21,13 +21,13 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/netns"
-	"github.com/containerd/containerd/snapshots"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/others/console"
+	"demo/over/oci"
+	"demo/pkg/netns"
+	"demo/snapshots"
+	"demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -44,7 +44,7 @@ var platformRunFlags = []cli.Flag{
 func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli.Context) (containerd.Container, error) {
 	var (
 		id    string
-		opts  []oci.SpecOpts
+		opts  []over_oci.SpecOpts
 		cOpts []containerd.NewContainerOpts
 		spec  containerd.NewContainerOpts
 
@@ -57,7 +57,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 
 	if config {
 		id = context.Args().First()
-		opts = append(opts, oci.WithSpecFromFile(context.String("config")))
+		opts = append(opts, over_oci.WithSpecFromFile(context.String("config")))
 		cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
 	} else {
 		var (
@@ -68,18 +68,18 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 		id = context.Args().Get(1)
 		snapshotter := context.String("snapshotter")
 		if snapshotter == "windows-lcow" {
-			opts = append(opts, oci.WithDefaultSpecForPlatform("linux/amd64"))
+			opts = append(opts, over_oci.WithDefaultSpecForPlatform("linux/amd64"))
 			// Clear the rootfs section.
-			opts = append(opts, oci.WithRootFSPath(""))
+			opts = append(opts, over_oci.WithRootFSPath(""))
 		} else {
-			opts = append(opts, oci.WithDefaultSpec())
-			opts = append(opts, oci.WithWindowNetworksAllowUnqualifiedDNSQuery())
-			opts = append(opts, oci.WithWindowsIgnoreFlushesDuringBoot())
+			opts = append(opts, over_oci.WithDefaultSpec())
+			opts = append(opts, over_oci.WithWindowNetworksAllowUnqualifiedDNSQuery())
+			opts = append(opts, over_oci.WithWindowsIgnoreFlushesDuringBoot())
 		}
 		if ef := context.String("env-file"); ef != "" {
-			opts = append(opts, oci.WithEnvFile(ef))
+			opts = append(opts, over_oci.WithEnvFile(ef))
 		}
-		opts = append(opts, oci.WithEnv(context.StringSlice("env")))
+		opts = append(opts, over_oci.WithEnv(context.StringSlice("env")))
 		opts = append(opts, withMounts(context))
 
 		image, err := client.GetImage(ctx, ref)
@@ -95,7 +95,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 				return nil, err
 			}
 		}
-		opts = append(opts, oci.WithImageConfig(image))
+		opts = append(opts, over_oci.WithImageConfig(image))
 		labels := buildLabels(commands.LabelArgs(context.StringSlice("label")), image.Labels())
 		cOpts = append(cOpts,
 			containerd.WithImage(image),
@@ -108,23 +108,23 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			containerd.WithAdditionalContainerLabels(labels))
 
 		if len(args) > 0 {
-			opts = append(opts, oci.WithProcessArgs(args...))
+			opts = append(opts, over_oci.WithProcessArgs(args...))
 		}
 		if cwd := context.String("cwd"); cwd != "" {
-			opts = append(opts, oci.WithProcessCwd(cwd))
+			opts = append(opts, over_oci.WithProcessCwd(cwd))
 		}
 		if user := context.String("user"); user != "" {
-			opts = append(opts, oci.WithUser(user))
+			opts = append(opts, over_oci.WithUser(user))
 		}
 		if context.Bool("tty") {
-			opts = append(opts, oci.WithTTY)
+			opts = append(opts, over_oci.WithTTY)
 
 			con := console.Current()
 			size, err := con.Size()
 			if err != nil {
 				logrus.WithError(err).Error("console size")
 			}
-			opts = append(opts, oci.WithTTYSize(int(size.Width), int(size.Height)))
+			opts = append(opts, over_oci.WithTTYSize(int(size.Width), int(size.Height)))
 		}
 		if context.Bool("net-host") {
 			return nil, errors.New("Cannot use host mode networking with Windows containers")
@@ -134,28 +134,28 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if err != nil {
 				return nil, err
 			}
-			opts = append(opts, oci.WithWindowsNetworkNamespace(ns.GetPath()))
+			opts = append(opts, over_oci.WithWindowsNetworkNamespace(ns.GetPath()))
 			cniMeta := &commands.NetworkMetaData{EnableCni: true}
 			cOpts = append(cOpts, containerd.WithContainerExtension(commands.CtrCniMetadataExtension, cniMeta))
 		}
 		if context.Bool("isolated") {
-			opts = append(opts, oci.WithWindowsHyperV)
+			opts = append(opts, over_oci.WithWindowsHyperV)
 		}
 		limit := context.Uint64("memory-limit")
 		if limit != 0 {
-			opts = append(opts, oci.WithMemoryLimit(limit))
+			opts = append(opts, over_oci.WithMemoryLimit(limit))
 		}
 		ccount := context.Uint64("cpu-count")
 		if ccount != 0 {
-			opts = append(opts, oci.WithWindowsCPUCount(ccount))
+			opts = append(opts, over_oci.WithWindowsCPUCount(ccount))
 		}
 		cshares := context.Uint64("cpu-shares")
 		if cshares != 0 {
-			opts = append(opts, oci.WithWindowsCPUShares(uint16(cshares)))
+			opts = append(opts, over_oci.WithWindowsCPUShares(uint16(cshares)))
 		}
 		cmax := context.Uint64("cpu-max")
 		if cmax != 0 {
-			opts = append(opts, oci.WithWindowsCPUMaximum(uint16(cmax)))
+			opts = append(opts, over_oci.WithWindowsCPUMaximum(uint16(cmax)))
 		}
 		for _, dev := range context.StringSlice("device") {
 			idType, devID, ok := strings.Cut(dev, "://")
@@ -165,7 +165,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if idType == "" {
 				return nil, errors.New("devices must have a non-empty IDType")
 			}
-			opts = append(opts, oci.WithWindowsDevice(idType, devID))
+			opts = append(opts, over_oci.WithWindowsDevice(idType, devID))
 		}
 	}
 

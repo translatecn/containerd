@@ -18,6 +18,8 @@ package podsandbox
 
 import (
 	"context"
+	"demo/others/log"
+	docker2 "demo/pkg/reference/docker"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -25,15 +27,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	clabels "github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	imagestore "github.com/containerd/containerd/pkg/cri/store/image"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/reference/docker"
+	"demo/containerd"
+	"demo/containers"
+	"demo/over/oci"
+	criconfig "demo/pkg/cri/config"
+	imagestore "demo/pkg/cri/store/image"
+	ctrdutil "demo/pkg/cri/util"
+	clabels "demo/pkg/labels"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 
@@ -80,12 +80,12 @@ func (c *Controller) getVolatileSandboxRootDir(id string) string {
 }
 
 // getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
-func getRepoDigestAndTag(namedRef docker.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
+func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
 	var repoTag, repoDigest string
-	if _, ok := namedRef.(docker.NamedTagged); ok {
+	if _, ok := namedRef.(docker2.NamedTagged); ok {
 		repoTag = namedRef.String()
 	}
-	if _, ok := namedRef.(docker.Canonical); ok {
+	if _, ok := namedRef.(docker2.Canonical); ok {
 		repoDigest = namedRef.String()
 	} else if !schema1 {
 		// digest is not actual repo digest for schema1 image.
@@ -148,13 +148,13 @@ func buildLabels(configLabels, imageConfigLabels map[string]string, containerTyp
 func parseImageReferences(refs []string) ([]string, []string) {
 	var tags, digests []string
 	for _, ref := range refs {
-		parsed, err := docker.ParseAnyReference(ref)
+		parsed, err := docker2.ParseAnyReference(ref)
 		if err != nil {
 			continue
 		}
-		if _, ok := parsed.(docker.Canonical); ok {
+		if _, ok := parsed.(docker2.Canonical); ok {
 			digests = append(digests, parsed.String())
-		} else if _, ok := parsed.(docker.Tagged); ok {
+		} else if _, ok := parsed.(docker2.Tagged); ok {
 			tags = append(tags, parsed.String())
 		}
 	}
@@ -181,7 +181,7 @@ func getPassthroughAnnotations(podAnnotations map[string]string,
 }
 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...over_oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := ctrdutil.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -192,22 +192,22 @@ func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.Spe
 			return nil, fmt.Errorf("can't find base OCI spec %q", baseSpecFile)
 		}
 
-		spec := oci.Spec{}
+		spec := over_oci.Spec{}
 		if err := ctrdutil.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
 		// Fix up cgroups path
-		applyOpts := append([]oci.SpecOpts{oci.WithNamespacedCgroup()}, opts...)
+		applyOpts := append([]over_oci.SpecOpts{over_oci.WithNamespacedCgroup()}, opts...)
 
-		if err := oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
+		if err := over_oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
 			return nil, fmt.Errorf("failed to apply OCI options: %w", err)
 		}
 
 		return &spec, nil
 	}
 
-	spec, err := oci.GenerateSpec(ctx, nil, container, opts...)
+	spec, err := over_oci.GenerateSpec(ctx, nil, container, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate spec: %w", err)
 	}
@@ -216,7 +216,7 @@ func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.Spe
 }
 
 // Overrides the default snapshotter if Snapshotter is set for this runtime.
-// See https://github.com/containerd/containerd/issues/6657
+// See https://github.com/containerd/issues/6657
 func (c *Controller) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
 	if ociRuntime.Snapshotter == "" {
 		return c.config.ContainerdConfig.Snapshotter

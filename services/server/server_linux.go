@@ -18,15 +18,15 @@ package server
 
 import (
 	"context"
+	"demo/others/cgroups/v3"
+	"demo/others/log"
+	"demo/pkg/sys"
 	"os"
 
-	"github.com/containerd/cgroups/v3"
-	cgroup1 "github.com/containerd/cgroups/v3/cgroup1"
-	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
-	"github.com/containerd/containerd/log"
-	srvconfig "github.com/containerd/containerd/services/server/config"
-	"github.com/containerd/containerd/sys"
-	"github.com/containerd/ttrpc"
+	cgroup1 "demo/others/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	"demo/others/ttrpc"
+	srvconfig "demo/services/server/config"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 

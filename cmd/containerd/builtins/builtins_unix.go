@@ -19,6 +19,6 @@
 package builtins
 
 import (
-	_ "github.com/containerd/containerd/snapshots/blockfile/plugin"
-	_ "github.com/containerd/containerd/snapshots/native/plugin"
+	_ "demo/snapshots/blockfile/plugin"
+	_ "demo/snapshots/native/plugin"
 )

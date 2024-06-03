@@ -25,8 +25,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	internalapi "github.com/containerd/containerd/integration/cri-api/pkg/apis"
-	"github.com/containerd/containerd/pkg/cri/util"
+	"demo/pkg/cri/util"
+	internalapi "demo/pkg/integration/cri-api/pkg/apis"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 

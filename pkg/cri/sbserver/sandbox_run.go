@@ -18,6 +18,10 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/go-cni"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
+	sb "demo/pkg/sandbox"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,22 +30,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	"github.com/containerd/containerd/pkg/cri/sbserver/podsandbox"
-	"github.com/containerd/containerd/pkg/cri/server/bandwidth"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	"github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/pkg/netns"
-	sb "github.com/containerd/containerd/sandbox"
+	"demo/containerd"
+	"demo/pkg/cri/annotations"
+	criconfig "demo/pkg/cri/config"
+	"demo/pkg/cri/sbserver/podsandbox"
+	"demo/pkg/cri/server/bandwidth"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	"demo/pkg/cri/util"
+	"demo/pkg/netns"
 )
 
 func init() {

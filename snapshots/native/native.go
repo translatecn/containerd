@@ -18,16 +18,17 @@ package native
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/storage"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/storage"
 
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
 )
 
 type snapshotter struct {
@@ -38,7 +39,7 @@ type snapshotter struct {
 // NewSnapshotter returns a Snapshotter which copies layers on the underlying
 // file system. A metadata file is stored under the root.
 func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 	ms, err := storage.NewMetaStore(filepath.Join(root, "metadata.db"))
@@ -46,7 +47,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 
-	if err := os.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
+	if err := my_mk.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
@@ -218,7 +219,7 @@ func (o *snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 	)
 
 	if kind == snapshots.KindActive || parent == "" {
-		td, err = os.MkdirTemp(filepath.Join(o.root, "snapshots"), "new-")
+		td, err = my_mk.MkdirTemp(filepath.Join(o.root, "snapshots"), "new-")
 		if err != nil {
 			return nil, fmt.Errorf("failed to create temp dir: %w", err)
 		}

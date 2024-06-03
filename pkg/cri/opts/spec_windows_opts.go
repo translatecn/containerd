@@ -24,9 +24,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/oci"
-	osinterface "github.com/containerd/containerd/pkg/os"
+	"demo/containers"
+	"demo/over/oci"
+	osinterface "demo/over/os"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -102,8 +102,8 @@ func parseMount(osi osinterface.OS, mount *runtime.Mount) (*runtimespec.Mount, e
 
 // WithWindowsMounts sorts and adds runtime and CRI mounts to the spec for
 // windows container.
-func WithWindowsMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+func WithWindowsMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
 		// mergeMounts merge CRI mounts with extra mounts. If a mount destination
 		// is mounted by both a CRI mount and an extra mount, the CRI mount will
 		// be kept.
@@ -160,8 +160,8 @@ func WithWindowsMounts(osi osinterface.OS, config *runtime.ContainerConfig, extr
 }
 
 // WithWindowsResources sets the provided resource restrictions for windows.
-func WithWindowsResources(resources *runtime.WindowsContainerResources) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithWindowsResources(resources *runtime.WindowsContainerResources) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if resources == nil {
 			return nil
 		}
@@ -201,7 +201,7 @@ func WithWindowsResources(resources *runtime.WindowsContainerResources) oci.Spec
 }
 
 // WithWindowsDefaultSandboxShares sets the default sandbox CPU shares
-func WithWindowsDefaultSandboxShares(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithWindowsDefaultSandboxShares(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 	if s.Windows == nil {
 		s.Windows = &runtimespec.Windows{}
 	}
@@ -218,8 +218,8 @@ func WithWindowsDefaultSandboxShares(ctx context.Context, client oci.Client, c *
 
 // WithWindowsCredentialSpec assigns `credentialSpec` to the
 // `runtime.Spec.Windows.CredentialSpec` field.
-func WithWindowsCredentialSpec(credentialSpec string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) error {
+func WithWindowsCredentialSpec(credentialSpec string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) error {
 		if s.Windows == nil {
 			s.Windows = &runtimespec.Windows{}
 		}
@@ -229,8 +229,8 @@ func WithWindowsCredentialSpec(credentialSpec string) oci.SpecOpts {
 }
 
 // WithWindowsDevices sets the provided devices onto the container spec
-func WithWindowsDevices(config *runtime.ContainerConfig) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+func WithWindowsDevices(config *runtime.ContainerConfig) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
 		for _, device := range config.GetDevices() {
 			if device.ContainerPath != "" {
 				return fmt.Errorf("unexpected ContainerPath %s, must be empty", device.ContainerPath)
@@ -250,7 +250,7 @@ func WithWindowsDevices(config *runtime.ContainerConfig) oci.SpecOpts {
 				return fmt.Errorf("unrecognised HostPath format %v, must match IDType://ID", device.HostPath)
 			}
 
-			o := oci.WithWindowsDevice(idType, id)
+			o := over_oci.WithWindowsDevice(idType, id)
 			if err := o(ctx, client, c, s); err != nil {
 				return fmt.Errorf("failed adding device with HostPath %v: %w", device.HostPath, err)
 			}

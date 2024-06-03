@@ -17,13 +17,13 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.20.1
-// source: github.com/containerd/containerd/runtime/v1/shim/v1/shim.proto
+// source: demo/runtime/v1/shim/v1/shim.proto
 
 package shim
 
 import (
-	types "github.com/containerd/containerd/api/types"
-	task "github.com/containerd/containerd/api/types/task"
+	types "demo/pkg/api/types"
+	task "demo/pkg/api/types/task"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"

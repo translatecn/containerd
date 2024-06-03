@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cni "github.com/containerd/go-cni"
+	cni "demo/others/go-cni"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 

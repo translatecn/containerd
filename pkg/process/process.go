@@ -21,8 +21,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/pkg/stdio"
+	"demo/others/console"
+	"demo/pkg/stdio"
 )
 
 // Process on a system

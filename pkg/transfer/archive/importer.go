@@ -18,18 +18,18 @@ package archive
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"io"
 
-	"github.com/containerd/typeurl/v2"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	transferapi "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/archive/compression"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/images/archive"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	tstreaming "github.com/containerd/containerd/pkg/transfer/streaming"
+	"demo/content"
+	"demo/over/images/archive"
+	transferapi "demo/pkg/api/types/transfer"
+	"demo/pkg/archive/compression"
+	"demo/pkg/streaming"
+	tstreaming "demo/pkg/transfer/streaming"
 )
 
 type ImportOpt func(*ImageImportStream)

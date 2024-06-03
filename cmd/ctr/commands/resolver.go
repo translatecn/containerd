@@ -21,6 +21,8 @@ import (
 	gocontext "context"
 	"crypto/tls"
 	"crypto/x509"
+	"demo/others/console"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"io"
@@ -30,12 +32,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/transfer/registry"
-	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/remotes/docker"
-	"github.com/containerd/containerd/remotes/docker/config"
+	"demo/pkg/transfer/registry"
+	"demo/remotes"
+	"demo/remotes/docker"
+	"demo/remotes/docker/config"
 	"github.com/urfave/cli"
 )
 

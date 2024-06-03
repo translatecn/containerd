@@ -18,16 +18,16 @@ package podsandbox
 
 import (
 	"context"
+	"demo/others/go-cni"
+	"demo/pkg/sandbox"
 	"encoding/json"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	"github.com/containerd/containerd/sandbox"
-	"github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
+	"demo/containerd"
+	"demo/containers"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
+	sandboxstore "demo/pkg/cri/store/sandbox"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -97,14 +97,14 @@ func toCRISandboxInfo(ctx context.Context, sandbox sandboxstore.Sandbox) (map[st
 
 	if container := sandbox.Container; container != nil {
 		task, err := container.Task(ctx, nil)
-		if err != nil && !errdefs.IsNotFound(err) {
+		if err != nil && !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get sandbox container task: %w", err)
 		}
 
 		var processStatus containerd.ProcessStatus
 		if task != nil {
 			if taskStatus, err := task.Status(ctx); err != nil {
-				if !errdefs.IsNotFound(err) {
+				if !over_errdefs.IsNotFound(err) {
 					return nil, fmt.Errorf("failed to get task status: %w", err)
 				}
 				processStatus = containerd.Unknown

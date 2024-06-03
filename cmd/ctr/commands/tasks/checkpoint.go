@@ -17,14 +17,14 @@
 package tasks
 
 import (
+	"demo/over/plugin"
 	"errors"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/runtime/linux/runctypes"
-	"github.com/containerd/containerd/runtime/v2/runc/options"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/runtime/linux/runctypes"
+	"demo/runtime/v2/runc/options"
 	"github.com/urfave/cli"
 )
 
@@ -87,7 +87,7 @@ func withCheckpointOpts(rt string, context *cli.Context) containerd.CheckpointTa
 		workPath := context.String("work-path")
 
 		switch rt {
-		case plugin.RuntimeRuncV1, plugin.RuntimeRuncV2:
+		case over_plugin.RuntimeRuncV1, over_plugin.RuntimeRuncV2:
 			if r.Options == nil {
 				r.Options = &options.CheckpointOptions{}
 			}
@@ -102,7 +102,7 @@ func withCheckpointOpts(rt string, context *cli.Context) containerd.CheckpointTa
 			if workPath != "" {
 				opts.WorkPath = workPath
 			}
-		case plugin.RuntimeLinuxV1:
+		case over_plugin.RuntimeLinuxV1:
 			if r.Options == nil {
 				r.Options = &runctypes.CheckpointOptions{}
 			}

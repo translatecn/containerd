@@ -17,6 +17,7 @@
 package content
 
 import (
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"io"
@@ -27,11 +28,10 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes"
+	"demo/cmd/ctr/commands"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/remotes"
 	units "github.com/docker/go-units"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -385,7 +385,7 @@ var (
 				}
 
 				if err := cs.Delete(ctx, dgst); err != nil {
-					if !errdefs.IsNotFound(err) {
+					if !over_errdefs.IsNotFound(err) {
 						if exitError == nil {
 							exitError = err
 						}

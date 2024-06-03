@@ -22,11 +22,11 @@ import (
 	"context"
 	"fmt"
 
-	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
-	eventstypes "github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/pkg/oom"
-	"github.com/containerd/containerd/runtime"
-	"github.com/containerd/containerd/runtime/v2/shim"
+	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	eventstypes "demo/pkg/api/events"
+	"demo/pkg/oom"
+	"demo/runtime"
+	"demo/runtime/v2/shim"
 	"github.com/sirupsen/logrus"
 )
 

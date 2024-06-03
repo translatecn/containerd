@@ -33,5 +33,5 @@ type Config struct {
 //
 // ready should be called when the logging binary finishes its setup and the container can be started.
 //
-// An example implementation of LoggerFunc: https://github.com/containerd/containerd/tree/main/runtime/v2#logging
+// An example implementation of LoggerFunc: https://github.com/containerd/tree/main/runtime/v2#logging
 type LoggerFunc func(ctx context.Context, cfg *Config, ready func() error) error

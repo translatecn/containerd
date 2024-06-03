@@ -20,13 +20,12 @@ package docker
 
 import (
 	"context"
+	refDocker "demo/pkg/reference/docker"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-
-	refDocker "github.com/containerd/containerd/reference/docker"
 )
 
 func FuzzFetcher(data []byte) int {

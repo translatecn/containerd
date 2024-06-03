@@ -17,20 +17,20 @@
 package snapshots
 
 import (
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/services"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/metadata"
+	"demo/services"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.ServicePlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.ServicePlugin,
 		ID:   services.SnapshotsService,
-		Requires: []plugin.Type{
-			plugin.MetadataPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.MetadataPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			m, err := ic.Get(plugin.MetadataPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			m, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}

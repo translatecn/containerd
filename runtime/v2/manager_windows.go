@@ -17,12 +17,12 @@
 package v2
 
 import (
-	"github.com/containerd/containerd/platforms"
+	"demo/over/platforms"
 )
 
 func defaultPlatforms() []string {
 	return []string{
-		platforms.DefaultString(),
+		over_platforms.DefaultString(),
 		"linux/amd64",
 	}
 }

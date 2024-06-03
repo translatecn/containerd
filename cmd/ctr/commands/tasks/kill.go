@@ -18,13 +18,13 @@ package tasks
 
 import (
 	"context"
+	"demo/others/typeurl/v2"
 	"errors"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	gocni "github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	gocni "demo/others/go-cni"
 	"github.com/moby/sys/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

@@ -21,6 +21,8 @@ package lcow
 
 import (
 	"context"
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
 	"fmt"
 	"io"
 	"os"
@@ -28,15 +30,13 @@ import (
 	"runtime"
 	"time"
 
+	"demo/content"
+	"demo/diff"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/pkg/metadata"
+	"demo/third_party/github.com/Microsoft/hcsshim/ext4/tar2ext4"
 	"github.com/Microsoft/go-winio/pkg/security"
-	"github.com/Microsoft/hcsshim/ext4/tar2ext4"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/plugin"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -47,14 +47,14 @@ const (
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.DiffPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.DiffPlugin,
 		ID:   "windows-lcow",
-		Requires: []plugin.Type{
-			plugin.MetadataPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.MetadataPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			md, err := ic.Get(plugin.MetadataPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			md, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}
@@ -184,7 +184,7 @@ func (s windowsLcowDiff) Apply(ctx context.Context, desc ocispec.Descriptor, mou
 // Compare creates a diff between the given mounts and uploads the result
 // to the content store.
 func (s windowsLcowDiff) Compare(ctx context.Context, lower, upper []mount.Mount, opts ...diff.Opt) (d ocispec.Descriptor, err error) {
-	return emptyDesc, fmt.Errorf("windowsLcowDiff does not implement Compare method: %w", errdefs.ErrNotImplemented)
+	return emptyDesc, fmt.Errorf("windowsLcowDiff does not implement Compare method: %w", over_errdefs.ErrNotImplemented)
 }
 
 type readCounter struct {
@@ -200,11 +200,11 @@ func (rc *readCounter) Read(p []byte) (n int, err error) {
 
 func mountsToLayerAndParents(mounts []mount.Mount) (string, []string, error) {
 	if len(mounts) != 1 {
-		return "", nil, fmt.Errorf("number of mounts should always be 1 for Windows lcow-layers: %w", errdefs.ErrInvalidArgument)
+		return "", nil, fmt.Errorf("number of mounts should always be 1 for Windows lcow-layers: %w", over_errdefs.ErrInvalidArgument)
 	}
 	mnt := mounts[0]
 	if mnt.Type != "lcow-layer" {
-		return "", nil, fmt.Errorf("mount layer type must be lcow-layer: %w", errdefs.ErrNotImplemented)
+		return "", nil, fmt.Errorf("mount layer type must be lcow-layer: %w", over_errdefs.ErrNotImplemented)
 	}
 
 	parentLayerPaths, err := mnt.GetParentPaths()

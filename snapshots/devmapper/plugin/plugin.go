@@ -19,20 +19,20 @@
 package plugin
 
 import (
+	over_plugin2 "demo/over/plugin"
 	"errors"
 
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots/devmapper"
+	"demo/over/platforms"
+	"demo/snapshots/devmapper"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.SnapshotPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.SnapshotPlugin,
 		ID:     "devmapper",
 		Config: &devmapper.Config{},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ic.Meta.Platforms = append(ic.Meta.Platforms, platforms.DefaultSpec())
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ic.Meta.Platforms = append(ic.Meta.Platforms, over_platforms.DefaultSpec())
 
 			config, ok := ic.Config.(*devmapper.Config)
 			if !ok {
@@ -47,7 +47,7 @@ func init() {
 				config.RootPath = ic.Root
 			}
 
-			ic.Meta.Exports[plugin.SnapshotterRootDir] = config.RootPath
+			ic.Meta.Exports[over_plugin2.SnapshotterRootDir] = config.RootPath
 			return devmapper.NewSnapshotter(ic.Context, config)
 		},
 	})

@@ -21,7 +21,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/containerd/cgroups/v3/cgroup1"
+	"demo/others/cgroups/v3/cgroup1"
 )
 
 func getSysProcAttr() *syscall.SysProcAttr {

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.20.1
-// source: github.com/containerd/containerd/runtime/linux/runctypes/runc.proto
+// source: demo/runtime/linux/runctypes/runc.proto
 
 package runctypes
 

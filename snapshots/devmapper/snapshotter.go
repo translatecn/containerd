@@ -20,6 +20,8 @@ package devmapper
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"errors"
 	"fmt"
 	"os"
@@ -28,12 +30,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/devmapper/dmsetup"
-	"github.com/containerd/containerd/snapshots/storage"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/devmapper/dmsetup"
+	"demo/snapshots/storage"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -52,7 +53,7 @@ const (
 
 type closeFunc func() error
 
-// Snapshotter implements containerd's snapshotter (https://godoc.org/github.com/containerd/containerd/snapshots#Snapshotter)
+// Snapshotter implements containerd's snapshotter (https://godoc.org/demo/snapshots#Snapshotter)
 // based on Linux device-mapper targets.
 type Snapshotter struct {
 	store     *storage.MetaStore
@@ -77,7 +78,7 @@ func NewSnapshotter(ctx context.Context, config *Config) (*Snapshotter, error) {
 
 	var cleanupFn []closeFunc
 
-	if err := os.MkdirAll(config.RootPath, 0750); err != nil && !os.IsExist(err) {
+	if err := my_mk.MkdirAll(config.RootPath, 0750); err != nil && !os.IsExist(err) {
 		return nil, fmt.Errorf("failed to create root directory: %s: %w", config.RootPath, err)
 	}
 
@@ -276,7 +277,7 @@ func (s *Snapshotter) Commit(ctx context.Context, name, key string, opts ...snap
 		// Before deactivation, we need to flush the outstanding IO by suspend.
 		// Afterward, we resume it again to prevent a race window which may cause
 		// a process IO hang. See the issue below for details:
-		//   (https://github.com/containerd/containerd/issues/4234)
+		//   (https://github.com/containerd/issues/4234)
 		err = s.pool.SuspendDevice(ctx, deviceName)
 		if err != nil {
 			return err
@@ -314,7 +315,7 @@ func (s *Snapshotter) removeDevice(ctx context.Context, key string) error {
 			// Otherwise, one snapshot collection failure will stop
 			// the GC, and all snapshots won't be collected even though
 			// having no relationship with the failed one.
-			return errdefs.ErrFailedPrecondition
+			return over_errdefs.ErrFailedPrecondition
 		}
 	} else {
 		// The asynchronous cleanup will do the real device remove work.

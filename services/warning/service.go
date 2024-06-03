@@ -18,13 +18,13 @@ package warning
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
 	"sync"
 	"time"
 
-	"github.com/containerd/log"
+	"demo/others/log"
 
-	deprecation "github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/plugin"
+	deprecation "demo/pkg/deprecation"
 )
 
 type Service interface {
@@ -33,10 +33,10 @@ type Service interface {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.WarningPlugin,
-		ID:   plugin.DeprecationsPlugin,
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.WarningPlugin,
+		ID:   over_plugin2.DeprecationsPlugin,
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			return &service{warnings: make(map[deprecation.Warning]time.Time)}, nil
 		},
 	})

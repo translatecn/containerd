@@ -20,13 +20,13 @@ package v2
 
 import (
 	"context"
+	"demo/over/protobuf"
 
-	shimapi "github.com/containerd/containerd/api/runtime/task/v2"
-	"github.com/containerd/containerd/pkg/shutdown"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/runtime/v2/runc/manager"
-	"github.com/containerd/containerd/runtime/v2/runc/task"
-	"github.com/containerd/containerd/runtime/v2/shim"
+	shimapi "demo/pkg/api/runtime/task/v2"
+	"demo/pkg/shutdown"
+	"demo/runtime/v2/runc/manager"
+	"demo/runtime/v2/runc/task"
+	"demo/runtime/v2/shim"
 )
 
 // TODO(2.0): Remove this package
@@ -45,7 +45,7 @@ func (stm *shimTaskManager) Cleanup(ctx context.Context) (*shimapi.DeleteRespons
 	return &shimapi.DeleteResponse{
 		Pid:        uint32(ss.Pid),
 		ExitStatus: uint32(ss.ExitStatus),
-		ExitedAt:   protobuf.ToTimestamp(ss.ExitedAt),
+		ExitedAt:   over_protobuf.ToTimestamp(ss.ExitedAt),
 	}, nil
 }
 

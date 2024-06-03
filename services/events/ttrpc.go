@@ -18,13 +18,13 @@ package events
 
 import (
 	"context"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 
-	api "github.com/containerd/containerd/api/services/ttrpc/events/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/events/exchange"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/ttrpc/events/v1"
+	"demo/pkg/events"
+	"demo/pkg/events/exchange"
 )
 
 type ttrpcService struct {
@@ -33,7 +33,7 @@ type ttrpcService struct {
 
 func (s *ttrpcService) Forward(ctx context.Context, r *api.ForwardRequest) (*ptypes.Empty, error) {
 	if err := s.events.Forward(ctx, fromTProto(r.Envelope)); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &ptypes.Empty{}, nil
@@ -41,7 +41,7 @@ func (s *ttrpcService) Forward(ctx context.Context, r *api.ForwardRequest) (*pty
 
 func fromTProto(env *api.Envelope) *events.Envelope {
 	return &events.Envelope{
-		Timestamp: protobuf.FromTimestamp(env.Timestamp),
+		Timestamp: over_protobuf.FromTimestamp(env.Timestamp),
 		Namespace: env.Namespace,
 		Topic:     env.Topic,
 		Event:     env.Event,

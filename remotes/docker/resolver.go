@@ -19,6 +19,9 @@ package docker
 import (
 	"context"
 	"crypto/tls"
+	"demo/others/log"
+	"demo/over/tracing"
+	"demo/pkg/reference"
 	"errors"
 	"fmt"
 	"io"
@@ -28,15 +31,12 @@ import (
 	"path"
 	"strings"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/reference"
-	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/remotes/docker/schema1" //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
-	remoteerrors "github.com/containerd/containerd/remotes/errors"
-	"github.com/containerd/containerd/tracing"
-	"github.com/containerd/containerd/version"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/remotes"
+	"demo/remotes/docker/schema1" //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
+	remoteerrors "demo/remotes/errors"
+	"demo/version"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -161,8 +161,8 @@ func NewResolver(options ResolverOptions) remotes.Resolver {
 	if _, ok := options.Headers["Accept"]; !ok {
 		// set headers for all the types we support for resolution.
 		resolveHeader.Set("Accept", strings.Join([]string{
-			images.MediaTypeDockerSchema2Manifest,
-			images.MediaTypeDockerSchema2ManifestList,
+			over_images.MediaTypeDockerSchema2Manifest,
+			over_images.MediaTypeDockerSchema2ManifestList,
 			ocispec.MediaTypeImageManifest,
 			ocispec.MediaTypeImageIndex, "*/*",
 		}, ", "))
@@ -213,7 +213,7 @@ func getManifestMediaType(resp *http.Response) string {
 	// As of Apr 30 2019 the registry.access.redhat.com registry does not specify
 	// the content type of any data but uses schema1 manifests.
 	if contentType == "text/plain" {
-		contentType = images.MediaTypeDockerSchema1Manifest
+		contentType = over_images.MediaTypeDockerSchema1Manifest
 	}
 	return contentType
 }
@@ -268,7 +268,7 @@ func (r *dockerResolver) Resolve(ctx context.Context, ref string) (string, ocisp
 
 	hosts := base.filterHosts(caps)
 	if len(hosts) == 0 {
-		return "", ocispec.Descriptor{}, fmt.Errorf("no resolve hosts: %w", errdefs.ErrNotFound)
+		return "", ocispec.Descriptor{}, fmt.Errorf("no resolve hosts: %w", over_errdefs.ErrNotFound)
 	}
 
 	ctx, err = ContextWithRepositoryScope(ctx, refspec, false)
@@ -364,7 +364,7 @@ func (r *dockerResolver) Resolve(ctx context.Context, ref string) (string, ocisp
 						return err
 					}
 
-					if contentType == images.MediaTypeDockerSchema1Manifest {
+					if contentType == over_images.MediaTypeDockerSchema1Manifest {
 						b, err := schema1.ReadStripSignature(&bodyReader)
 						if err != nil {
 							return err
@@ -385,7 +385,7 @@ func (r *dockerResolver) Resolve(ctx context.Context, ref string) (string, ocisp
 			// Prevent resolving to excessively large manifests
 			if size > MaxManifestSize {
 				if firstErr == nil {
-					firstErr = fmt.Errorf("rejecting %d byte manifest for %s: %w", size, ref, errdefs.ErrNotFound)
+					firstErr = fmt.Errorf("rejecting %d byte manifest for %s: %w", size, ref, over_errdefs.ErrNotFound)
 				}
 				continue
 			}
@@ -406,7 +406,7 @@ func (r *dockerResolver) Resolve(ctx context.Context, ref string) (string, ocisp
 	// means that either no registries were given or each registry returned 404.
 
 	if firstErr == nil {
-		firstErr = fmt.Errorf("%s: %w", ref, errdefs.ErrNotFound)
+		firstErr = fmt.Errorf("%s: %w", ref, over_errdefs.ErrNotFound)
 	}
 
 	return "", ocispec.Descriptor{}, firstErr
@@ -586,7 +586,7 @@ func (r *request) do(ctx context.Context) (*http.Response, error) {
 		}
 	}
 
-	tracing.UpdateHTTPClient(client, tracing.Name("remotes.docker.resolver", "HTTPRequest"))
+	over_tracing.UpdateHTTPClient(client, over_tracing.Name("remotes.docker.resolver", "HTTPRequest"))
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -626,7 +626,7 @@ func (r *request) retryRequest(ctx context.Context, responses []*http.Response) 
 		if r.host.Authorizer != nil {
 			if err := r.host.Authorizer.AddResponses(ctx, responses); err == nil {
 				return true, nil
-			} else if !errdefs.IsNotImplemented(err) {
+			} else if !over_errdefs.IsNotImplemented(err) {
 				return false, err
 			}
 		}

@@ -4,7 +4,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.20.1
-// source: github.com/containerd/containerd/pkg/runtimeoptions/v1/api.proto
+// source: demo/pkg/runtimeoptions/v1/api.proto
 
 package runtimeoptions_v1
 

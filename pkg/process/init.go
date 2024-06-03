@@ -20,6 +20,8 @@ package process
 
 import (
 	"context"
+	"demo/others/log"
+	google_protobuf "demo/over/protobuf/types"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,13 +31,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/stdio"
-	google_protobuf "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/fifo"
-	runc "github.com/containerd/go-runc"
+	"demo/others/console"
+	"demo/others/fifo"
+	runc "demo/others/go-runc"
+	"demo/over/mount"
+	"demo/pkg/stdio"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 )

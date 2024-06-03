@@ -17,15 +17,15 @@
 package images
 
 import (
-	imagesapi "github.com/containerd/containerd/api/services/images/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/protobuf"
+	"demo/over/images"
+	"demo/over/protobuf"
+	imagesapi "demo/pkg/api/services/images/v1"
+	"demo/pkg/api/types"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-func imagesToProto(images []images.Image) []*imagesapi.Image {
+func imagesToProto(images []over_images.Image) []*imagesapi.Image {
 	var imagespb []*imagesapi.Image
 
 	for _, image := range images {
@@ -36,23 +36,23 @@ func imagesToProto(images []images.Image) []*imagesapi.Image {
 	return imagespb
 }
 
-func imageToProto(image *images.Image) *imagesapi.Image {
+func imageToProto(image *over_images.Image) *imagesapi.Image {
 	return &imagesapi.Image{
 		Name:      image.Name,
 		Labels:    image.Labels,
 		Target:    descToProto(&image.Target),
-		CreatedAt: protobuf.ToTimestamp(image.CreatedAt),
-		UpdatedAt: protobuf.ToTimestamp(image.UpdatedAt),
+		CreatedAt: over_protobuf.ToTimestamp(image.CreatedAt),
+		UpdatedAt: over_protobuf.ToTimestamp(image.UpdatedAt),
 	}
 }
 
-func imageFromProto(imagepb *imagesapi.Image) images.Image {
-	return images.Image{
+func imageFromProto(imagepb *imagesapi.Image) over_images.Image {
+	return over_images.Image{
 		Name:      imagepb.Name,
 		Labels:    imagepb.Labels,
 		Target:    descFromProto(imagepb.Target),
-		CreatedAt: protobuf.FromTimestamp(imagepb.CreatedAt),
-		UpdatedAt: protobuf.FromTimestamp(imagepb.UpdatedAt),
+		CreatedAt: over_protobuf.FromTimestamp(imagepb.CreatedAt),
+		UpdatedAt: over_protobuf.FromTimestamp(imagepb.UpdatedAt),
 	}
 }
 

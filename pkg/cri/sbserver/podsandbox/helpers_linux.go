@@ -18,6 +18,7 @@ package podsandbox
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"os"
 	"path"
@@ -28,10 +29,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/seccomp"
-	"github.com/containerd/containerd/pkg/seutil"
+	"demo/over/mount"
+	"demo/pkg/seccomp"
+	"demo/pkg/seutil"
 	"github.com/moby/sys/mountinfo"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"

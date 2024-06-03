@@ -19,21 +19,21 @@ package walking
 import (
 	"context"
 	"crypto/rand"
+	"demo/others/log"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/containerd/containerd/archive"
-	"github.com/containerd/containerd/archive/compression"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/epoch"
+	"demo/content"
+	"demo/diff"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/pkg/archive"
+	"demo/pkg/archive/compression"
+	"demo/pkg/epoch"
+	"demo/pkg/labels"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -90,7 +90,7 @@ func (s *walkingDiff) Compare(ctx context.Context, lower, upper []mount.Mount, o
 		case ocispec.MediaTypeImageLayerGzip:
 			isCompressed = true
 		default:
-			return emptyDesc, fmt.Errorf("unsupported diff media type: %v: %w", config.MediaType, errdefs.ErrNotImplemented)
+			return emptyDesc, fmt.Errorf("unsupported diff media type: %v: %w", config.MediaType, over_errdefs.ErrNotImplemented)
 		}
 	}
 
@@ -168,7 +168,7 @@ func (s *walkingDiff) Compare(ctx context.Context, lower, upper []mount.Mount, o
 
 			dgst := cw.Digest()
 			if errOpen = cw.Commit(ctx, 0, dgst, commitopts...); errOpen != nil {
-				if !errdefs.IsAlreadyExists(errOpen) {
+				if !over_errdefs.IsAlreadyExists(errOpen) {
 					return fmt.Errorf("failed to commit: %w", errOpen)
 				}
 				errOpen = nil

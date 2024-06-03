@@ -18,15 +18,15 @@ package proxy
 
 import (
 	"context"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 
-	diffapi "github.com/containerd/containerd/api/services/diff/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/epoch"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/diff"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	diffapi "demo/pkg/api/services/diff/v1"
+	"demo/pkg/api/types"
+	"demo/pkg/epoch"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
@@ -55,7 +55,7 @@ func (r *diffRemote) Apply(ctx context.Context, desc ocispec.Descriptor, mounts 
 
 	payloads := make(map[string]*ptypes.Any)
 	for k, v := range config.ProcessorPayloads {
-		payloads[k] = protobuf.FromAny(v)
+		payloads[k] = over_protobuf.FromAny(v)
 	}
 
 	req := &diffapi.ApplyRequest{
@@ -66,7 +66,7 @@ func (r *diffRemote) Apply(ctx context.Context, desc ocispec.Descriptor, mounts 
 	}
 	resp, err := r.client.Apply(ctx, req)
 	if err != nil {
-		return ocispec.Descriptor{}, errdefs.FromGRPC(err)
+		return ocispec.Descriptor{}, over_errdefs.FromGRPC(err)
 	}
 	return toDescriptor(resp.Applied), nil
 }
@@ -95,7 +95,7 @@ func (r *diffRemote) Compare(ctx context.Context, a, b []mount.Mount, opts ...di
 	}
 	resp, err := r.client.Diff(ctx, req)
 	if err != nil {
-		return ocispec.Descriptor{}, errdefs.FromGRPC(err)
+		return ocispec.Descriptor{}, over_errdefs.FromGRPC(err)
 	}
 	return toDescriptor(resp.Diff), nil
 }

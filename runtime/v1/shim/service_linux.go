@@ -18,6 +18,7 @@ package shim
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"errors"
 	"fmt"
 	"io"
@@ -26,10 +27,9 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/fifo"
+	"demo/others/console"
+	"demo/others/fifo"
+	"demo/pkg/process"
 )
 
 type linuxPlatform struct {

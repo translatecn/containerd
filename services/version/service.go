@@ -18,25 +18,25 @@ package version
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
+	ptypes "demo/over/protobuf/types"
 
-	api "github.com/containerd/containerd/api/services/version/v1"
-	"github.com/containerd/containerd/plugin"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	ctrdversion "github.com/containerd/containerd/version"
+	api "demo/pkg/api/services/version/v1"
+	ctrdversion "demo/version"
 	"google.golang.org/grpc"
 )
 
 var _ api.VersionServer = &service{}
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.GRPCPlugin,
 		ID:     "version",
 		InitFn: initFunc,
 	})
 }
 
-func initFunc(ic *plugin.InitContext) (interface{}, error) {
+func initFunc(ic *over_plugin2.InitContext) (interface{}, error) {
 	return &service{}, nil
 }
 

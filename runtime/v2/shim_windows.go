@@ -18,6 +18,7 @@ package v2
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"errors"
 	"fmt"
 	"io"
@@ -25,8 +26,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/containerd/containerd/namespaces"
 )
 
 type deferredPipeConnection struct {

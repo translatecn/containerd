@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/containerd/containerd/errdefs"
+	"demo/over/errdefs"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -50,9 +50,9 @@ var (
 
 var (
 	// ErrNotFound represents an error returned when object not found in meta store
-	ErrNotFound = errdefs.ErrNotFound
+	ErrNotFound = over_errdefs.ErrNotFound
 	// ErrAlreadyExists represents an error returned when object can't be duplicated in meta store
-	ErrAlreadyExists = errdefs.ErrAlreadyExists
+	ErrAlreadyExists = over_errdefs.ErrAlreadyExists
 )
 
 // PoolMetadata keeps device info for the given thin-pool device, generates next available device ids,
@@ -99,7 +99,7 @@ func (m *PoolMetadata) AddDevice(ctx context.Context, info *DeviceInfo) error {
 
 		// Make sure device name is unique. If there is already a device with the same name,
 		// but in Faulty state, give it a try with another devmapper device ID.
-		// See https://github.com/containerd/containerd/pull/3436 for more context.
+		// See https://github.com/containerd/pull/3436 for more context.
 		var existing DeviceInfo
 		if err := getObject(devicesBucket, info.Name, &existing); err == nil && existing.State != Faulty {
 			return fmt.Errorf("device %q is already there %+v: %w", info.Name, existing, ErrAlreadyExists)

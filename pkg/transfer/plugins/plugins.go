@@ -21,8 +21,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
 )
 
 var register = struct {
@@ -59,5 +59,5 @@ func ResolveType(any typeurl.Any) (interface{}, error) {
 			return reflect.New(t).Interface(), nil
 		}
 	}
-	return nil, fmt.Errorf("%v not registered: %w", any.GetTypeUrl(), errdefs.ErrNotFound)
+	return nil, fmt.Errorf("%v not registered: %w", any.GetTypeUrl(), over_errdefs.ErrNotFound)
 }

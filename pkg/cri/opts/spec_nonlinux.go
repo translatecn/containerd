@@ -21,8 +21,8 @@ package opts
 import (
 	"context"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/oci"
+	"demo/containers"
+	"demo/over/oci"
 )
 
 func isHugetlbControllerPresent() bool {
@@ -34,8 +34,8 @@ func SwapControllerAvailable() bool {
 }
 
 // WithCDI does nothing on non Linux platforms.
-func WithCDI(_ map[string]string) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, container *containers.Container, spec *oci.Spec) error {
+func WithCDI(_ map[string]string) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, container *containers.Container, spec *over_oci.Spec) error {
 		return nil
 	}
 }

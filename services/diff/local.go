@@ -18,16 +18,16 @@ package diff
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
 	"fmt"
 
-	diffapi "github.com/containerd/containerd/api/services/diff/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/services"
-	"github.com/containerd/typeurl/v2"
+	"demo/diff"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	diffapi "demo/pkg/api/services/diff/v1"
+	"demo/pkg/api/types"
+	"demo/services"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"google.golang.org/grpc"
@@ -49,15 +49,15 @@ type differ interface {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.ServicePlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.ServicePlugin,
 		ID:   services.DiffService,
-		Requires: []plugin.Type{
-			plugin.DiffPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.DiffPlugin,
 		},
 		Config: defaultDifferConfig,
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			differs, err := ic.GetByType(plugin.DiffPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			differs, err := ic.GetByType(over_plugin2.DiffPlugin)
 			if err != nil {
 				return nil, err
 			}
@@ -113,13 +113,13 @@ func (l *local) Apply(ctx context.Context, er *diffapi.ApplyRequest, _ ...grpc.C
 
 	for _, differ := range l.differs {
 		ocidesc, err = differ.Apply(ctx, desc, mounts, opts...)
-		if !errdefs.IsNotImplemented(err) {
+		if !over_errdefs.IsNotImplemented(err) {
 			break
 		}
 	}
 
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &diffapi.ApplyResponse{
@@ -153,12 +153,12 @@ func (l *local) Diff(ctx context.Context, dr *diffapi.DiffRequest, _ ...grpc.Cal
 
 	for _, d := range l.differs {
 		ocidesc, err = d.Compare(ctx, aMounts, bMounts, opts...)
-		if !errdefs.IsNotImplemented(err) {
+		if !over_errdefs.IsNotImplemented(err) {
 			break
 		}
 	}
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &diffapi.DiffResponse{

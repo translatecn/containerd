@@ -19,11 +19,11 @@
 package overlay
 
 import (
+	over_plugin2 "demo/over/plugin"
 	"errors"
 
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots/overlay"
+	"demo/over/platforms"
+	"demo/snapshots/overlay"
 )
 
 // Config represents configuration for the overlay plugin.
@@ -38,12 +38,12 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.SnapshotPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.SnapshotPlugin,
 		ID:     "overlayfs",
 		Config: &Config{},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ic.Meta.Platforms = append(ic.Meta.Platforms, platforms.DefaultSpec())
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ic.Meta.Platforms = append(ic.Meta.Platforms, over_platforms.DefaultSpec())
 
 			config, ok := ic.Config.(*Config)
 			if !ok {
@@ -67,7 +67,7 @@ func init() {
 				oOpts = append(oOpts, overlay.WithMountOptions(config.MountOptions))
 			}
 
-			ic.Meta.Exports[plugin.SnapshotterRootDir] = root
+			ic.Meta.Exports[over_plugin2.SnapshotterRootDir] = root
 			return overlay.NewSnapshotter(root, oOpts...)
 		},
 	})

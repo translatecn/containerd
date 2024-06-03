@@ -18,31 +18,30 @@ package snapshots
 
 import (
 	"context"
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 	"errors"
-
 	"google.golang.org/grpc"
 
-	snapshotsapi "github.com/containerd/containerd/api/services/snapshots/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/services"
-	"github.com/containerd/containerd/services/warning"
-	"github.com/containerd/containerd/snapshots"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	snapshotsapi "demo/pkg/api/services/snapshots/v1"
+	"demo/pkg/api/types"
+	"demo/pkg/deprecation"
+	"demo/services"
+	"demo/services/warning"
+	"demo/snapshots"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "snapshots",
-		Requires: []plugin.Type{
-			plugin.ServicePlugin,
-			plugin.WarningPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.ServicePlugin,
+			over_plugin2.WarningPlugin,
 		},
 		InitFn: newService,
 	})
@@ -56,8 +55,8 @@ type service struct {
 	snapshotsapi.UnimplementedSnapshotsServer
 }
 
-func newService(ic *plugin.InitContext) (interface{}, error) {
-	plugins, err := ic.GetByType(plugin.ServicePlugin)
+func newService(ic *over_plugin2.InitContext) (interface{}, error) {
+	plugins, err := ic.GetByType(over_plugin2.ServicePlugin)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +69,7 @@ func newService(ic *plugin.InitContext) (interface{}, error) {
 		return nil, err
 	}
 	ss := i.(map[string]snapshots.Snapshotter)
-	w, err := ic.Get(plugin.WarningPlugin)
+	w, err := ic.Get(over_plugin2.WarningPlugin)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +81,12 @@ func newService(ic *plugin.InitContext) (interface{}, error) {
 
 func (s *service) getSnapshotter(name string) (snapshots.Snapshotter, error) {
 	if name == "" {
-		return nil, errdefs.ToGRPCf(errdefs.ErrInvalidArgument, "snapshotter argument missing")
+		return nil, over_errdefs.ToGRPCf(over_errdefs.ErrInvalidArgument, "snapshotter argument missing")
 	}
 
 	sn := s.ss[name]
 	if sn == nil {
-		return nil, errdefs.ToGRPCf(errdefs.ErrInvalidArgument, "snapshotter not loaded: %s", name)
+		return nil, over_errdefs.ToGRPCf(over_errdefs.ErrInvalidArgument, "snapshotter not loaded: %s", name)
 	}
 	return sn, nil
 }
@@ -110,7 +109,7 @@ func (s *service) Prepare(ctx context.Context, pr *snapshotsapi.PrepareSnapshotR
 	}
 	mounts, err := sn.Prepare(ctx, pr.Key, pr.Parent, opts...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &snapshotsapi.PrepareSnapshotResponse{
@@ -130,7 +129,7 @@ func (s *service) View(ctx context.Context, pr *snapshotsapi.ViewSnapshotRequest
 	}
 	mounts, err := sn.View(ctx, pr.Key, pr.Parent, opts...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	return &snapshotsapi.ViewSnapshotResponse{
 		Mounts: fromMounts(mounts),
@@ -146,7 +145,7 @@ func (s *service) Mounts(ctx context.Context, mr *snapshotsapi.MountsRequest) (*
 
 	mounts, err := sn.Mounts(ctx, mr.Key)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	return &snapshotsapi.MountsResponse{
 		Mounts: fromMounts(mounts),
@@ -166,7 +165,7 @@ func (s *service) Commit(ctx context.Context, cr *snapshotsapi.CommitSnapshotReq
 		opts = append(opts, snapshots.WithLabels(cr.Labels))
 	}
 	if err := sn.Commit(ctx, cr.Name, cr.Key, opts...); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return empty, nil
@@ -180,7 +179,7 @@ func (s *service) Remove(ctx context.Context, rr *snapshotsapi.RemoveSnapshotReq
 	}
 
 	if err := sn.Remove(ctx, rr.Key); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return empty, nil
@@ -195,7 +194,7 @@ func (s *service) Stat(ctx context.Context, sr *snapshotsapi.StatSnapshotRequest
 
 	info, err := sn.Stat(ctx, sr.Key)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &snapshotsapi.StatSnapshotResponse{Info: fromInfo(info)}, nil
@@ -210,7 +209,7 @@ func (s *service) Update(ctx context.Context, sr *snapshotsapi.UpdateSnapshotReq
 
 	info, err := sn.Update(ctx, toInfo(sr.Info), sr.UpdateMask.GetPaths()...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &snapshotsapi.UpdateSnapshotResponse{Info: fromInfo(info)}, nil
@@ -264,7 +263,7 @@ func (s *service) Usage(ctx context.Context, ur *snapshotsapi.UsageRequest) (*sn
 
 	usage, err := sn.Usage(ctx, ur.Key)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return fromUsage(usage), nil
@@ -278,12 +277,12 @@ func (s *service) Cleanup(ctx context.Context, cr *snapshotsapi.CleanupRequest) 
 
 	c, ok := sn.(snapshots.Cleaner)
 	if !ok {
-		return nil, errdefs.ToGRPCf(errdefs.ErrNotImplemented, "snapshotter does not implement Cleanup method")
+		return nil, over_errdefs.ToGRPCf(over_errdefs.ErrNotImplemented, "snapshotter does not implement Cleanup method")
 	}
 
 	err = c.Cleanup(ctx)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return empty, nil
@@ -312,8 +311,8 @@ func fromInfo(info snapshots.Info) *snapshotsapi.Info {
 		Name:      info.Name,
 		Parent:    info.Parent,
 		Kind:      fromKind(info.Kind),
-		CreatedAt: protobuf.ToTimestamp(info.Created),
-		UpdatedAt: protobuf.ToTimestamp(info.Updated),
+		CreatedAt: over_protobuf.ToTimestamp(info.Created),
+		UpdatedAt: over_protobuf.ToTimestamp(info.Updated),
 		Labels:    info.Labels,
 	}
 }
@@ -343,8 +342,8 @@ func toInfo(info *snapshotsapi.Info) snapshots.Info {
 		Name:    info.Name,
 		Parent:  info.Parent,
 		Kind:    toKind(info.Kind),
-		Created: protobuf.FromTimestamp(info.CreatedAt),
-		Updated: protobuf.FromTimestamp(info.UpdatedAt),
+		Created: over_protobuf.FromTimestamp(info.CreatedAt),
+		Updated: over_protobuf.FromTimestamp(info.UpdatedAt),
 		Labels:  info.Labels,
 	}
 }

@@ -22,9 +22,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/containerd/containerd/archive/compression"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
+	"demo/over/images"
+	"demo/pkg/archive/compression"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -88,7 +88,7 @@ type StreamProcessor interface {
 }
 
 func compressedHandler(ctx context.Context, mediaType string) (StreamProcessorInit, bool) {
-	compressed, err := images.DiffCompression(ctx, mediaType)
+	compressed, err := over_images.DiffCompression(ctx, mediaType)
 	if err != nil {
 		return nil, false
 	}

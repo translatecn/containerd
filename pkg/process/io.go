@@ -20,6 +20,9 @@ package process
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	"demo/pkg/namespaces"
 	"fmt"
 	"io"
 	"net/url"
@@ -31,11 +34,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/stdio"
-	"github.com/containerd/fifo"
-	runc "github.com/containerd/go-runc"
+	"demo/others/fifo"
+	runc "demo/others/go-runc"
+	"demo/pkg/stdio"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -109,7 +110,7 @@ func createIO(ctx context.Context, id string, ioUID, ioGID int, stdio stdio.Stdi
 		pio.io, err = NewBinaryIO(ctx, id, u)
 	case "file":
 		filePath := u.Path
-		if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		if err := my_mk.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 			return nil, err
 		}
 		var f *os.File

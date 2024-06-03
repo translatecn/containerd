@@ -19,13 +19,12 @@ package docker
 import (
 	"bytes"
 	"context"
+	"demo/content"
+	"demo/others/log"
+	"demo/over/images"
+	"demo/remotes"
 	"encoding/json"
 	"fmt"
-
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -41,7 +40,7 @@ const LegacyConfigMediaType = "application/octet-stream"
 // 1. original manifest will be deleted by next gc round.
 // 2. don't cover manifest list.
 func ConvertManifest(ctx context.Context, store content.Store, desc ocispec.Descriptor) (ocispec.Descriptor, error) {
-	if !(desc.MediaType == images.MediaTypeDockerSchema2Manifest ||
+	if !(desc.MediaType == over_images.MediaTypeDockerSchema2Manifest ||
 		desc.MediaType == ocispec.MediaTypeImageManifest) {
 
 		log.G(ctx).Warnf("do nothing for media type: %s", desc.MediaType)
@@ -64,7 +63,7 @@ func ConvertManifest(ctx context.Context, store content.Store, desc ocispec.Desc
 		return desc, nil
 	}
 
-	manifest.Config.MediaType = images.MediaTypeDockerSchema2Config
+	manifest.Config.MediaType = over_images.MediaTypeDockerSchema2Config
 	data, err := json.MarshalIndent(manifest, "", "   ")
 	if err != nil {
 		return ocispec.Descriptor{}, fmt.Errorf("failed to marshal manifest: %w", err)

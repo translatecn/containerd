@@ -18,46 +18,45 @@ package images
 
 import (
 	"context"
-
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
+	ptypes "demo/over/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	eventstypes "github.com/containerd/containerd/api/events"
-	imagesapi "github.com/containerd/containerd/api/services/images/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/gc"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/pkg/epoch"
-	"github.com/containerd/containerd/plugin"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/services"
-	"github.com/containerd/containerd/services/warning"
+	"demo/over/errdefs"
+	"demo/over/images"
+	eventstypes "demo/pkg/api/events"
+	imagesapi "demo/pkg/api/services/images/v1"
+	"demo/pkg/deprecation"
+	"demo/pkg/epoch"
+	"demo/pkg/events"
+	"demo/pkg/gc"
+	"demo/pkg/metadata"
+	"demo/services"
+	"demo/services/warning"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.ServicePlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.ServicePlugin,
 		ID:   services.ImagesService,
-		Requires: []plugin.Type{
-			plugin.MetadataPlugin,
-			plugin.GCPlugin,
-			plugin.WarningPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.MetadataPlugin,
+			over_plugin2.GCPlugin,
+			over_plugin2.WarningPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			m, err := ic.Get(plugin.MetadataPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			m, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}
-			g, err := ic.Get(plugin.GCPlugin)
+			g, err := ic.Get(over_plugin2.GCPlugin)
 			if err != nil {
 				return nil, err
 			}
-			w, err := ic.Get(plugin.WarningPlugin)
+			w, err := ic.Get(over_plugin2.WarningPlugin)
 			if err != nil {
 				return nil, err
 			}
@@ -77,7 +76,7 @@ type gcScheduler interface {
 }
 
 type local struct {
-	store     images.Store
+	store     over_images.Store
 	gc        gcScheduler
 	publisher events.Publisher
 	warnings  warning.Service
@@ -88,7 +87,7 @@ var _ imagesapi.ImagesClient = &local{}
 func (l *local) Get(ctx context.Context, req *imagesapi.GetImageRequest, _ ...grpc.CallOption) (*imagesapi.GetImageResponse, error) {
 	image, err := l.store.Get(ctx, req.Name)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	imagepb := imageToProto(&image)
@@ -100,7 +99,7 @@ func (l *local) Get(ctx context.Context, req *imagesapi.GetImageRequest, _ ...gr
 func (l *local) List(ctx context.Context, req *imagesapi.ListImagesRequest, _ ...grpc.CallOption) (*imagesapi.ListImagesResponse, error) {
 	images, err := l.store.List(ctx, req.Filters...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &imagesapi.ListImagesResponse{
@@ -124,7 +123,7 @@ func (l *local) Create(ctx context.Context, req *imagesapi.CreateImageRequest, _
 	}
 	created, err := l.store.Create(ctx, image)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	resp.Image = imageToProto(&created)
@@ -163,7 +162,7 @@ func (l *local) Update(ctx context.Context, req *imagesapi.UpdateImageRequest, _
 
 	updated, err := l.store.Update(ctx, image, fieldpaths...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	resp.Image = imageToProto(&updated)
@@ -183,7 +182,7 @@ func (l *local) Delete(ctx context.Context, req *imagesapi.DeleteImageRequest, _
 	log.G(ctx).WithField("name", req.Name).Debugf("delete image")
 
 	if err := l.store.Delete(ctx, req.Name); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	if err := l.publisher.Publish(ctx, "/images/delete", &eventstypes.ImageDelete{
@@ -201,11 +200,11 @@ func (l *local) Delete(ctx context.Context, req *imagesapi.DeleteImageRequest, _
 	return &ptypes.Empty{}, nil
 }
 
-func (l *local) emitSchema1DeprecationWarning(ctx context.Context, image *images.Image) {
+func (l *local) emitSchema1DeprecationWarning(ctx context.Context, image *over_images.Image) {
 	if image == nil {
 		return
 	}
-	dgst, ok := image.Labels[images.ConvertedDockerSchema1LabelKey]
+	dgst, ok := image.Labels[over_images.ConvertedDockerSchema1LabelKey]
 	if !ok {
 		return
 	}

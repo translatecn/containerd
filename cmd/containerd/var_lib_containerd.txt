@@ -1,0 +1,13 @@
+.
+├── io.containerd.content.v1.content
+│   └── ingest
+├── io.containerd.metadata.v1.bolt
+│   └── meta.db
+├── io.containerd.runtime.v1.linux
+├── io.containerd.runtime.v2.task
+├── io.containerd.snapshotter.v1.blockfile
+├── io.containerd.snapshotter.v1.native
+│   └── snapshots
+├── io.containerd.snapshotter.v1.overlayfs
+│   └── snapshots
+└── tmpmounts

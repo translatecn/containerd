@@ -25,9 +25,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/runtime/restart"
+	"demo/containerd"
+	"demo/pkg/cio"
+	"demo/runtime/restart"
 )
 
 type stopChange struct {

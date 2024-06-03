@@ -20,18 +20,19 @@ package overlay
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/overlay/overlayutils"
-	"github.com/containerd/containerd/snapshots/storage"
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/overlay/overlayutils"
+	"demo/snapshots/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -112,7 +113,7 @@ func NewSnapshotter(root string, opts ...Opt) (snapshots.Snapshotter, error) {
 		}
 	}
 
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 	supportsDType, err := fs.SupportsDType(root)
@@ -129,7 +130,7 @@ func NewSnapshotter(root string, opts ...Opt) (snapshots.Snapshotter, error) {
 		}
 	}
 
-	if err := os.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
+	if err := my_mk.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
@@ -464,17 +465,17 @@ func (o *snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 }
 
 func (o *snapshotter) prepareDirectory(ctx context.Context, snapshotDir string, kind snapshots.Kind) (string, error) {
-	td, err := os.MkdirTemp(snapshotDir, "new-")
+	td, err := my_mk.MkdirTemp(snapshotDir, "new-")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
-	if err := os.Mkdir(filepath.Join(td, "fs"), 0755); err != nil {
+	if err := my_mk.Mkdir(filepath.Join(td, "fs"), 0755); err != nil {
 		return td, err
 	}
 
 	if kind == snapshots.KindActive {
-		if err := os.Mkdir(filepath.Join(td, "work"), 0711); err != nil {
+		if err := my_mk.Mkdir(filepath.Join(td, "work"), 0711); err != nil {
 			return td, err
 		}
 	}

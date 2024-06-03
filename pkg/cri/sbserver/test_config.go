@@ -16,7 +16,7 @@
 
 package sbserver
 
-import criconfig "github.com/containerd/containerd/pkg/cri/config"
+import criconfig "demo/pkg/cri/config"
 
 const (
 	testRootDir  = "/test/root"

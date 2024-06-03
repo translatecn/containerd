@@ -18,15 +18,15 @@ package shim
 
 import (
 	"context"
+	over_protobuf2 "demo/over/protobuf"
+	"demo/pkg/namespaces"
 	"sync"
 	"time"
 
-	v1 "github.com/containerd/containerd/api/services/ttrpc/events/v1"
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/ttrpcutil"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	v1 "demo/pkg/api/services/ttrpc/events/v1"
+	"demo/pkg/events"
+	"demo/pkg/ttrpcutil"
 	"github.com/sirupsen/logrus"
 )
 
@@ -110,13 +110,13 @@ func (l *RemoteEventsPublisher) Publish(ctx context.Context, topic string, event
 	if err != nil {
 		return err
 	}
-	any, err := protobuf.MarshalAnyToProto(event)
+	any, err := over_protobuf2.MarshalAnyToProto(event)
 	if err != nil {
 		return err
 	}
 	i := &item{
 		ev: &v1.Envelope{
-			Timestamp: protobuf.ToTimestamp(time.Now()),
+			Timestamp: over_protobuf2.ToTimestamp(time.Now()),
 			Namespace: ns,
 			Topic:     topic,
 			Event:     any,

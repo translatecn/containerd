@@ -20,26 +20,26 @@ package pause
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
 	"runtime"
 
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/pkg/shutdown"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	"demo/pkg/api/types"
+	"demo/pkg/shutdown"
 	log "github.com/sirupsen/logrus"
 
-	api "github.com/containerd/containerd/api/runtime/sandbox/v1"
-	"github.com/containerd/containerd/plugin"
+	api "demo/pkg/api/runtime/sandbox/v1"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.TTRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.TTRPCPlugin,
 		ID:   "pause",
-		Requires: []plugin.Type{
-			plugin.InternalPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.InternalPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ss, err := ic.GetByID(plugin.InternalPlugin, "shutdown")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ss, err := ic.GetByID(over_plugin2.InternalPlugin, "shutdown")
 			if err != nil {
 				return nil, err
 			}

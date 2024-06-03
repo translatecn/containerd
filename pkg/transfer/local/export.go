@@ -19,8 +19,8 @@ package local
 import (
 	"context"
 
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/pkg/transfer"
+	"demo/over/images"
+	"demo/pkg/transfer"
 )
 
 func (ts *localTransferService) exportStream(ctx context.Context, ig transfer.ImageGetter, is transfer.ImageExporter, tops *transfer.Config) error {
@@ -36,7 +36,7 @@ func (ts *localTransferService) exportStream(ctx context.Context, ig transfer.Im
 		})
 	}
 
-	var imgs []images.Image
+	var imgs []over_images.Image
 	if il, ok := ig.(transfer.ImageLookup); ok {
 		imgs, err = il.Lookup(ctx, ts.images)
 		if err != nil {

@@ -20,6 +20,10 @@ package client
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	ptypes "demo/over/protobuf/types"
+	"demo/pkg/sys"
 	"errors"
 	"fmt"
 	"io"
@@ -33,14 +37,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/log"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	v1 "github.com/containerd/containerd/runtime/v1"
-	"github.com/containerd/containerd/runtime/v1/shim"
-	shimapi "github.com/containerd/containerd/runtime/v1/shim/v1"
-	"github.com/containerd/containerd/sys"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	"demo/pkg/events"
+	v1 "demo/runtime/v1"
+	"demo/runtime/v1/shim"
+	shimapi "demo/runtime/v1/shim/v1"
 	"golang.org/x/sys/unix"
 )
 
@@ -266,7 +267,7 @@ func newSocket(address string) (*net.UnixListener, error) {
 		path = sock.path()
 	)
 	if !sock.isAbstract() {
-		if err := os.MkdirAll(filepath.Dir(path), 0600); err != nil {
+		if err := my_mk.MkdirAll(filepath.Dir(path), 0600); err != nil {
 			return nil, fmt.Errorf("%s: %w", path, err)
 		}
 	}

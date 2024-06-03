@@ -18,6 +18,7 @@ package content
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"io"
 	"net/http/httptrace"
@@ -26,15 +27,14 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/progress"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/remotes"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/over/platforms"
+	"demo/pkg/progress"
+	"demo/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"
@@ -104,7 +104,7 @@ type FetchConfig struct {
 	// Labels to set on the content
 	Labels []string
 	// PlatformMatcher matches platforms, supersedes Platforms
-	PlatformMatcher platforms.MatchComparer
+	PlatformMatcher over_platforms.MatchComparer
 	// Platforms to fetch
 	Platforms []string
 	// Whether or not download all metadata
@@ -132,7 +132,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 	if !clicontext.Bool("all-platforms") {
 		p := clicontext.StringSlice("platform")
 		if len(p) == 0 {
-			p = append(p, platforms.DefaultString())
+			p = append(p, over_platforms.DefaultString())
 		}
 		config.Platforms = p
 	}
@@ -140,7 +140,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 	if clicontext.Bool("metadata-only") {
 		config.AllMetadata = true
 		// Any with an empty set is None
-		config.PlatformMatcher = platforms.Any()
+		config.PlatformMatcher = over_platforms.Any()
 	} else if clicontext.Bool("all-metadata") {
 		config.AllMetadata = true
 	}
@@ -159,7 +159,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 }
 
 // Fetch loads all resources into the content store and returns the image
-func Fetch(ctx context.Context, client *containerd.Client, ref string, config *FetchConfig) (images.Image, error) {
+func Fetch(ctx context.Context, client *containerd.Client, ref string, config *FetchConfig) (over_images.Image, error) {
 	ongoing := NewJobs(ref)
 
 	if config.TraceHTTP {
@@ -177,8 +177,8 @@ func Fetch(ctx context.Context, client *containerd.Client, ref string, config *F
 		close(progress)
 	}()
 
-	h := images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
-		if desc.MediaType != images.MediaTypeDockerSchema1Manifest {
+	h := over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		if desc.MediaType != over_images.MediaTypeDockerSchema1Manifest {
 			ongoing.Add(desc)
 		}
 		return nil, nil
@@ -209,7 +209,7 @@ func Fetch(ctx context.Context, client *containerd.Client, ref string, config *F
 	img, err := client.Fetch(pctx, ref, opts...)
 	stopProgress()
 	if err != nil {
-		return images.Image{}, err
+		return over_images.Image{}, err
 	}
 
 	<-progress
@@ -279,7 +279,7 @@ outer:
 				if !done && (!ok || status.Status == StatusDownloading) {
 					info, err := cs.Info(ctx, j.Digest)
 					if err != nil {
-						if !errdefs.IsNotFound(err) {
+						if !over_errdefs.IsNotFound(err) {
 							log.G(ctx).WithError(err).Error("failed to get content info")
 							continue outer
 						} else {

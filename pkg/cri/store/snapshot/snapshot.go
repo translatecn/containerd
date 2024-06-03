@@ -19,8 +19,8 @@ package snapshot
 import (
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	snapshot "github.com/containerd/containerd/snapshots"
+	"demo/over/errdefs"
+	snapshot "demo/snapshots"
 )
 
 // Snapshot contains the information about the snapshot.
@@ -56,7 +56,7 @@ func (s *Store) Add(snapshot Snapshot) {
 	s.snapshots[snapshot.Key] = snapshot
 }
 
-// Get returns the snapshot with specified key. Returns errdefs.ErrNotFound if the
+// Get returns the snapshot with specified key. Returns over_errdefs.ErrNotFound if the
 // snapshot doesn't exist.
 func (s *Store) Get(key string) (Snapshot, error) {
 	s.lock.RLock()
@@ -64,7 +64,7 @@ func (s *Store) Get(key string) (Snapshot, error) {
 	if sn, ok := s.snapshots[key]; ok {
 		return sn, nil
 	}
-	return Snapshot{}, errdefs.ErrNotFound
+	return Snapshot{}, over_errdefs.ErrNotFound
 }
 
 // List lists all snapshots.

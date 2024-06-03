@@ -18,13 +18,12 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/errdefs"
+	"demo/over/tracing"
+	imagestore "demo/pkg/cri/store/image"
 	"encoding/json"
 	"fmt"
-
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	imagestore "github.com/containerd/containerd/pkg/cri/store/image"
-	"github.com/containerd/containerd/tracing"
 
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -34,17 +33,17 @@ import (
 // TODO(random-liu): We should change CRI to distinguish image id and image spec. (See
 // kubernetes/kubernetes#46255)
 func (c *criService) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
-	span := tracing.SpanFromContext(ctx)
+	span := over_tracing.SpanFromContext(ctx)
 	image, err := c.localResolve(r.GetImage().GetImage())
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			span.AddEvent(err.Error())
 			// return empty without error when image not found.
 			return &runtime.ImageStatusResponse{}, nil
 		}
 		return nil, fmt.Errorf("can not resolve %q locally: %w", r.GetImage().GetImage(), err)
 	}
-	span.SetAttributes(tracing.Attribute("image.id", image.ID))
+	span.SetAttributes(over_tracing.Attribute("image.id", image.ID))
 	// TODO(random-liu): [P0] Make sure corresponding snapshot exists. What if snapshot
 	// doesn't exist?
 

@@ -18,6 +18,7 @@ package docker
 
 import (
 	"context"
+	"demo/others/log"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -25,10 +26,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes/docker/auth"
-	remoteerrors "github.com/containerd/containerd/remotes/errors"
+	"demo/over/errdefs"
+	"demo/remotes/docker/auth"
+	remoteerrors "demo/remotes/errors"
 )
 
 type dockerAuthorizer struct {
@@ -199,7 +199,7 @@ func (a *dockerAuthorizer) AddResponses(ctx context.Context, responses []*http.R
 			return nil
 		}
 	}
-	return fmt.Errorf("failed to find supported auth scheme: %w", errdefs.ErrNotImplemented)
+	return fmt.Errorf("failed to find supported auth scheme: %w", over_errdefs.ErrNotImplemented)
 }
 
 // authResult is used to control limit rate.
@@ -246,7 +246,7 @@ func (ah *authHandler) authorize(ctx context.Context) (string, string, error) {
 	case auth.BearerAuth:
 		return ah.doBearerAuth(ctx)
 	default:
-		return "", "", fmt.Errorf("failed to find supported auth scheme: %s: %w", string(ah.scheme), errdefs.ErrNotImplemented)
+		return "", "", fmt.Errorf("failed to find supported auth scheme: %s: %w", string(ah.scheme), over_errdefs.ErrNotImplemented)
 	}
 }
 

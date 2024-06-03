@@ -20,6 +20,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"demo/others/log"
+	"demo/over/tracing"
+	distribution "demo/pkg/reference/docker"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -34,23 +37,20 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containerd/imgcrypt"
-	"github.com/containerd/imgcrypt/images/encryption"
+	"demo/others/imgcrypt"
+	"demo/others/imgcrypt/images/encryption"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	containerdimages "github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	crilabels "github.com/containerd/containerd/pkg/cri/labels"
-	snpkg "github.com/containerd/containerd/pkg/snapshotters"
-	distribution "github.com/containerd/containerd/reference/docker"
-	"github.com/containerd/containerd/remotes/docker"
-	"github.com/containerd/containerd/remotes/docker/config"
-	"github.com/containerd/containerd/tracing"
+	"demo/containerd"
+	"demo/over/errdefs"
+	containerdimages "demo/over/images"
+	"demo/pkg/cri/annotations"
+	criconfig "demo/pkg/cri/config"
+	crilabels "demo/pkg/cri/labels"
+	snpkg "demo/pkg/snapshotters"
+	"demo/remotes/docker"
+	"demo/remotes/docker/config"
 )
 
 // For image management:
@@ -96,7 +96,7 @@ import (
 
 // PullImage pulls an image with authentication config.
 func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (_ *runtime.PullImageResponse, err error) {
-	span := tracing.SpanFromContext(ctx)
+	span := over_tracing.SpanFromContext(ctx)
 	defer func() {
 		// TODO: add domain label for imagePulls metrics, and we may need to provide a mechanism
 		// for the user to configure the set of registries that they are interested in.
@@ -152,8 +152,8 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	}
 	log.G(ctx).Debugf("PullImage %q with snapshotter %s", ref, snapshotter)
 	span.SetAttributes(
-		tracing.Attribute("image.ref", ref),
-		tracing.Attribute("snapshotter.name", snapshotter),
+		over_tracing.Attribute("image.ref", ref),
+		over_tracing.Attribute("snapshotter.name", snapshotter),
 	)
 
 	labels := c.getLabels(ctx, ref)
@@ -281,7 +281,7 @@ func (c *criService) createImageReference(ctx context.Context, name string, desc
 	// TODO(random-liu): Figure out which is the more performant sequence create then update or
 	// update then create.
 	_, err := c.client.ImageService().Create(ctx, img)
-	if err == nil || !errdefs.IsAlreadyExists(err) {
+	if err == nil || !over_errdefs.IsAlreadyExists(err) {
 		return err
 	}
 	// Retrieve oldImg from image store here because Create routine returns an
@@ -328,7 +328,7 @@ func (c *criService) getLabels(ctx context.Context, name string) map[string]stri
 // generates necessary metadata for the image and make it managed.
 func (c *criService) updateImage(ctx context.Context, r string) error {
 	img, err := c.client.GetImage(ctx, r)
-	if err != nil && !errdefs.IsNotFound(err) {
+	if err != nil && !over_errdefs.IsNotFound(err) {
 		return fmt.Errorf("get image by reference: %w", err)
 	}
 	if err == nil && img.Labels()[crilabels.ImageLabelKey] != crilabels.ImageLabelValue {
@@ -380,7 +380,7 @@ func (c *criService) getTLSConfig(registryTLSConfig criconfig.TLSConfig) (*tls.C
 		if len(cert.Certificate) != 0 {
 			tlsConfig.Certificates = []tls.Certificate{cert}
 		}
-		// TODO(thaJeztah): verify if we should ignore the deprecation; see https://github.com/containerd/containerd/pull/7349/files#r990644833
+		// TODO(thaJeztah): verify if we should ignore the deprecation; see https://github.com/containerd/pull/7349/files#r990644833
 		tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 	}
 
@@ -409,7 +409,7 @@ func hostDirFromRoots(roots []string) func(string) (string, error) {
 	return func(host string) (dir string, err error) {
 		for _, fn := range rootfn {
 			dir, err = fn(host)
-			if (err != nil && !errdefs.IsNotFound(err)) || (dir != "") {
+			if (err != nil && !over_errdefs.IsNotFound(err)) || (dir != "") {
 				break
 			}
 		}
@@ -777,7 +777,7 @@ func (rt *pullRequestReporterRoundTripper) RoundTrip(req *http.Request) (*http.R
 // Given that runtime information is not passed from PullImageRequest, we depend on an experimental annotation
 // passed from pod sandbox config to get the runtimeHandler. The annotation key is specified in configuration.
 // Once we know the runtime, try to override default snapshotter if it is set for this runtime.
-// See https://github.com/containerd/containerd/issues/6657
+// See https://github.com/containerd/issues/6657
 func (c *criService) snapshotterFromPodSandboxConfig(ctx context.Context, imageRef string,
 	s *runtime.PodSandboxConfig) (string, error) {
 	snapshotter := c.config.ContainerdConfig.Snapshotter

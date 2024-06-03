@@ -19,13 +19,13 @@
 package plugin
 
 import (
+	over_plugin2 "demo/over/plugin"
 	"errors"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots/btrfs"
+	"demo/over/platforms"
+	"demo/snapshots/btrfs"
 )
 
 // Config represents configuration for the btrfs plugin.
@@ -35,12 +35,12 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
+	over_plugin2.Register(&over_plugin2.Registration{
 		ID:     "btrfs",
-		Type:   plugin.SnapshotPlugin,
+		Type:   over_plugin2.SnapshotPlugin,
 		Config: &Config{},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ic.Meta.Platforms = []ocispec.Platform{platforms.DefaultSpec()}
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ic.Meta.Platforms = []ocispec.Platform{over_platforms.DefaultSpec()}
 
 			config, ok := ic.Config.(*Config)
 			if !ok {
@@ -52,7 +52,7 @@ func init() {
 				root = config.RootPath
 			}
 
-			ic.Meta.Exports[plugin.SnapshotterRootDir] = root
+			ic.Meta.Exports[over_plugin2.SnapshotterRootDir] = root
 			return btrfs.NewSnapshotter(root)
 		},
 	})

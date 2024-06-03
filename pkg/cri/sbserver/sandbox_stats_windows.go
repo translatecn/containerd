@@ -18,20 +18,19 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"time"
 
-	"github.com/Microsoft/hcsshim"
-	wstats "github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-	"github.com/Microsoft/hcsshim/hcn"
-	"github.com/containerd/containerd/api/services/tasks/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	"github.com/containerd/containerd/pkg/cri/store/stats"
-	"github.com/containerd/typeurl/v2"
+	"demo/over/errdefs"
+	"demo/pkg/api/services/tasks/v1"
+	"demo/pkg/api/types"
+	containerstore "demo/pkg/cri/store/container"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	"demo/pkg/cri/store/stats"
+	"demo/third_party/github.com/Microsoft/hcsshim"
+	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
+	"demo/third_party/github.com/Microsoft/hcsshim/hcn"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -41,7 +40,7 @@ func (c *criService) podSandboxStats(
 	meta := sandbox.Metadata
 
 	if sandbox.Status.Get().State != sandboxstore.StateReady {
-		return nil, fmt.Errorf("failed to get pod sandbox stats since sandbox container %q is not in ready state: %w", meta.ID, errdefs.ErrUnavailable)
+		return nil, fmt.Errorf("failed to get pod sandbox stats since sandbox container %q is not in ready state: %w", meta.ID, over_errdefs.ErrUnavailable)
 	}
 
 	timestamp := time.Now()
@@ -392,14 +391,14 @@ func (c *criService) getSandboxPidCount(ctx context.Context, sandbox sandboxstor
 	// get process count inside PodSandbox for Windows
 	task, err := sandbox.Container.Task(ctx, nil)
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			return 0, nil
 		}
 		return 0, err
 	}
 	processes, err := task.Pids(ctx)
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			return 0, nil
 		}
 		return 0, err
@@ -423,7 +422,7 @@ func (c *criService) getSandboxPidCount(ctx context.Context, sandbox sandboxstor
 
 		processes, err := task.Pids(ctx)
 		if err != nil {
-			if errdefs.IsNotFound(err) {
+			if over_errdefs.IsNotFound(err) {
 				continue
 			}
 			return 0, err

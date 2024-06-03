@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
+	"demo/content"
+	"demo/over/errdefs"
 	"github.com/moby/locker"
 )
 
@@ -81,7 +81,7 @@ func (t *memoryStatusTracker) GetStatus(ref string) (Status, error) {
 	defer t.m.Unlock()
 	status, ok := t.statuses[ref]
 	if !ok {
-		return Status{}, fmt.Errorf("status for ref %v: %w", ref, errdefs.ErrNotFound)
+		return Status{}, fmt.Errorf("status for ref %v: %w", ref, over_errdefs.ErrNotFound)
 	}
 	return status, nil
 }

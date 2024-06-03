@@ -17,14 +17,14 @@
 package commands
 
 import (
+	"demo/pkg/defaults"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/pkg/atomicfile"
+	"demo/pkg/atomicfile"
 
 	"github.com/urfave/cli"
 )

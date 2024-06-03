@@ -18,15 +18,15 @@ package nri
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"path"
 	"sync"
 
-	"github.com/containerd/containerd/log"
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd/version"
-	nri "github.com/containerd/nri/pkg/adaptation"
+	nri "demo/others/nri/pkg/adaptation"
+	"demo/version"
 )
 
 // API implements a common API for interfacing NRI from containerd. It is

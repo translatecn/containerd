@@ -18,6 +18,11 @@ package shim
 
 import (
 	"context"
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	"demo/over/protobuf/proto"
+	"demo/pkg/namespaces"
 	"errors"
 	"flag"
 	"fmt"
@@ -29,16 +34,11 @@ import (
 	"runtime/debug"
 	"time"
 
-	shimapi "github.com/containerd/containerd/api/runtime/task/v2"
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/shutdown"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/containerd/version"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	shimapi "demo/pkg/api/runtime/task/v2"
+	"demo/pkg/events"
+	"demo/pkg/shutdown"
+	"demo/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -241,7 +241,7 @@ func (stm shimToManager) Stop(ctx context.Context, id string) (StopStatus, error
 	return StopStatus{
 		Pid:        int(dr.Pid),
 		ExitStatus: int(dr.ExitStatus),
-		ExitedAt:   protobuf.FromTimestamp(dr.ExitedAt),
+		ExitedAt:   over_protobuf.FromTimestamp(dr.ExitedAt),
 	}, nil
 }
 
@@ -306,13 +306,13 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 		if err != nil {
 			return err
 		}
-		plugin.Register(&plugin.Registration{
-			Type: plugin.TTRPCPlugin,
+		over_plugin2.Register(&over_plugin2.Registration{
+			Type: over_plugin2.TTRPCPlugin,
 			ID:   "task",
-			Requires: []plugin.Type{
-				plugin.EventPlugin,
+			Requires: []over_plugin2.Type{
+				over_plugin2.EventPlugin,
 			},
-			InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+			InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 				return taskService{service}, nil
 			},
 		})
@@ -340,7 +340,7 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 		data, err := proto.Marshal(&shimapi.DeleteResponse{
 			Pid:        uint32(ss.Pid),
 			ExitStatus: uint32(ss.ExitStatus),
-			ExitedAt:   protobuf.ToTimestamp(ss.ExitedAt),
+			ExitedAt:   over_protobuf.ToTimestamp(ss.ExitedAt),
 		})
 		if err != nil {
 			return err
@@ -373,35 +373,35 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 		}
 	}
 
-	plugin.Register(&plugin.Registration{
-		Type: plugin.InternalPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.InternalPlugin,
 		ID:   "shutdown",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			return sd, nil
 		},
 	})
 
 	// Register event plugin
-	plugin.Register(&plugin.Registration{
-		Type: plugin.EventPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.EventPlugin,
 		ID:   "publisher",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			return publisher, nil
 		},
 	})
 
 	var (
-		initialized   = plugin.NewPluginSet()
+		initialized   = over_plugin2.NewPluginSet()
 		ttrpcServices = []ttrpcService{}
 
 		ttrpcUnaryInterceptors = []ttrpc.UnaryServerInterceptor{}
 	)
-	plugins := plugin.Graph(func(*plugin.Registration) bool { return false })
+	plugins := over_plugin2.Graph(func(*over_plugin2.Registration) bool { return false })
 	for _, p := range plugins {
 		id := p.URI()
 		log.G(ctx).WithField("type", p.Type).Infof("loading plugin %q...", id)
 
-		initContext := plugin.NewContext(
+		initContext := over_plugin2.NewContext(
 			ctx,
 			p,
 			initialized,
@@ -432,7 +432,7 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 
 		instance, err := result.Instance()
 		if err != nil {
-			if plugin.IsSkipPlugin(err) {
+			if over_plugin2.IsSkipPlugin(err) {
 				log.G(ctx).WithError(err).WithField("type", p.Type).Infof("skip loading plugin %q...", id)
 				continue
 			}

@@ -20,6 +20,7 @@ package shim
 
 import (
 	"context"
+	"demo/pkg/sys/reaper"
 	"fmt"
 	"io"
 	"net"
@@ -27,8 +28,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/containerd/containerd/sys/reaper"
-	"github.com/containerd/fifo"
+	"demo/others/fifo"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )

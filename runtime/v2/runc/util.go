@@ -20,12 +20,12 @@ package runc
 
 import (
 	"context"
+	"demo/others/log"
 	"path/filepath"
 
-	"github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/runtime"
+	"demo/over/oci"
+	"demo/pkg/api/events"
+	"demo/runtime"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 )
@@ -63,7 +63,7 @@ func GetTopic(e interface{}) string {
 // ShouldKillAllOnExit reads the bundle's OCI spec and returns true if
 // there is an error reading the spec or if the container has a private PID namespace
 func ShouldKillAllOnExit(ctx context.Context, bundlePath string) bool {
-	spec, err := oci.ReadSpec(filepath.Join(bundlePath, oci.ConfigFilename))
+	spec, err := over_oci.ReadSpec(filepath.Join(bundlePath, over_oci.ConfigFilename))
 	if err != nil {
 		log.G(ctx).WithError(err).Error("shouldKillAllOnExit: failed to read config.json")
 		return true

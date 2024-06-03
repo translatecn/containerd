@@ -18,18 +18,18 @@ package proxy
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"errors"
 	"io"
 
 	"google.golang.org/protobuf/types/known/anypb"
 
-	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
-	transfertypes "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/containerd/pkg/transfer"
-	tstreaming "github.com/containerd/containerd/pkg/transfer/streaming"
-	"github.com/containerd/typeurl/v2"
+	transferapi "demo/pkg/api/services/transfer/v1"
+	transfertypes "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
+	"demo/pkg/transfer"
+	tstreaming "demo/pkg/transfer/streaming"
 )
 
 type proxyTransferrer struct {

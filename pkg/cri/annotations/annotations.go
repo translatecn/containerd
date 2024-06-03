@@ -17,8 +17,8 @@
 package annotations
 
 import (
-	"github.com/containerd/containerd/oci"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
+	"demo/over/oci"
+	customopts "demo/pkg/cri/opts"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -82,7 +82,7 @@ const (
 	PodAnnotations = "io.kubernetes.cri.pod-annotations"
 
 	// RuntimeHandler an experimental annotation key for getting runtime handler from pod annotations.
-	// See https://github.com/containerd/containerd/issues/6657 and https://github.com/containerd/containerd/pull/6899 for details.
+	// See https://github.com/containerd/issues/6657 and https://github.com/containerd/pull/6899 for details.
 	// The value of this annotation should be the runtime for sandboxes.
 	// e.g. for [plugins.cri.containerd.runtimes.runc] runtime config, this value should be runc
 	// TODO: we should deprecate this annotation as soon as kubelet supports passing RuntimeHandler from PullImageRequest
@@ -100,8 +100,8 @@ func DefaultCRIAnnotations(
 	imageName string,
 	config *runtime.PodSandboxConfig,
 	sandbox bool,
-) []oci.SpecOpts {
-	opts := []oci.SpecOpts{
+) []over_oci.SpecOpts {
+	opts := []over_oci.SpecOpts{
 		customopts.WithAnnotation(SandboxID, sandboxID),
 		customopts.WithAnnotation(SandboxNamespace, config.GetMetadata().GetNamespace()),
 		customopts.WithAnnotation(SandboxUID, config.GetMetadata().GetUid()),

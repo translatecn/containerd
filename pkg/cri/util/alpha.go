@@ -17,7 +17,7 @@
 package util
 
 import (
-	"github.com/containerd/containerd/protobuf/proto"
+	"demo/over/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

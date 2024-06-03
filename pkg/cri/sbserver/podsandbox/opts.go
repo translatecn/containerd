@@ -18,11 +18,10 @@ package podsandbox
 
 import (
 	"context"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/nri"
-	v1 "github.com/containerd/nri/types/v1"
+	"demo/containerd"
+	"demo/others/log"
+	"demo/others/nri"
+	v1 "demo/others/nri/types/v1"
 )
 
 // WithNRISandboxDelete calls delete for a sandbox'd task

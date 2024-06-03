@@ -18,10 +18,9 @@ package snapshotters
 
 import (
 	"context"
-
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
+	"demo/others/log"
+	"demo/over/images"
+	"demo/pkg/labels"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -48,18 +47,18 @@ const (
 // of images like digests for manifest and their child layers as annotations during unpack.
 // These annotations will be passed to snapshotters as labels. These labels will be
 // used mainly by remote snapshotters for querying image contents from the remote location.
-func AppendInfoHandlerWrapper(ref string) func(f images.Handler) images.Handler {
-	return func(f images.Handler) images.Handler {
-		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+func AppendInfoHandlerWrapper(ref string) func(f over_images.Handler) over_images.Handler {
+	return func(f over_images.Handler) over_images.Handler {
+		return over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 			children, err := f.Handle(ctx, desc)
 			if err != nil {
 				return nil, err
 			}
 			switch desc.MediaType {
-			case ocispec.MediaTypeImageManifest, images.MediaTypeDockerSchema2Manifest:
+			case ocispec.MediaTypeImageManifest, over_images.MediaTypeDockerSchema2Manifest:
 				for i := range children {
 					c := &children[i]
-					if images.IsLayerType(c.MediaType) {
+					if over_images.IsLayerType(c.MediaType) {
 						if c.Annotations == nil {
 							c.Annotations = make(map[string]string)
 						}
@@ -80,7 +79,7 @@ func AppendInfoHandlerWrapper(ref string) func(f images.Handler) images.Handler 
 // as meets the label validation.
 func getLayers(ctx context.Context, key string, descs []ocispec.Descriptor, validate func(k, v string) error) (layers string) {
 	for _, l := range descs {
-		if images.IsLayerType(l.MediaType) {
+		if over_images.IsLayerType(l.MediaType) {
 			item := l.Digest.String()
 			if layers != "" {
 				item = "," + item

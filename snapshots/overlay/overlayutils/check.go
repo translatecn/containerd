@@ -19,16 +19,17 @@
 package overlayutils
 
 import (
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
 
-	kernel "github.com/containerd/containerd/contrib/seccomp/kernelversion"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/userns"
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
+	"demo/over/mount"
+	kernel "demo/pkg/contrib/seccomp/kernelversion"
+	"demo/pkg/userns"
 )
 
 const (
@@ -44,7 +45,7 @@ const (
 //
 // Ported from moby overlay2.
 func SupportsMultipleLowerDir(d string) error {
-	td, err := os.MkdirTemp(d, "multiple-lowerdir-check")
+	td, err := my_mk.MkdirTemp(d, "multiple-lowerdir-check")
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func SupportsMultipleLowerDir(d string) error {
 	}()
 
 	for _, dir := range []string{"lower1", "lower2", "upper", "work", "merged"} {
-		if err := os.Mkdir(filepath.Join(td, dir), 0755); err != nil {
+		if err := my_mk.Mkdir(filepath.Join(td, dir), 0755); err != nil {
 			return err
 		}
 	}
@@ -80,7 +81,7 @@ func SupportsMultipleLowerDir(d string) error {
 // Supported is not called during plugin initialization, but exposed for downstream projects which uses
 // this snapshotter as a library.
 func Supported(root string) error {
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return err
 	}
 	supportsDType, err := fs.SupportsDType(root)
@@ -153,7 +154,7 @@ func NeedsUserXAttr(d string) (bool, error) {
 		log.L.WithError(err).Warnf("Failed to remove check directory %v", tdRoot)
 	}
 
-	if err := os.MkdirAll(tdRoot, 0700); err != nil {
+	if err := my_mk.MkdirAll(tdRoot, 0700); err != nil {
 		return false, err
 	}
 
@@ -163,13 +164,13 @@ func NeedsUserXAttr(d string) (bool, error) {
 		}
 	}()
 
-	td, err := os.MkdirTemp(tdRoot, "")
+	td, err := my_mk.MkdirTemp(tdRoot, "")
 	if err != nil {
 		return false, err
 	}
 
 	for _, dir := range []string{"lower1", "lower2", "upper", "work", "merged"} {
-		if err := os.Mkdir(filepath.Join(td, dir), 0755); err != nil {
+		if err := my_mk.Mkdir(filepath.Join(td, dir), 0755); err != nil {
 			return false, err
 		}
 	}

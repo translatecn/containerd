@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/services/server"
+	"demo/over/errdefs"
+	"demo/services/server"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/windows"
@@ -189,7 +189,7 @@ func unregisterService() error {
 func registerUnregisterService(root string) (bool, error) {
 	if unregisterServiceFlag {
 		if registerServiceFlag {
-			return true, fmt.Errorf("--register-service and --unregister-service cannot be used together: %w", errdefs.ErrInvalidArgument)
+			return true, fmt.Errorf("--register-service and --unregister-service cannot be used together: %w", over_errdefs.ErrInvalidArgument)
 		}
 		return true, unregisterService()
 	}

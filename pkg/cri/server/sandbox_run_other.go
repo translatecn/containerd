@@ -19,10 +19,10 @@
 package server
 
 import (
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/pkg/cri/annotations"
+	"demo/snapshots"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -35,8 +35,8 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 
 // sandboxContainerSpecOpts generates OCI spec options for
 // the sandbox container.
-func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
-	return []oci.SpecOpts{}, nil
+func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
+	return []over_oci.SpecOpts{}, nil
 }
 
 // setupSandboxFiles sets up necessary sandbox files including /dev/shm, /etc/hosts,

@@ -18,26 +18,26 @@ package local
 
 import (
 	"context"
+	leases2 "demo/pkg/leases"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
 	"golang.org/x/sync/semaphore"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/pkg/kmutex"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/pkg/unpack"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/pkg/kmutex"
+	"demo/pkg/transfer"
+	"demo/pkg/unpack"
 )
 
 type localTransferService struct {
-	leases  leases.Manager
+	leases  leases2.Manager
 	content content.Store
-	images  images.Store
+	images  over_images.Store
 	// limiter for upload
 	limiterU *semaphore.Weighted
 	// limiter for download operation
@@ -45,7 +45,7 @@ type localTransferService struct {
 	config   TransferConfig
 }
 
-func NewTransferService(lm leases.Manager, cs content.Store, is images.Store, tc *TransferConfig) transfer.Transferrer {
+func NewTransferService(lm leases2.Manager, cs content.Store, is over_images.Store, tc *TransferConfig) transfer.Transferrer {
 	ts := &localTransferService{
 		leases:  lm,
 		content: cs,
@@ -91,7 +91,7 @@ func (ts *localTransferService) Transfer(ctx context.Context, src interface{}, d
 			return ts.importStream(ctx, s, d, topts)
 		}
 	}
-	return fmt.Errorf("unable to transfer from %s to %s: %w", name(src), name(dest), errdefs.ErrNotImplemented)
+	return fmt.Errorf("unable to transfer from %s to %s: %w", name(src), name(dest), over_errdefs.ErrNotImplemented)
 }
 
 func name(t interface{}) string {
@@ -110,7 +110,7 @@ func name(t interface{}) string {
 func (ts *localTransferService) echo(ctx context.Context, i transfer.ImageImporter, e transfer.ImageExportStreamer, tops *transfer.Config) error {
 	iis, ok := i.(transfer.ImageImportStreamer)
 	if !ok {
-		return fmt.Errorf("echo requires access to raw stream: %w", errdefs.ErrNotImplemented)
+		return fmt.Errorf("echo requires access to raw stream: %w", over_errdefs.ErrNotImplemented)
 	}
 	r, _, err := iis.ImportStream(ctx)
 	if err != nil {
@@ -130,10 +130,10 @@ func (ts *localTransferService) echo(ctx context.Context, i transfer.ImageImport
 }
 
 // WithLease attaches a lease on the context
-func (ts *localTransferService) withLease(ctx context.Context, opts ...leases.Opt) (context.Context, func(context.Context) error, error) {
+func (ts *localTransferService) withLease(ctx context.Context, opts ...leases2.Opt) (context.Context, func(context.Context) error, error) {
 	nop := func(context.Context) error { return nil }
 
-	_, ok := leases.FromContext(ctx)
+	_, ok := leases2.FromContext(ctx)
 	if ok {
 		return ctx, nop, nil
 	}
@@ -142,9 +142,9 @@ func (ts *localTransferService) withLease(ctx context.Context, opts ...leases.Op
 
 	if len(opts) == 0 {
 		// Use default lease configuration if no options provided
-		opts = []leases.Opt{
-			leases.WithRandomID(),
-			leases.WithExpiration(24 * time.Hour),
+		opts = []leases2.Opt{
+			leases2.WithRandomID(),
+			leases2.WithExpiration(24 * time.Hour),
 		}
 	}
 
@@ -153,7 +153,7 @@ func (ts *localTransferService) withLease(ctx context.Context, opts ...leases.Op
 		return ctx, nop, err
 	}
 
-	ctx = leases.WithLease(ctx, l.ID)
+	ctx = leases2.WithLease(ctx, l.ID)
 	return ctx, func(ctx context.Context) error {
 		return ls.Delete(ctx, l)
 	}, nil
@@ -173,7 +173,7 @@ type TransferConfig struct {
 	// BaseHandlers are a set of handlers which get are called on dispatch.
 	// These handlers always get called before any operation specific
 	// handlers.
-	BaseHandlers []images.Handler
+	BaseHandlers []over_images.Handler
 
 	// UnpackPlatforms are used to specify supported combination of platforms and snapshotters
 	UnpackPlatforms []unpack.Platform

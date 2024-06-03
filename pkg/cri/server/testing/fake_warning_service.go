@@ -19,8 +19,8 @@ package testing
 import (
 	"context"
 
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/services/warning"
+	"demo/pkg/deprecation"
+	"demo/services/warning"
 )
 
 // FakeWarningService is a fake service used for test.

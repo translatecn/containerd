@@ -18,18 +18,18 @@ package instrument
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/tracing"
 	"errors"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/services/warning"
-	runtime_alpha "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"github.com/containerd/containerd/tracing"
+	"demo/over/errdefs"
+	"demo/services/warning"
+	runtime_alpha "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/pkg/deprecation"
+	ctrdutil "demo/pkg/cri/util"
+	"demo/pkg/deprecation"
 )
 
 const (
@@ -127,7 +127,7 @@ func (in *instrumentedService) RunPodSandbox(ctx context.Context, r *runtime.Run
 		}
 	}()
 	res, err = in.c.RunPodSandbox(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) RunPodSandbox(ctx context.Context, r *runtime_alpha.RunPodSandboxRequest) (res *runtime_alpha.RunPodSandboxResponse, err error) {
@@ -145,7 +145,7 @@ func (in *instrumentedAlphaService) RunPodSandbox(ctx context.Context, r *runtim
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.RunPodSandboxRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.RunPodSandboxResponse
 	v1res, err = in.c.RunPodSandbox(ctrdutil.WithNamespace(ctx), &v1r)
@@ -164,7 +164,7 @@ func (in *instrumentedAlphaService) RunPodSandbox(ctx context.Context, r *runtim
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (res *runtime.ListPodSandboxResponse, err error) {
@@ -180,7 +180,7 @@ func (in *instrumentedService) ListPodSandbox(ctx context.Context, r *runtime.Li
 		}
 	}()
 	res, err = in.c.ListPodSandbox(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ListPodSandbox(ctx context.Context, r *runtime_alpha.ListPodSandboxRequest) (res *runtime_alpha.ListPodSandboxResponse, err error) {
@@ -198,7 +198,7 @@ func (in *instrumentedAlphaService) ListPodSandbox(ctx context.Context, r *runti
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ListPodSandboxRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ListPodSandboxResponse
 	v1res, err = in.c.ListPodSandbox(ctrdutil.WithNamespace(ctx), &v1r)
@@ -217,7 +217,7 @@ func (in *instrumentedAlphaService) ListPodSandbox(ctx context.Context, r *runti
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (res *runtime.PodSandboxStatusResponse, err error) {
@@ -233,7 +233,7 @@ func (in *instrumentedService) PodSandboxStatus(ctx context.Context, r *runtime.
 		}
 	}()
 	res, err = in.c.PodSandboxStatus(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) PodSandboxStatus(ctx context.Context, r *runtime_alpha.PodSandboxStatusRequest) (res *runtime_alpha.PodSandboxStatusResponse, err error) {
@@ -251,7 +251,7 @@ func (in *instrumentedAlphaService) PodSandboxStatus(ctx context.Context, r *run
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.PodSandboxStatusRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.PodSandboxStatusResponse
 	v1res, err = in.c.PodSandboxStatus(ctrdutil.WithNamespace(ctx), &v1r)
@@ -270,7 +270,7 @@ func (in *instrumentedAlphaService) PodSandboxStatus(ctx context.Context, r *run
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (_ *runtime.StopPodSandboxResponse, err error) {
@@ -286,7 +286,7 @@ func (in *instrumentedService) StopPodSandbox(ctx context.Context, r *runtime.St
 		}
 	}()
 	res, err := in.c.StopPodSandbox(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) StopPodSandbox(ctx context.Context, r *runtime_alpha.StopPodSandboxRequest) (res *runtime_alpha.StopPodSandboxResponse, err error) {
@@ -304,7 +304,7 @@ func (in *instrumentedAlphaService) StopPodSandbox(ctx context.Context, r *runti
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.StopPodSandboxRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.StopPodSandboxResponse
 	v1res, err = in.c.StopPodSandbox(ctrdutil.WithNamespace(ctx), &v1r)
@@ -323,7 +323,7 @@ func (in *instrumentedAlphaService) StopPodSandbox(ctx context.Context, r *runti
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodSandboxRequest) (_ *runtime.RemovePodSandboxResponse, err error) {
@@ -339,7 +339,7 @@ func (in *instrumentedService) RemovePodSandbox(ctx context.Context, r *runtime.
 		}
 	}()
 	res, err := in.c.RemovePodSandbox(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) RemovePodSandbox(ctx context.Context, r *runtime_alpha.RemovePodSandboxRequest) (res *runtime_alpha.RemovePodSandboxResponse, err error) {
@@ -357,7 +357,7 @@ func (in *instrumentedAlphaService) RemovePodSandbox(ctx context.Context, r *run
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.RemovePodSandboxRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.RemovePodSandboxResponse
 	v1res, err = in.c.RemovePodSandbox(ctrdutil.WithNamespace(ctx), &v1r)
@@ -376,7 +376,7 @@ func (in *instrumentedAlphaService) RemovePodSandbox(ctx context.Context, r *run
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) PortForward(ctx context.Context, r *runtime.PortForwardRequest) (res *runtime.PortForwardResponse, err error) {
@@ -392,7 +392,7 @@ func (in *instrumentedService) PortForward(ctx context.Context, r *runtime.PortF
 		}
 	}()
 	res, err = in.c.PortForward(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) PortForward(ctx context.Context, r *runtime_alpha.PortForwardRequest) (res *runtime_alpha.PortForwardResponse, err error) {
@@ -410,7 +410,7 @@ func (in *instrumentedAlphaService) PortForward(ctx context.Context, r *runtime_
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.PortForwardRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.PortForwardResponse
 	v1res, err = in.c.PortForward(ctrdutil.WithNamespace(ctx), &v1r)
@@ -429,7 +429,7 @@ func (in *instrumentedAlphaService) PortForward(ctx context.Context, r *runtime_
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (res *runtime.CreateContainerResponse, err error) {
@@ -448,7 +448,7 @@ func (in *instrumentedService) CreateContainer(ctx context.Context, r *runtime.C
 		}
 	}()
 	res, err = in.c.CreateContainer(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) CreateContainer(ctx context.Context, r *runtime_alpha.CreateContainerRequest) (res *runtime_alpha.CreateContainerResponse, err error) {
@@ -469,7 +469,7 @@ func (in *instrumentedAlphaService) CreateContainer(ctx context.Context, r *runt
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.CreateContainerRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.CreateContainerResponse
 	v1res, err = in.c.CreateContainer(ctrdutil.WithNamespace(ctx), &v1r)
@@ -489,7 +489,7 @@ func (in *instrumentedAlphaService) CreateContainer(ctx context.Context, r *runt
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (_ *runtime.StartContainerResponse, err error) {
@@ -505,7 +505,7 @@ func (in *instrumentedService) StartContainer(ctx context.Context, r *runtime.St
 		}
 	}()
 	res, err := in.c.StartContainer(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) StartContainer(ctx context.Context, r *runtime_alpha.StartContainerRequest) (res *runtime_alpha.StartContainerResponse, err error) {
@@ -523,7 +523,7 @@ func (in *instrumentedAlphaService) StartContainer(ctx context.Context, r *runti
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.StartContainerRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.StartContainerResponse
 	v1res, err = in.c.StartContainer(ctrdutil.WithNamespace(ctx), &v1r)
@@ -542,7 +542,7 @@ func (in *instrumentedAlphaService) StartContainer(ctx context.Context, r *runti
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (res *runtime.ListContainersResponse, err error) {
@@ -559,7 +559,7 @@ func (in *instrumentedService) ListContainers(ctx context.Context, r *runtime.Li
 		}
 	}()
 	res, err = in.c.ListContainers(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ListContainers(ctx context.Context, r *runtime_alpha.ListContainersRequest) (res *runtime_alpha.ListContainersResponse, err error) {
@@ -578,7 +578,7 @@ func (in *instrumentedAlphaService) ListContainers(ctx context.Context, r *runti
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ListContainersRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ListContainersResponse
 	v1res, err = in.c.ListContainers(ctrdutil.WithNamespace(ctx), &v1r)
@@ -597,7 +597,7 @@ func (in *instrumentedAlphaService) ListContainers(ctx context.Context, r *runti
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ContainerStatus(ctx context.Context, r *runtime.ContainerStatusRequest) (res *runtime.ContainerStatusResponse, err error) {
@@ -613,7 +613,7 @@ func (in *instrumentedService) ContainerStatus(ctx context.Context, r *runtime.C
 		}
 	}()
 	res, err = in.c.ContainerStatus(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ContainerStatus(ctx context.Context, r *runtime_alpha.ContainerStatusRequest) (res *runtime_alpha.ContainerStatusResponse, err error) {
@@ -631,7 +631,7 @@ func (in *instrumentedAlphaService) ContainerStatus(ctx context.Context, r *runt
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ContainerStatusRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ContainerStatusResponse
 	v1res, err = in.c.ContainerStatus(ctrdutil.WithNamespace(ctx), &v1r)
@@ -650,7 +650,7 @@ func (in *instrumentedAlphaService) ContainerStatus(ctx context.Context, r *runt
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) StopContainer(ctx context.Context, r *runtime.StopContainerRequest) (res *runtime.StopContainerResponse, err error) {
@@ -666,7 +666,7 @@ func (in *instrumentedService) StopContainer(ctx context.Context, r *runtime.Sto
 		}
 	}()
 	res, err = in.c.StopContainer(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) StopContainer(ctx context.Context, r *runtime_alpha.StopContainerRequest) (res *runtime_alpha.StopContainerResponse, err error) {
@@ -684,7 +684,7 @@ func (in *instrumentedAlphaService) StopContainer(ctx context.Context, r *runtim
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.StopContainerRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.StopContainerResponse
 	v1res, err = in.c.StopContainer(ctrdutil.WithNamespace(ctx), &v1r)
@@ -703,7 +703,7 @@ func (in *instrumentedAlphaService) StopContainer(ctx context.Context, r *runtim
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) RemoveContainer(ctx context.Context, r *runtime.RemoveContainerRequest) (res *runtime.RemoveContainerResponse, err error) {
@@ -719,7 +719,7 @@ func (in *instrumentedService) RemoveContainer(ctx context.Context, r *runtime.R
 		}
 	}()
 	res, err = in.c.RemoveContainer(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) RemoveContainer(ctx context.Context, r *runtime_alpha.RemoveContainerRequest) (res *runtime_alpha.RemoveContainerResponse, err error) {
@@ -737,7 +737,7 @@ func (in *instrumentedAlphaService) RemoveContainer(ctx context.Context, r *runt
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.RemoveContainerRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.RemoveContainerResponse
 	v1res, err = in.c.RemoveContainer(ctrdutil.WithNamespace(ctx), &v1r)
@@ -756,7 +756,7 @@ func (in *instrumentedAlphaService) RemoveContainer(ctx context.Context, r *runt
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (res *runtime.ExecSyncResponse, err error) {
@@ -772,7 +772,7 @@ func (in *instrumentedService) ExecSync(ctx context.Context, r *runtime.ExecSync
 		}
 	}()
 	res, err = in.c.ExecSync(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ExecSync(ctx context.Context, r *runtime_alpha.ExecSyncRequest) (res *runtime_alpha.ExecSyncResponse, err error) {
@@ -790,7 +790,7 @@ func (in *instrumentedAlphaService) ExecSync(ctx context.Context, r *runtime_alp
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ExecSyncRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ExecSyncResponse
 	v1res, err = in.c.ExecSync(ctrdutil.WithNamespace(ctx), &v1r)
@@ -809,7 +809,7 @@ func (in *instrumentedAlphaService) ExecSync(ctx context.Context, r *runtime_alp
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) Exec(ctx context.Context, r *runtime.ExecRequest) (res *runtime.ExecResponse, err error) {
@@ -826,7 +826,7 @@ func (in *instrumentedService) Exec(ctx context.Context, r *runtime.ExecRequest)
 		}
 	}()
 	res, err = in.c.Exec(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) Exec(ctx context.Context, r *runtime_alpha.ExecRequest) (res *runtime_alpha.ExecResponse, err error) {
@@ -845,7 +845,7 @@ func (in *instrumentedAlphaService) Exec(ctx context.Context, r *runtime_alpha.E
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ExecRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ExecResponse
 	v1res, err = in.c.Exec(ctrdutil.WithNamespace(ctx), &v1r)
@@ -864,7 +864,7 @@ func (in *instrumentedAlphaService) Exec(ctx context.Context, r *runtime_alpha.E
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) Attach(ctx context.Context, r *runtime.AttachRequest) (res *runtime.AttachResponse, err error) {
@@ -880,7 +880,7 @@ func (in *instrumentedService) Attach(ctx context.Context, r *runtime.AttachRequ
 		}
 	}()
 	res, err = in.c.Attach(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) Attach(ctx context.Context, r *runtime_alpha.AttachRequest) (res *runtime_alpha.AttachResponse, err error) {
@@ -898,7 +898,7 @@ func (in *instrumentedAlphaService) Attach(ctx context.Context, r *runtime_alpha
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.AttachRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.AttachResponse
 	v1res, err = in.c.Attach(ctrdutil.WithNamespace(ctx), &v1r)
@@ -917,7 +917,7 @@ func (in *instrumentedAlphaService) Attach(ctx context.Context, r *runtime_alpha
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) UpdateContainerResources(ctx context.Context, r *runtime.UpdateContainerResourcesRequest) (res *runtime.UpdateContainerResourcesResponse, err error) {
@@ -933,7 +933,7 @@ func (in *instrumentedService) UpdateContainerResources(ctx context.Context, r *
 		}
 	}()
 	res, err = in.c.UpdateContainerResources(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) UpdateContainerResources(ctx context.Context, r *runtime_alpha.UpdateContainerResourcesRequest) (res *runtime_alpha.UpdateContainerResourcesResponse, err error) {
@@ -951,7 +951,7 @@ func (in *instrumentedAlphaService) UpdateContainerResources(ctx context.Context
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.UpdateContainerResourcesRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.UpdateContainerResourcesResponse
 	v1res, err = in.c.UpdateContainerResources(ctrdutil.WithNamespace(ctx), &v1r)
@@ -970,14 +970,14 @@ func (in *instrumentedAlphaService) UpdateContainerResources(ctx context.Context
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (res *runtime.PullImageResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "PullImage"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "PullImage"))
 	defer span.End()
 	log.G(ctx).Infof("PullImage %q", r.GetImage().GetImage())
 	defer func() {
@@ -990,14 +990,14 @@ func (in *instrumentedService) PullImage(ctx context.Context, r *runtime.PullIma
 		span.SetStatus(err)
 	}()
 	res, err = in.c.PullImage(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) PullImage(ctx context.Context, r *runtime_alpha.PullImageRequest) (res *runtime_alpha.PullImageResponse, err error) {
 	if err := in.checkInitialized(ctx); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "PullImage"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "PullImage"))
 	defer span.End()
 	log.G(ctx).Infof("PullImage %q", r.GetImage().GetImage())
 	defer func() {
@@ -1012,7 +1012,7 @@ func (in *instrumentedAlphaService) PullImage(ctx context.Context, r *runtime_al
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.PullImageRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.PullImageResponse
 	v1res, err = in.c.PullImage(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1031,14 +1031,14 @@ func (in *instrumentedAlphaService) PullImage(ctx context.Context, r *runtime_al
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListImages(ctx context.Context, r *runtime.ListImagesRequest) (res *runtime.ListImagesResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ListImages"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ListImages"))
 	defer span.End()
 	log.G(ctx).Tracef("ListImages with filter %+v", r.GetFilter())
 	defer func() {
@@ -1051,14 +1051,14 @@ func (in *instrumentedService) ListImages(ctx context.Context, r *runtime.ListIm
 		span.SetStatus(err)
 	}()
 	res, err = in.c.ListImages(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ListImages(ctx context.Context, r *runtime_alpha.ListImagesRequest) (res *runtime_alpha.ListImagesResponse, err error) {
 	if err := in.checkInitialized(ctx); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ListImages"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ListImages"))
 	defer span.End()
 	log.G(ctx).Tracef("ListImages with filter %+v", r.GetFilter())
 	defer func() {
@@ -1073,7 +1073,7 @@ func (in *instrumentedAlphaService) ListImages(ctx context.Context, r *runtime_a
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ListImagesRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ListImagesResponse
 	v1res, err = in.c.ListImages(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1092,14 +1092,14 @@ func (in *instrumentedAlphaService) ListImages(ctx context.Context, r *runtime_a
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (res *runtime.ImageStatusResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ImageStatus"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ImageStatus"))
 	defer span.End()
 	log.G(ctx).Tracef("ImageStatus for %q", r.GetImage().GetImage())
 	defer func() {
@@ -1112,14 +1112,14 @@ func (in *instrumentedService) ImageStatus(ctx context.Context, r *runtime.Image
 		span.SetStatus(err)
 	}()
 	res, err = in.c.ImageStatus(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ImageStatus(ctx context.Context, r *runtime_alpha.ImageStatusRequest) (res *runtime_alpha.ImageStatusResponse, err error) {
 	if err := in.checkInitialized(ctx); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ImageStatus"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ImageStatus"))
 	defer span.End()
 	log.G(ctx).Tracef("ImageStatus for %q", r.GetImage().GetImage())
 	defer func() {
@@ -1134,7 +1134,7 @@ func (in *instrumentedAlphaService) ImageStatus(ctx context.Context, r *runtime_
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ImageStatusRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ImageStatusResponse
 	v1res, err = in.c.ImageStatus(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1153,14 +1153,14 @@ func (in *instrumentedAlphaService) ImageStatus(ctx context.Context, r *runtime_
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (_ *runtime.RemoveImageResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "RemoveImage"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "RemoveImage"))
 	defer span.End()
 	log.G(ctx).Infof("RemoveImage %q", r.GetImage().GetImage())
 	defer func() {
@@ -1172,14 +1172,14 @@ func (in *instrumentedService) RemoveImage(ctx context.Context, r *runtime.Remov
 		span.SetStatus(err)
 	}()
 	res, err := in.c.RemoveImage(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) RemoveImage(ctx context.Context, r *runtime_alpha.RemoveImageRequest) (res *runtime_alpha.RemoveImageResponse, err error) {
 	if err := in.checkInitialized(ctx); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "RemoveImage"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "RemoveImage"))
 	defer span.End()
 	log.G(ctx).Infof("RemoveImage %q", r.GetImage().GetImage())
 	defer func() {
@@ -1193,7 +1193,7 @@ func (in *instrumentedAlphaService) RemoveImage(ctx context.Context, r *runtime_
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.RemoveImageRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.RemoveImageResponse
 	v1res, err = in.c.RemoveImage(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1212,14 +1212,14 @@ func (in *instrumentedAlphaService) RemoveImage(ctx context.Context, r *runtime_
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ImageFsInfo(ctx context.Context, r *runtime.ImageFsInfoRequest) (res *runtime.ImageFsInfoResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ImageFsInfo"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ImageFsInfo"))
 	defer span.End()
 	log.G(ctx).Tracef("ImageFsInfo")
 	defer func() {
@@ -1231,14 +1231,14 @@ func (in *instrumentedService) ImageFsInfo(ctx context.Context, r *runtime.Image
 		span.SetStatus(err)
 	}()
 	res, err = in.c.ImageFsInfo(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ImageFsInfo(ctx context.Context, r *runtime_alpha.ImageFsInfoRequest) (res *runtime_alpha.ImageFsInfoResponse, err error) {
 	if err := in.checkInitialized(ctx); err != nil {
 		return nil, err
 	}
-	ctx, span := tracing.StartSpan(ctx, tracing.Name(criSpanPrefix, "ImageFsInfo"))
+	ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(criSpanPrefix, "ImageFsInfo"))
 	defer span.End()
 	log.G(ctx).Debugf("ImageFsInfo")
 	defer func() {
@@ -1252,7 +1252,7 @@ func (in *instrumentedAlphaService) ImageFsInfo(ctx context.Context, r *runtime_
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ImageFsInfoRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ImageFsInfoResponse
 	v1res, err = in.c.ImageFsInfo(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1271,7 +1271,7 @@ func (in *instrumentedAlphaService) ImageFsInfo(ctx context.Context, r *runtime_
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) PodSandboxStats(ctx context.Context, r *runtime.PodSandboxStatsRequest) (res *runtime.PodSandboxStatsResponse, err error) {
@@ -1287,7 +1287,7 @@ func (in *instrumentedService) PodSandboxStats(ctx context.Context, r *runtime.P
 		}
 	}()
 	res, err = in.c.PodSandboxStats(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) PodSandboxStats(ctx context.Context, r *runtime_alpha.PodSandboxStatsRequest) (res *runtime_alpha.PodSandboxStatsResponse, err error) {
@@ -1305,7 +1305,7 @@ func (in *instrumentedAlphaService) PodSandboxStats(ctx context.Context, r *runt
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.PodSandboxStatsRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.PodSandboxStatsResponse
 	v1res, err = in.c.PodSandboxStats(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1324,7 +1324,7 @@ func (in *instrumentedAlphaService) PodSandboxStats(ctx context.Context, r *runt
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ContainerStats(ctx context.Context, r *runtime.ContainerStatsRequest) (res *runtime.ContainerStatsResponse, err error) {
@@ -1340,7 +1340,7 @@ func (in *instrumentedService) ContainerStats(ctx context.Context, r *runtime.Co
 		}
 	}()
 	res, err = in.c.ContainerStats(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ContainerStats(ctx context.Context, r *runtime_alpha.ContainerStatsRequest) (res *runtime_alpha.ContainerStatsResponse, err error) {
@@ -1358,7 +1358,7 @@ func (in *instrumentedAlphaService) ContainerStats(ctx context.Context, r *runti
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ContainerStatsRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ContainerStatsResponse
 	v1res, err = in.c.ContainerStats(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1377,7 +1377,7 @@ func (in *instrumentedAlphaService) ContainerStats(ctx context.Context, r *runti
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListPodSandboxStats(ctx context.Context, r *runtime.ListPodSandboxStatsRequest) (res *runtime.ListPodSandboxStatsResponse, err error) {
@@ -1393,7 +1393,7 @@ func (in *instrumentedService) ListPodSandboxStats(ctx context.Context, r *runti
 		}
 	}()
 	res, err = in.c.ListPodSandboxStats(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ListPodSandboxStats(ctx context.Context, r *runtime_alpha.ListPodSandboxStatsRequest) (res *runtime_alpha.ListPodSandboxStatsResponse, err error) {
@@ -1411,7 +1411,7 @@ func (in *instrumentedAlphaService) ListPodSandboxStats(ctx context.Context, r *
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ListPodSandboxStatsRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ListPodSandboxStatsResponse
 	v1res, err = in.c.ListPodSandboxStats(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1430,7 +1430,7 @@ func (in *instrumentedAlphaService) ListPodSandboxStats(ctx context.Context, r *
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListContainerStats(ctx context.Context, r *runtime.ListContainerStatsRequest) (res *runtime.ListContainerStatsResponse, err error) {
@@ -1446,7 +1446,7 @@ func (in *instrumentedService) ListContainerStats(ctx context.Context, r *runtim
 		}
 	}()
 	res, err = in.c.ListContainerStats(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ListContainerStats(ctx context.Context, r *runtime_alpha.ListContainerStatsRequest) (res *runtime_alpha.ListContainerStatsResponse, err error) {
@@ -1464,7 +1464,7 @@ func (in *instrumentedAlphaService) ListContainerStats(ctx context.Context, r *r
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ListContainerStatsRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ListContainerStatsResponse
 	v1res, err = in.c.ListContainerStats(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1483,7 +1483,7 @@ func (in *instrumentedAlphaService) ListContainerStats(ctx context.Context, r *r
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) Status(ctx context.Context, r *runtime.StatusRequest) (res *runtime.StatusResponse, err error) {
@@ -1499,7 +1499,7 @@ func (in *instrumentedService) Status(ctx context.Context, r *runtime.StatusRequ
 		}
 	}()
 	res, err = in.c.Status(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) Status(ctx context.Context, r *runtime_alpha.StatusRequest) (res *runtime_alpha.StatusResponse, err error) {
@@ -1517,7 +1517,7 @@ func (in *instrumentedAlphaService) Status(ctx context.Context, r *runtime_alpha
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.StatusRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.StatusResponse
 	v1res, err = in.c.Status(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1536,7 +1536,7 @@ func (in *instrumentedAlphaService) Status(ctx context.Context, r *runtime_alpha
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) Version(ctx context.Context, r *runtime.VersionRequest) (res *runtime.VersionResponse, err error) {
@@ -1552,7 +1552,7 @@ func (in *instrumentedService) Version(ctx context.Context, r *runtime.VersionRe
 		}
 	}()
 	res, err = in.c.Version(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) Version(ctx context.Context, r *runtime_alpha.VersionRequest) (res *runtime_alpha.VersionResponse, err error) {
@@ -1568,7 +1568,7 @@ func (in *instrumentedAlphaService) Version(ctx context.Context, r *runtime_alph
 		}
 	}()
 	res, err = in.c.AlphaVersion(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateRuntimeConfigRequest) (res *runtime.UpdateRuntimeConfigResponse, err error) {
@@ -1584,7 +1584,7 @@ func (in *instrumentedService) UpdateRuntimeConfig(ctx context.Context, r *runti
 		}
 	}()
 	res, err = in.c.UpdateRuntimeConfig(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) UpdateRuntimeConfig(ctx context.Context, r *runtime_alpha.UpdateRuntimeConfigRequest) (res *runtime_alpha.UpdateRuntimeConfigResponse, err error) {
@@ -1602,7 +1602,7 @@ func (in *instrumentedAlphaService) UpdateRuntimeConfig(ctx context.Context, r *
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.UpdateRuntimeConfigRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.UpdateRuntimeConfigResponse
 	v1res, err = in.c.UpdateRuntimeConfig(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1621,7 +1621,7 @@ func (in *instrumentedAlphaService) UpdateRuntimeConfig(ctx context.Context, r *
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ReopenContainerLog(ctx context.Context, r *runtime.ReopenContainerLogRequest) (res *runtime.ReopenContainerLogResponse, err error) {
@@ -1637,7 +1637,7 @@ func (in *instrumentedService) ReopenContainerLog(ctx context.Context, r *runtim
 		}
 	}()
 	res, err = in.c.ReopenContainerLog(ctrdutil.WithNamespace(ctx), r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedAlphaService) ReopenContainerLog(ctx context.Context, r *runtime_alpha.ReopenContainerLogRequest) (res *runtime_alpha.ReopenContainerLogResponse, err error) {
@@ -1655,7 +1655,7 @@ func (in *instrumentedAlphaService) ReopenContainerLog(ctx context.Context, r *r
 	// converts request and response for earlier CRI version to call and get response from the current version
 	var v1r runtime.ReopenContainerLogRequest
 	if err := ctrdutil.AlphaReqToV1Req(r, &v1r); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	var v1res *runtime.ReopenContainerLogResponse
 	v1res, err = in.c.ReopenContainerLog(ctrdutil.WithNamespace(ctx), &v1r)
@@ -1674,7 +1674,7 @@ func (in *instrumentedAlphaService) ReopenContainerLog(ctx context.Context, r *r
 			}
 		}
 	}
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) CheckpointContainer(ctx context.Context, r *runtime.CheckpointContainerRequest) (res *runtime.CheckpointContainerResponse, err error) {
@@ -1691,7 +1691,7 @@ func (in *instrumentedService) CheckpointContainer(ctx context.Context, r *runti
 	}()
 
 	res, err = in.c.CheckpointContainer(ctx, r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) GetContainerEvents(r *runtime.GetEventsRequest, s runtime.RuntimeService_GetContainerEventsServer) (err error) {
@@ -1709,7 +1709,7 @@ func (in *instrumentedService) GetContainerEvents(r *runtime.GetEventsRequest, s
 	}()
 
 	err = in.c.GetContainerEvents(r, s)
-	return errdefs.ToGRPC(err)
+	return over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListMetricDescriptors(ctx context.Context, r *runtime.ListMetricDescriptorsRequest) (res *runtime.ListMetricDescriptorsResponse, err error) {
@@ -1726,7 +1726,7 @@ func (in *instrumentedService) ListMetricDescriptors(ctx context.Context, r *run
 	}()
 
 	res, err = in.c.ListMetricDescriptors(ctx, r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }
 
 func (in *instrumentedService) ListPodSandboxMetrics(ctx context.Context, r *runtime.ListPodSandboxMetricsRequest) (res *runtime.ListPodSandboxMetricsResponse, err error) {
@@ -1743,5 +1743,5 @@ func (in *instrumentedService) ListPodSandboxMetrics(ctx context.Context, r *run
 	}()
 
 	res, err = in.c.ListPodSandboxMetrics(ctx, r)
-	return res, errdefs.ToGRPC(err)
+	return res, over_errdefs.ToGRPC(err)
 }

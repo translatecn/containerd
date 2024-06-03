@@ -18,17 +18,16 @@ package local
 
 import (
 	"context"
+	"demo/containerd"
+	"demo/content"
+	"demo/others/log"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/pkg/transfer"
+	"demo/pkg/unpack"
+	"demo/remotes"
+	"demo/remotes/docker"
 	"fmt"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/pkg/unpack"
-	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/remotes/docker"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -49,9 +48,9 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	if err != nil {
 		return fmt.Errorf("failed to resolve image: %w", err)
 	}
-	if desc.MediaType == images.MediaTypeDockerSchema1Manifest {
+	if desc.MediaType == over_images.MediaTypeDockerSchema1Manifest {
 		// Explicitly call out schema 1 as deprecated and not supported
-		return fmt.Errorf("schema 1 image manifests are no longer supported: %w", errdefs.ErrInvalidArgument)
+		return fmt.Errorf("schema 1 image manifests are no longer supported: %w", over_errdefs.ErrInvalidArgument)
 	}
 
 	// TODO: Handle already exists
@@ -72,9 +71,9 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	}
 
 	var (
-		handler images.Handler
+		handler over_images.Handler
 
-		baseHandlers []images.Handler
+		baseHandlers []over_images.Handler
 
 		unpacker *unpack.Unpacker
 
@@ -94,13 +93,13 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	defer cancel()
 
 	// Get all the children for a descriptor
-	childrenHandler := images.ChildrenHandler(store)
+	childrenHandler := over_images.ChildrenHandler(store)
 
 	if f, ok := is.(transfer.ImageFilterer); ok {
 		childrenHandler = f.ImageFilter(childrenHandler, store)
 	}
 
-	checkNeedsFix := images.HandlerFunc(
+	checkNeedsFix := over_images.HandlerFunc(
 		func(_ context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 			// set to true if there is application/octet-stream media type
 			if desc.MediaType == docker.LegacyConfigMediaType {
@@ -120,11 +119,11 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	if ts.config.BaseHandlers != nil {
 		baseHandlers = ts.config.BaseHandlers
 	} else {
-		baseHandlers = []images.Handler{}
+		baseHandlers = []over_images.Handler{}
 	}
 
 	if tops.Progress != nil {
-		baseHandlers = append(baseHandlers, images.HandlerFunc(
+		baseHandlers = append(baseHandlers, over_images.HandlerFunc(
 			func(_ context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 				progressTracker.Add(desc)
 
@@ -133,7 +132,7 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 		))
 
 		baseChildrenHandler := childrenHandler
-		childrenHandler = images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) (children []ocispec.Descriptor, err error) {
+		childrenHandler = over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) (children []ocispec.Descriptor, err error) {
 			children, err = baseChildrenHandler(ctx, desc)
 			if err != nil {
 				return
@@ -143,7 +142,7 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 		})
 	}
 
-	handler = images.Handlers(append(baseHandlers,
+	handler = over_images.Handlers(append(baseHandlers,
 		fetchHandler(store, fetcher, progressTracker),
 		checkNeedsFix,
 		childrenHandler, // List children to track hierarchy
@@ -180,7 +179,7 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 		}
 	}
 
-	if err := images.Dispatch(ctx, handler, ts.limiterD, desc); err != nil {
+	if err := over_images.Dispatch(ctx, handler, ts.limiterD, desc); err != nil {
 		if unpacker != nil {
 			// wait for unpacker to cleanup
 			unpacker.Wait()
@@ -227,7 +226,7 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	return nil
 }
 
-func fetchHandler(ingester content.Ingester, fetcher remotes.Fetcher, pt *ProgressTracker) images.HandlerFunc {
+func fetchHandler(ingester content.Ingester, fetcher remotes.Fetcher, pt *ProgressTracker) over_images.HandlerFunc {
 	return func(ctx context.Context, desc ocispec.Descriptor) (subdescs []ocispec.Descriptor, err error) {
 		ctx = log.WithLogger(ctx, log.G(ctx).WithFields(log.Fields{
 			"digest":    desc.Digest,
@@ -236,11 +235,11 @@ func fetchHandler(ingester content.Ingester, fetcher remotes.Fetcher, pt *Progre
 		}))
 
 		switch desc.MediaType {
-		case images.MediaTypeDockerSchema1Manifest:
+		case over_images.MediaTypeDockerSchema1Manifest:
 			return nil, fmt.Errorf("%v not supported", desc.MediaType)
 		default:
 			err := remotes.Fetch(ctx, ingester, fetcher, desc)
-			if errdefs.IsAlreadyExists(err) {
+			if over_errdefs.IsAlreadyExists(err) {
 				pt.MarkExists(desc)
 				return nil, nil
 			}

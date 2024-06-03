@@ -17,19 +17,19 @@
 package tasks
 
 import (
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/runtime"
+	over_plugin2 "demo/over/plugin"
+	"demo/runtime"
 )
 
-var tasksServiceRequires = []plugin.Type{
-	plugin.EventPlugin,
-	plugin.RuntimePluginV2,
-	plugin.MetadataPlugin,
-	plugin.TaskMonitorPlugin,
-	plugin.WarningPlugin,
+var tasksServiceRequires = []over_plugin2.Type{
+	over_plugin2.EventPlugin,
+	over_plugin2.RuntimePluginV2,
+	over_plugin2.MetadataPlugin,
+	over_plugin2.TaskMonitorPlugin,
+	over_plugin2.WarningPlugin,
 }
 
 // loadV1Runtimes on FreeBSD returns an empty map. There are no v1 runtimes
-func loadV1Runtimes(ic *plugin.InitContext) (map[string]runtime.PlatformRuntime, error) {
+func loadV1Runtimes(ic *over_plugin2.InitContext) (map[string]runtime.PlatformRuntime, error) {
 	return make(map[string]runtime.PlatformRuntime), nil
 }

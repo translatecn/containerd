@@ -19,13 +19,13 @@ package sandbox
 import (
 	"sync"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/pkg/cri/store"
-	"github.com/containerd/containerd/pkg/cri/store/label"
-	"github.com/containerd/containerd/pkg/cri/store/stats"
-	"github.com/containerd/containerd/pkg/netns"
-	"github.com/containerd/containerd/pkg/truncindex"
+	"demo/containerd"
+	"demo/over/errdefs"
+	"demo/pkg/cri/store"
+	"demo/pkg/cri/store/label"
+	"demo/pkg/cri/store/stats"
+	"demo/pkg/netns"
+	"demo/pkg/truncindex"
 )
 
 // Sandbox contains all resources associated with the sandbox. All methods to
@@ -78,13 +78,13 @@ func NewStore(labels *label.Store) *Store {
 	}
 }
 
-// Add a sandbox into the store. Returns errdefs.ErrAlreadyExists if the sandbox is
+// Add a sandbox into the store. Returns over_errdefs.ErrAlreadyExists if the sandbox is
 // already stored.
 func (s *Store) Add(sb Sandbox) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, ok := s.sandboxes[sb.ID]; ok {
-		return errdefs.ErrAlreadyExists
+		return over_errdefs.ErrAlreadyExists
 	}
 	if err := s.labels.Reserve(sb.ProcessLabel); err != nil {
 		return err
@@ -97,21 +97,21 @@ func (s *Store) Add(sb Sandbox) error {
 }
 
 // Get returns the sandbox with specified id.
-// Returns errdefs.ErrNotFound if the sandbox doesn't exist.
+// Returns over_errdefs.ErrNotFound if the sandbox doesn't exist.
 func (s *Store) Get(id string) (Sandbox, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	id, err := s.idIndex.Get(id)
 	if err != nil {
 		if err == truncindex.ErrNotExist {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return Sandbox{}, err
 	}
 	if sb, ok := s.sandboxes[id]; ok {
 		return sb, nil
 	}
-	return Sandbox{}, errdefs.ErrNotFound
+	return Sandbox{}, over_errdefs.ErrNotFound
 }
 
 // List lists all sandboxes.
@@ -126,7 +126,7 @@ func (s *Store) List() []Sandbox {
 }
 
 // UpdateContainerStats updates the sandbox specified by ID with the
-// stats present in 'newContainerStats'. Returns errdefs.ErrNotFound
+// stats present in 'newContainerStats'. Returns over_errdefs.ErrNotFound
 // if the sandbox does not exist in the store.
 func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.ContainerStats) error {
 	s.lock.Lock()
@@ -134,13 +134,13 @@ func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.Contain
 	id, err := s.idIndex.Get(id)
 	if err != nil {
 		if err == truncindex.ErrNotExist {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return err
 	}
 
 	if _, ok := s.sandboxes[id]; !ok {
-		return errdefs.ErrNotFound
+		return over_errdefs.ErrNotFound
 	}
 
 	c := s.sandboxes[id]

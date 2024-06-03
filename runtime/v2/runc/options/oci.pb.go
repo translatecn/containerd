@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.20.1
-// source: github.com/containerd/containerd/runtime/v2/runc/options/oci.proto
+// source: demo/runtime/v2/runc/options/oci.proto
 
 package options
 

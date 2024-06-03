@@ -18,14 +18,14 @@ package image
 
 import (
 	"context"
+	"demo/pkg/reference/docker"
 	"fmt"
 	"sync"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/pkg/cri/labels"
-	"github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/reference/docker"
+	"demo/containerd"
+	"demo/over/errdefs"
+	"demo/pkg/cri/labels"
+	"demo/pkg/cri/util"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	imagedigest "github.com/opencontainers/go-digest"
@@ -80,7 +80,7 @@ func (s *Store) Update(ctx context.Context, ref string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	i, err := s.client.GetImage(ctx, ref)
-	if err != nil && !errdefs.IsNotFound(err) {
+	if err != nil && !over_errdefs.IsNotFound(err) {
 		return fmt.Errorf("get image from containerd: %w", err)
 	}
 	var img *Image
@@ -168,14 +168,14 @@ func (s *Store) Resolve(ref string) (string, error) {
 	defer s.lock.RUnlock()
 	id, ok := s.refCache[ref]
 	if !ok {
-		return "", errdefs.ErrNotFound
+		return "", over_errdefs.ErrNotFound
 	}
 	return id, nil
 }
 
 // Get gets image metadata by image id. The id can be truncated.
 // Returns various validation errors if the image id is invalid.
-// Returns errdefs.ErrNotFound if the image doesn't exist.
+// Returns over_errdefs.ErrNotFound if the image doesn't exist.
 func (s *Store) Get(id string) (Image, error) {
 	return s.store.get(id)
 }
@@ -252,13 +252,13 @@ func (s *store) pin(id, ref string) error {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return err
 	}
 	i, ok := s.images[digest.String()]
 	if !ok {
-		return errdefs.ErrNotFound
+		return over_errdefs.ErrNotFound
 	}
 
 	if refs := s.pinnedRefs[digest.String()]; refs == nil {
@@ -277,13 +277,13 @@ func (s *store) unpin(id, ref string) error {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return err
 	}
 	i, ok := s.images[digest.String()]
 	if !ok {
-		return errdefs.ErrNotFound
+		return over_errdefs.ErrNotFound
 	}
 
 	refs := s.pinnedRefs[digest.String()]
@@ -308,14 +308,14 @@ func (s *store) get(id string) (Image, error) {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return Image{}, err
 	}
 	if i, ok := s.images[digest.String()]; ok {
 		return i, nil
 	}
-	return Image{}, errdefs.ErrNotFound
+	return Image{}, over_errdefs.ErrNotFound
 }
 
 func (s *store) delete(id, ref string) {

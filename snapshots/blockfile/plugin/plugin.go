@@ -17,11 +17,11 @@
 package plugin
 
 import (
+	over_plugin2 "demo/over/plugin"
 	"errors"
 
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots/blockfile"
+	"demo/over/platforms"
+	"demo/snapshots/blockfile"
 )
 
 // Config represents configuration for the native plugin.
@@ -40,12 +40,12 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:   plugin.SnapshotPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:   over_plugin2.SnapshotPlugin,
 		ID:     "blockfile",
 		Config: &Config{},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ic.Meta.Platforms = append(ic.Meta.Platforms, platforms.DefaultSpec())
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ic.Meta.Platforms = append(ic.Meta.Platforms, over_platforms.DefaultSpec())
 
 			config, ok := ic.Config.(*Config)
 			if !ok {
@@ -67,7 +67,7 @@ func init() {
 				opts = append(opts, blockfile.WithMountOptions(config.MountOptions))
 			}
 
-			ic.Meta.Exports[plugin.SnapshotterRootDir] = root
+			ic.Meta.Exports[over_plugin2.SnapshotterRootDir] = root
 			return blockfile.NewSnapshotter(root, opts...)
 		},
 	})

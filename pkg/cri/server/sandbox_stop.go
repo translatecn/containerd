@@ -18,19 +18,19 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/protobuf"
 	"errors"
 	"fmt"
 	"syscall"
 	"time"
 
-	eventtypes "github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/protobuf"
+	"demo/over/errdefs"
+	eventtypes "demo/pkg/api/events"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
 )
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
@@ -120,7 +120,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	state := sandbox.Status.Get().State
 	task, err := container.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get sandbox container: %w", err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -138,7 +138,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task: %w", err)
 			}
 			return c.cleanupUnknownSandbox(ctx, id, sandbox)
@@ -156,7 +156,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	}
 
 	// Kill the sandbox container.
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill sandbox container: %w", err)
 	}
 
@@ -210,6 +210,6 @@ func (c *criService) cleanupUnknownSandbox(ctx context.Context, id string, sandb
 		ID:          id,
 		Pid:         0,
 		ExitStatus:  unknownExitCode,
-		ExitedAt:    protobuf.ToTimestamp(time.Now()),
+		ExitedAt:    over_protobuf.ToTimestamp(time.Now()),
 	}, sandbox, c)
 }

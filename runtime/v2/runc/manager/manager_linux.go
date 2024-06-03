@@ -18,29 +18,28 @@ package manager
 
 import (
 	"context"
+	"demo/others/cgroups/v3"
+	"demo/others/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	runcC "demo/others/go-runc"
+	"demo/others/log"
+	"demo/over/mount"
+	"demo/over/oci"
+	"demo/pkg/namespaces"
+	"demo/pkg/process"
+	"demo/pkg/schedcore"
+	"demo/runtime/v2/runc"
+	"demo/runtime/v2/runc/options"
+	"demo/runtime/v2/shim"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sys/unix"
 	"os"
 	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
 	"syscall"
 	"time"
-
-	"github.com/containerd/cgroups/v3"
-	"github.com/containerd/cgroups/v3/cgroup1"
-	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/containerd/pkg/schedcore"
-	"github.com/containerd/containerd/runtime/v2/runc"
-	"github.com/containerd/containerd/runtime/v2/runc/options"
-	"github.com/containerd/containerd/runtime/v2/shim"
-	runcC "github.com/containerd/go-runc"
-	"golang.org/x/sys/unix"
 )
 
 // NewShimManager returns an implementation of the shim manager
@@ -59,7 +58,7 @@ var groupLabels = []string{
 	"io.kubernetes.cri.sandbox-id",
 }
 
-// spec is a shallow version of [oci.Spec] containing only the
+// spec is a shallow version of [over_oci.Spec] containing only the
 // fields we need for the hook. We use a shallow struct to reduce
 // the overhead of unmarshaling.
 type spec struct {
@@ -102,7 +101,7 @@ func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddre
 }
 
 func readSpec() (*spec, error) {
-	f, err := os.Open(oci.ConfigFilename)
+	f, err := os.Open(over_oci.ConfigFilename)
 	if err != nil {
 		return nil, err
 	}

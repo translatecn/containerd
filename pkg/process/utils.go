@@ -30,8 +30,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	runc "github.com/containerd/go-runc"
+	runc "demo/others/go-runc"
+	"demo/over/errdefs"
 	"golang.org/x/sys/unix"
 )
 
@@ -135,9 +135,9 @@ func checkKillError(err error) error {
 		strings.Contains(err.Error(), "container not running") ||
 		strings.Contains(strings.ToLower(err.Error()), "no such process") ||
 		err == unix.ESRCH {
-		return fmt.Errorf("process already finished: %w", errdefs.ErrNotFound)
+		return fmt.Errorf("process already finished: %w", over_errdefs.ErrNotFound)
 	} else if strings.Contains(err.Error(), "does not exist") {
-		return fmt.Errorf("no such container: %w", errdefs.ErrNotFound)
+		return fmt.Errorf("no such container: %w", over_errdefs.ErrNotFound)
 	}
 	return fmt.Errorf("unknown error after kill: %w", err)
 }

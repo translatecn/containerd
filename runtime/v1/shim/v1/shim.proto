@@ -21,10 +21,10 @@ package containerd.runtime.linux.shim.v1;
 import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "github.com/containerd/containerd/api/types/mount.proto";
-import "github.com/containerd/containerd/api/types/task/task.proto";
+import "demo/containerd/api/types/mount.proto";
+import "demo/containerd/api/types/task/task.proto";
 
-option go_package = "github.com/containerd/containerd/runtime/v1/shim/v1;shim";
+option go_package = "demo/containerd/runtime/v1/shim/v1;shim";
 
 // Shim service is launched for each container and is responsible for owning the IO
 // for the container and its additional processes.  The shim is also the parent of

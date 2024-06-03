@@ -20,9 +20,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/errdefs"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/over/errdefs"
 	"github.com/urfave/cli"
 )
 
@@ -77,7 +77,7 @@ var checkpointCommand = cli.Command{
 		}
 		task, err := container.Task(ctx, nil)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return err
 			}
 		}

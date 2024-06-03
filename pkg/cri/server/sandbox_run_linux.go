@@ -17,47 +17,47 @@
 package server
 
 import (
+	"demo/over/plugin"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/over/oci"
+	"demo/snapshots"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"golang.org/x/sys/unix"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
-	"github.com/containerd/containerd/pkg/userns"
+	"demo/pkg/cri/annotations"
+	customopts "demo/pkg/cri/opts"
+	"demo/pkg/userns"
 )
 
 func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig, nsPath string, runtimePodAnnotations []string) (_ *runtimespec.Spec, retErr error) {
 	// Creates a spec Generator with the default spec.
 	// TODO(random-liu): [P1] Compare the default settings with docker and containerd default.
-	specOpts := []oci.SpecOpts{
-		oci.WithoutRunMount,
+	specOpts := []over_oci.SpecOpts{
+		over_oci.WithoutRunMount,
 		customopts.WithoutDefaultSecuritySettings,
 		customopts.WithRelativeRoot(relativeRootfsPath),
-		oci.WithEnv(imageConfig.Env),
-		oci.WithRootFSReadonly(),
-		oci.WithHostname(config.GetHostname()),
+		over_oci.WithEnv(imageConfig.Env),
+		over_oci.WithRootFSReadonly(),
+		over_oci.WithHostname(config.GetHostname()),
 	}
 	if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if len(imageConfig.Entrypoint) == 0 && len(imageConfig.Cmd) == 0 {
 		// Pause image must have entrypoint or cmd.
 		return nil, fmt.Errorf("invalid empty entrypoint and cmd in image config %+v", imageConfig)
 	}
-	specOpts = append(specOpts, oci.WithProcessArgs(append(imageConfig.Entrypoint, imageConfig.Cmd...)...))
+	specOpts = append(specOpts, over_oci.WithProcessArgs(append(imageConfig.Entrypoint, imageConfig.Cmd...)...))
 
 	// Set cgroups parent.
 	if c.config.DisableCgroup {
@@ -65,7 +65,7 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 	} else {
 		if config.GetLinux().GetCgroupParent() != "" {
 			cgroupsPath := getCgroupsPath(config.GetLinux().GetCgroupParent(), id)
-			specOpts = append(specOpts, oci.WithCgroup(cgroupsPath))
+			specOpts = append(specOpts, over_oci.WithCgroup(cgroupsPath))
 		}
 	}
 
@@ -82,7 +82,7 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.NetworkNamespace))
 		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.UTSNamespace))
 	} else {
-		specOpts = append(specOpts, oci.WithLinuxNamespace(
+		specOpts = append(specOpts, over_oci.WithLinuxNamespace(
 			runtimespec.LinuxNamespace{
 				Type: runtimespec.NetworkNamespace,
 				Path: nsPath,
@@ -107,7 +107,7 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 		case runtime.NamespaceMode_NODE:
 			specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.UserNamespace))
 		case runtime.NamespaceMode_POD:
-			specOpts = append(specOpts, oci.WithUserNamespace(uids, gids))
+			specOpts = append(specOpts, over_oci.WithUserNamespace(uids, gids))
 			usernsEnabled = true
 		default:
 			return nil, fmt.Errorf("unsupported user namespace mode: %q", mode)
@@ -121,11 +121,11 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 		sandboxDevShm = devShm
 	}
 	// Remove the default /dev/shm mount from defaultMounts, it is added in oci/mounts.go.
-	specOpts = append(specOpts, oci.WithoutMounts(devShm))
+	specOpts = append(specOpts, over_oci.WithoutMounts(devShm))
 	// In future the when user-namespace is enabled, the `nosuid, nodev, noexec` flags are
 	// required, otherwise the remount will fail with EPERM. Just use them unconditionally,
 	// they are nice to have anyways.
-	specOpts = append(specOpts, oci.WithMounts([]runtimespec.Mount{
+	specOpts = append(specOpts, over_oci.WithMounts([]runtimespec.Mount{
 		{
 			Source:      sandboxDevShm,
 			Destination: devShm,
@@ -202,10 +202,10 @@ func (c *criService) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 
 // sandboxContainerSpecOpts generates OCI spec options for
 // the sandbox container.
-func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
 	var (
 		securityContext = config.GetLinux().GetSecurityContext()
-		specOpts        []oci.SpecOpts
+		specOpts        []over_oci.SpecOpts
 		err             error
 	)
 	ssp := securityContext.GetSeccomp()
@@ -242,7 +242,7 @@ func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, 
 		userstr = imageConfig.User
 	}
 	if userstr != "" {
-		specOpts = append(specOpts, oci.WithUser(userstr))
+		specOpts = append(specOpts, over_oci.WithUser(userstr))
 	}
 	return specOpts, nil
 }
@@ -354,8 +354,8 @@ func (c *criService) taskOpts(runtimeType string) []containerd.NewTaskOpts {
 	// c.config.NoPivot is only supported for RuntimeLinuxV1 = "io.containerd.runtime.v1.linux" legacy linux runtime
 	// and is not supported for RuntimeRuncV1 = "io.containerd.runc.v1" or  RuntimeRuncV2 = "io.containerd.runc.v2"
 	// for RuncV1/2 no pivot is set under the containerd.runtimes.runc.options config see
-	// https://github.com/containerd/containerd/blob/v1.3.2/runtime/v2/runc/options/oci.pb.go#L26
-	if c.config.NoPivot && runtimeType == plugin.RuntimeLinuxV1 {
+	// https://github.com/containerd/blob/v1.3.2/runtime/v2/runc/options/oci.pb.go#L26
+	if c.config.NoPivot && runtimeType == over_plugin.RuntimeLinuxV1 {
 		taskOpts = append(taskOpts, containerd.WithNoPivotRoot)
 	}
 

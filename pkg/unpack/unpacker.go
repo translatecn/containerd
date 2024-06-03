@@ -19,6 +19,8 @@ package unpack
 import (
 	"context"
 	"crypto/rand"
+	"demo/others/log"
+	"demo/over/tracing"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -28,18 +30,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/cleanup"
-	"github.com/containerd/containerd/pkg/kmutex"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/tracing"
+	"demo/content"
+	"demo/diff"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/over/mount"
+	"demo/over/platforms"
+	"demo/pkg/cleanup"
+	"demo/pkg/kmutex"
+	"demo/pkg/labels"
+	"demo/snapshots"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -69,7 +69,7 @@ type unpackerConfig struct {
 // Platform represents a platform-specific unpack configuration which includes
 // the platform matcher as well as snapshotter and applier.
 type Platform struct {
-	Platform platforms.Matcher
+	Platform over_platforms.Matcher
 
 	SnapshotterKey string
 	Snapshotter    snapshots.Snapshotter
@@ -84,7 +84,7 @@ type UnpackerOpt func(*unpackerConfig) error
 func WithUnpackPlatform(u Platform) UnpackerOpt {
 	return UnpackerOpt(func(c *unpackerConfig) error {
 		if u.Platform == nil {
-			u.Platform = platforms.All
+			u.Platform = over_platforms.All
 		}
 		if u.Snapshotter == nil {
 			return fmt.Errorf("snapshotter must be provided to unpack")
@@ -150,7 +150,7 @@ func NewUnpacker(ctx context.Context, cs content.Store, opts ...UnpackerOpt) (*U
 		}
 	}
 	if len(u.platforms) == 0 {
-		return nil, fmt.Errorf("no unpack platforms defined: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("no unpack platforms defined: %w", over_errdefs.ErrInvalidArgument)
 	}
 	return u, nil
 }
@@ -158,17 +158,17 @@ func NewUnpacker(ctx context.Context, cs content.Store, opts ...UnpackerOpt) (*U
 // Unpack wraps an image handler to filter out blob handling and scheduling them
 // during the unpack process. When an image config is encountered, the unpack
 // process will be started in a goroutine.
-func (u *Unpacker) Unpack(h images.Handler) images.Handler {
+func (u *Unpacker) Unpack(h over_images.Handler) over_images.Handler {
 	var (
 		lock   sync.Mutex
 		layers = map[digest.Digest][]ocispec.Descriptor{}
 	)
-	return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
-		ctx, span := tracing.StartSpan(ctx, tracing.Name(unpackSpanPrefix, "UnpackHandler"))
+	return over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		ctx, span := over_tracing.StartSpan(ctx, over_tracing.Name(unpackSpanPrefix, "UnpackHandler"))
 		defer span.End()
 		span.SetAttributes(
-			tracing.Attribute("descriptor.media.type", desc.MediaType),
-			tracing.Attribute("descriptor.digest", desc.Digest.String()))
+			over_tracing.Attribute("descriptor.media.type", desc.MediaType),
+			over_tracing.Attribute("descriptor.digest", desc.Digest.String()))
 		unlock, err := u.lockBlobDescriptor(ctx, desc)
 		if err != nil {
 			return nil, err
@@ -180,16 +180,16 @@ func (u *Unpacker) Unpack(h images.Handler) images.Handler {
 		}
 
 		switch desc.MediaType {
-		case images.MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest:
+		case over_images.MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest:
 			var nonLayers []ocispec.Descriptor
 			var manifestLayers []ocispec.Descriptor
 			// Split layers from non-layers, layers will be handled after
 			// the config
 			for i, child := range children {
 				span.SetAttributes(
-					tracing.Attribute("descriptor.child."+strconv.Itoa(i), []string{child.MediaType, child.Digest.String()}),
+					over_tracing.Attribute("descriptor.child."+strconv.Itoa(i), []string{child.MediaType, child.Digest.String()}),
 				)
-				if images.IsLayerType(child.MediaType) {
+				if over_images.IsLayerType(child.MediaType) {
 					manifestLayers = append(manifestLayers, child)
 				} else {
 					nonLayers = append(nonLayers, child)
@@ -203,7 +203,7 @@ func (u *Unpacker) Unpack(h images.Handler) images.Handler {
 			lock.Unlock()
 
 			children = nonLayers
-		case images.MediaTypeDockerSchema2Config, ocispec.MediaTypeImageConfig:
+		case over_images.MediaTypeDockerSchema2Config, ocispec.MediaTypeImageConfig:
 			lock.Lock()
 			l := layers[desc.Digest]
 			lock.Unlock()
@@ -229,12 +229,12 @@ func (u *Unpacker) Wait() (Result, error) {
 }
 
 func (u *Unpacker) unpack(
-	h images.Handler,
+	h over_images.Handler,
 	config ocispec.Descriptor,
 	layers []ocispec.Descriptor,
 ) error {
 	ctx := u.ctx
-	ctx, layerSpan := tracing.StartSpan(ctx, tracing.Name(unpackSpanPrefix, "unpack"))
+	ctx, layerSpan := over_tracing.StartSpan(ctx, over_tracing.Name(unpackSpanPrefix, "unpack"))
 	defer layerSpan.End()
 	unpackStart := time.Now()
 	p, err := content.ReadBlob(ctx, u.content, config)
@@ -254,7 +254,7 @@ func (u *Unpacker) unpack(
 	// TODO: Support multiple unpacks rather than just first match
 	var unpack *Platform
 
-	imgPlatform := platforms.Normalize(ocispec.Platform{OS: i.OS, Architecture: i.Architecture})
+	imgPlatform := over_platforms.Normalize(ocispec.Platform{OS: i.OS, Architecture: i.Architecture})
 	for _, up := range u.platforms {
 		if up.Platform.Match(imgPlatform) {
 			unpack = up
@@ -263,7 +263,7 @@ func (u *Unpacker) unpack(
 	}
 
 	if unpack == nil {
-		log.G(ctx).WithField("image", config.Digest).WithField("platform", platforms.Format(imgPlatform)).Debugf("unpacker does not support platform, only fetching layers")
+		log.G(ctx).WithField("image", config.Digest).WithField("platform", over_platforms.Format(imgPlatform)).Debugf("unpacker does not support platform, only fetching layers")
 		return u.fetch(ctx, h, layers, nil)
 	}
 
@@ -300,7 +300,7 @@ func (u *Unpacker) unpack(
 		if _, err := sn.Stat(ctx, chainID); err == nil {
 			// no need to handle
 			return nil
-		} else if !errdefs.IsNotFound(err) {
+		} else if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to stat snapshot %s: %w", chainID, err)
 		}
 
@@ -322,9 +322,9 @@ func (u *Unpacker) unpack(
 			key = fmt.Sprintf(snapshots.UnpackKeyFormat, uniquePart(), chainID)
 			mounts, err = sn.Prepare(ctx, key, parent.String(), opts...)
 			if err != nil {
-				if errdefs.IsAlreadyExists(err) {
+				if over_errdefs.IsAlreadyExists(err) {
 					if _, err := sn.Stat(ctx, chainID); err != nil {
-						if !errdefs.IsNotFound(err) {
+						if !over_errdefs.IsNotFound(err) {
 							return fmt.Errorf("failed to stat snapshot %s: %w", chainID, err)
 						}
 						// Try again, this should be rare, log it
@@ -392,7 +392,7 @@ func (u *Unpacker) unpack(
 
 		if err = sn.Commit(ctx, chainID, key, opts...); err != nil {
 			cleanup.Do(ctx, abort)
-			if errdefs.IsAlreadyExists(err) {
+			if over_errdefs.IsAlreadyExists(err) {
 				return nil
 			}
 			return fmt.Errorf("failed to commit snapshot %s: %w", key, err)
@@ -413,12 +413,12 @@ func (u *Unpacker) unpack(
 	}
 
 	for i, desc := range layers {
-		_, layerSpan := tracing.StartSpan(ctx, tracing.Name(unpackSpanPrefix, "unpackLayer"))
+		_, layerSpan := over_tracing.StartSpan(ctx, over_tracing.Name(unpackSpanPrefix, "unpackLayer"))
 		unpackLayerStart := time.Now()
 		layerSpan.SetAttributes(
-			tracing.Attribute("layer.media.type", desc.MediaType),
-			tracing.Attribute("layer.media.size", desc.Size),
-			tracing.Attribute("layer.media.digest", desc.Digest.String()),
+			over_tracing.Attribute("layer.media.type", desc.MediaType),
+			over_tracing.Attribute("layer.media.size", desc.Size),
+			over_tracing.Attribute("layer.media.digest", desc.Digest.String()),
 		)
 		if err := doUnpackFn(i, desc); err != nil {
 			layerSpan.SetStatus(err)
@@ -452,14 +452,14 @@ func (u *Unpacker) unpack(
 	return nil
 }
 
-func (u *Unpacker) fetch(ctx context.Context, h images.Handler, layers []ocispec.Descriptor, done []chan struct{}) error {
+func (u *Unpacker) fetch(ctx context.Context, h over_images.Handler, layers []ocispec.Descriptor, done []chan struct{}) error {
 	eg, ctx2 := errgroup.WithContext(ctx)
 	for i, desc := range layers {
-		ctx2, layerSpan := tracing.StartSpan(ctx2, tracing.Name(unpackSpanPrefix, "fetchLayer"))
+		ctx2, layerSpan := over_tracing.StartSpan(ctx2, over_tracing.Name(unpackSpanPrefix, "fetchLayer"))
 		layerSpan.SetAttributes(
-			tracing.Attribute("layer.media.type", desc.MediaType),
-			tracing.Attribute("layer.media.size", desc.Size),
-			tracing.Attribute("layer.media.digest", desc.Digest.String()),
+			over_tracing.Attribute("layer.media.type", desc.MediaType),
+			over_tracing.Attribute("layer.media.size", desc.Size),
+			over_tracing.Attribute("layer.media.digest", desc.Digest.String()),
 		)
 		desc := desc
 		var ch chan struct{}
@@ -485,7 +485,7 @@ func (u *Unpacker) fetch(ctx context.Context, h images.Handler, layers []ocispec
 			unlock()
 			u.release()
 
-			if err != nil && !errors.Is(err, images.ErrSkipDesc) {
+			if err != nil && !errors.Is(err, over_images.ErrSkipDesc) {
 				return err
 			}
 			if ch != nil {

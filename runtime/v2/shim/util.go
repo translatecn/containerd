@@ -19,6 +19,9 @@ package shim
 import (
 	"bytes"
 	"context"
+	"demo/over/protobuf/proto"
+	"demo/over/protobuf/types"
+	"demo/pkg/namespaces"
 	"errors"
 	"fmt"
 	"io"
@@ -29,14 +32,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/ttrpc"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/ttrpc"
+	"demo/others/typeurl/v2"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/atomicfile"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/containerd/protobuf/types"
+	"demo/over/errdefs"
+	"demo/pkg/atomicfile"
 )
 
 type CommandConfig struct {
@@ -189,7 +189,7 @@ func ReadRuntimeOptions[T any](reader io.Reader) (T, error) {
 	}
 
 	if len(data) == 0 {
-		return config, errdefs.ErrNotFound
+		return config, over_errdefs.ErrNotFound
 	}
 
 	var any types.Any
@@ -204,7 +204,7 @@ func ReadRuntimeOptions[T any](reader io.Reader) (T, error) {
 
 	config, ok := v.(T)
 	if !ok {
-		return config, fmt.Errorf("invalid type %T: %w", v, errdefs.ErrInvalidArgument)
+		return config, fmt.Errorf("invalid type %T: %w", v, over_errdefs.ErrInvalidArgument)
 	}
 
 	return config, nil

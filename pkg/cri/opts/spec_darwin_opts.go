@@ -26,14 +26,14 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/oci"
-	osinterface "github.com/containerd/containerd/pkg/os"
+	"demo/containers"
+	"demo/over/oci"
+	osinterface "demo/over/os"
 )
 
 // WithDarwinMounts adds mounts from CRI's container config + extra mounts.
-func WithDarwinMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, container *containers.Container, s *oci.Spec) error {
+func WithDarwinMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*runtime.Mount) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, container *containers.Container, s *over_oci.Spec) error {
 		// mergeMounts merge CRI mounts with extra mounts. If a mount destination
 		// is mounted by both a CRI mount and an extra mount, the CRI mount will
 		// be kept.

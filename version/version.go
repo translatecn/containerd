@@ -20,7 +20,7 @@ import "runtime"
 
 var (
 	// Package is filled at linking time
-	Package = "github.com/containerd/containerd"
+	Package = "demo/containerd"
 
 	// Version holds the complete version number. Filled in at linking time.
 	Version = "1.7.17+unknown"

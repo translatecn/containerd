@@ -18,11 +18,10 @@ package util
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"time"
 
-	"github.com/containerd/containerd/namespaces"
-
-	"github.com/containerd/containerd/pkg/cri/constants"
+	"demo/pkg/cri/constants"
 )
 
 // deferCleanupTimeout is the default timeout for containerd cleanup operations

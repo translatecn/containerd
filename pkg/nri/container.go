@@ -17,7 +17,7 @@
 package nri
 
 import (
-	nri "github.com/containerd/nri/pkg/adaptation"
+	nri "demo/others/nri/pkg/adaptation"
 )
 
 // Container interface for interacting with NRI.

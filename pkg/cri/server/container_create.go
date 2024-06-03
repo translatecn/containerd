@@ -18,28 +18,28 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"errors"
 	"fmt"
 	"path/filepath"
 	goruntime "runtime"
 	"time"
 
-	"github.com/containerd/typeurl/v2"
 	"github.com/davecgh/go-spew/spew"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	"github.com/containerd/containerd/pkg/cri/util"
+	"demo/containerd"
+	"demo/containers"
+	"demo/over/oci"
+	criconfig "demo/pkg/cri/config"
+	cio "demo/pkg/cri/io"
+	customopts "demo/pkg/cri/opts"
+	containerstore "demo/pkg/cri/store/container"
+	"demo/pkg/cri/util"
 )
 
 func init() {
@@ -342,7 +342,7 @@ func (c *criService) volumeMounts(containerRootDir string, criMounts []*runtime.
 }
 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...over_oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := util.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -353,22 +353,22 @@ func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...oci.Spe
 			return nil, fmt.Errorf("can't find base OCI spec %q", baseSpecFile)
 		}
 
-		spec := oci.Spec{}
+		spec := over_oci.Spec{}
 		if err := util.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
 		// Fix up cgroups path
-		applyOpts := append([]oci.SpecOpts{oci.WithNamespacedCgroup()}, opts...)
+		applyOpts := append([]over_oci.SpecOpts{over_oci.WithNamespacedCgroup()}, opts...)
 
-		if err := oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
+		if err := over_oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
 			return nil, fmt.Errorf("failed to apply OCI options: %w", err)
 		}
 
 		return &spec, nil
 	}
 
-	spec, err := oci.GenerateSpec(ctx, nil, container, opts...)
+	spec, err := over_oci.GenerateSpec(ctx, nil, container, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate spec: %w", err)
 	}
@@ -377,7 +377,7 @@ func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...oci.Spe
 }
 
 // Overrides the default snapshotter if Snapshotter is set for this runtime.
-// See https://github.com/containerd/containerd/issues/6657
+// See https://github.com/containerd/issues/6657
 func (c *criService) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
 	if ociRuntime.Snapshotter == "" {
 		return c.config.ContainerdConfig.Snapshotter

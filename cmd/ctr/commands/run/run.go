@@ -18,27 +18,27 @@ package run
 
 import (
 	gocontext "context"
+	clabels "demo/pkg/labels"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/cmd/ctr/commands/tasks"
-	"github.com/containerd/containerd/containers"
-	clabels "github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/oci"
-	gocni "github.com/containerd/go-cni"
+	"demo/cmd/ctr/commands"
+	"demo/cmd/ctr/commands/tasks"
+	"demo/containerd"
+	"demo/containers"
+	"demo/others/console"
+	gocni "demo/others/go-cni"
+	"demo/over/oci"
+	"demo/pkg/cio"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
-func withMounts(context *cli.Context) oci.SpecOpts {
-	return func(ctx gocontext.Context, client oci.Client, container *containers.Container, s *specs.Spec) error {
+func withMounts(context *cli.Context) over_oci.SpecOpts {
+	return func(ctx gocontext.Context, client over_oci.Client, container *containers.Container, s *specs.Spec) error {
 		mounts := make([]specs.Mount, 0)
 		for _, mount := range context.StringSlice("mount") {
 			m, err := parseMountFlag(mount)
@@ -47,7 +47,7 @@ func withMounts(context *cli.Context) oci.SpecOpts {
 			}
 			mounts = append(mounts, m)
 		}
-		return oci.WithMounts(mounts)(ctx, client, container, s)
+		return over_oci.WithMounts(mounts)(ctx, client, container, s)
 	}
 }
 

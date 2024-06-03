@@ -18,9 +18,10 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -28,8 +29,7 @@ import (
 
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/atomicfile"
+	"demo/pkg/atomicfile"
 )
 
 // cniConfigTemplate contains the values containerd will overwrite
@@ -130,7 +130,7 @@ func writeCNIConfigFile(ctx context.Context, confDir string, confTemplate string
 	if err != nil {
 		return fmt.Errorf("failed to parse cni config template %q: %w", confTemplate, err)
 	}
-	if err := os.MkdirAll(confDir, 0755); err != nil {
+	if err := my_mk.MkdirAll(confDir, 0755); err != nil {
 		return fmt.Errorf("failed to create cni config directory: %q: %w", confDir, err)
 	}
 	confFile := filepath.Join(confDir, cniConfigFileName)

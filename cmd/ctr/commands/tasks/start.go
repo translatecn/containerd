@@ -19,10 +19,10 @@ package tasks
 import (
 	"errors"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/cmd/ctr/commands"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/others/console"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

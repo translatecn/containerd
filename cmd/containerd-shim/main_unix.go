@@ -21,6 +21,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"demo/over/protobuf"
+	"demo/over/protobuf/proto"
+	ptypes "demo/over/protobuf/types"
+	"demo/pkg/namespaces"
+	"demo/pkg/sys/reaper"
 	"errors"
 	"flag"
 	"fmt"
@@ -36,18 +41,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/events"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/protobuf/proto"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	shimlog "github.com/containerd/containerd/runtime/v1"
-	"github.com/containerd/containerd/runtime/v1/shim"
-	shimapi "github.com/containerd/containerd/runtime/v1/shim/v1"
-	"github.com/containerd/containerd/sys/reaper"
-	"github.com/containerd/containerd/version"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	"demo/pkg/events"
+	"demo/pkg/process"
+	shimlog "demo/runtime/v1"
+	"demo/runtime/v1/shim"
+	shimapi "demo/runtime/v1/shim/v1"
+	"demo/version"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -301,7 +301,7 @@ type remoteEventsPublisher struct {
 
 func (l *remoteEventsPublisher) Publish(ctx context.Context, topic string, event events.Event) error {
 	ns, _ := namespaces.Namespace(ctx)
-	encoded, err := protobuf.MarshalAnyToProto(event)
+	encoded, err := over_protobuf.MarshalAnyToProto(event)
 	if err != nil {
 		return err
 	}

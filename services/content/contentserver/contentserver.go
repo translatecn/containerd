@@ -18,16 +18,16 @@ package contentserver
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 	"fmt"
 	"io"
 	"sync"
 
-	api "github.com/containerd/containerd/api/services/content/v1"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/content"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/content/v1"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"google.golang.org/grpc"
@@ -65,7 +65,7 @@ func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResp
 
 	bi, err := s.store.Info(ctx, dg)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &api.InfoResponse{
@@ -81,7 +81,7 @@ func (s *service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Upda
 
 	info, err := s.store.Update(ctx, infoFromGRPC(req.Info), req.UpdateMask.GetPaths()...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &api.UpdateResponse{
@@ -104,7 +104,7 @@ func (s *service) List(req *api.ListContentRequest, session api.Content_ListServ
 		buffer = append(buffer, &api.Info{
 			Digest:    info.Digest.String(),
 			Size:      info.Size,
-			CreatedAt: protobuf.ToTimestamp(info.CreatedAt),
+			CreatedAt: over_protobuf.ToTimestamp(info.CreatedAt),
 			Labels:    info.Labels,
 		})
 
@@ -118,7 +118,7 @@ func (s *service) List(req *api.ListContentRequest, session api.Content_ListServ
 
 		return nil
 	}, req.Filters...); err != nil {
-		return errdefs.ToGRPC(err)
+		return over_errdefs.ToGRPC(err)
 	}
 
 	if len(buffer) > 0 {
@@ -139,7 +139,7 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteContentRequest) (*p
 	}
 
 	if err := s.store.Delete(ctx, dg); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &ptypes.Empty{}, nil
@@ -153,12 +153,12 @@ func (s *service) Read(req *api.ReadContentRequest, session api.Content_ReadServ
 
 	oi, err := s.store.Info(session.Context(), dg)
 	if err != nil {
-		return errdefs.ToGRPC(err)
+		return over_errdefs.ToGRPC(err)
 	}
 
 	ra, err := s.store.ReaderAt(session.Context(), ocispec.Descriptor{Digest: dg})
 	if err != nil {
-		return errdefs.ToGRPC(err)
+		return over_errdefs.ToGRPC(err)
 	}
 	defer ra.Close()
 
@@ -189,7 +189,7 @@ func (s *service) Read(req *api.ReadContentRequest, session api.Content_ReadServ
 	_, err = io.CopyBuffer(
 		&readResponseWriter{session: session},
 		io.NewSectionReader(ra, offset, size), *p)
-	return errdefs.ToGRPC(err)
+	return over_errdefs.ToGRPC(err)
 }
 
 // readResponseWriter is a writer that places the output into ReadContentRequest messages.
@@ -216,13 +216,13 @@ func (rw *readResponseWriter) Write(p []byte) (n int, err error) {
 func (s *service) Status(ctx context.Context, req *api.StatusRequest) (*api.StatusResponse, error) {
 	status, err := s.store.Status(ctx, req.Ref)
 	if err != nil {
-		return nil, errdefs.ToGRPCf(err, "could not get status for ref %q", req.Ref)
+		return nil, over_errdefs.ToGRPCf(err, "could not get status for ref %q", req.Ref)
 	}
 
 	var resp api.StatusResponse
 	resp.Status = &api.Status{
-		StartedAt: protobuf.ToTimestamp(status.StartedAt),
-		UpdatedAt: protobuf.ToTimestamp(status.UpdatedAt),
+		StartedAt: over_protobuf.ToTimestamp(status.StartedAt),
+		UpdatedAt: over_protobuf.ToTimestamp(status.UpdatedAt),
 		Ref:       status.Ref,
 		Offset:    status.Offset,
 		Total:     status.Total,
@@ -235,14 +235,14 @@ func (s *service) Status(ctx context.Context, req *api.StatusRequest) (*api.Stat
 func (s *service) ListStatuses(ctx context.Context, req *api.ListStatusesRequest) (*api.ListStatusesResponse, error) {
 	statuses, err := s.store.ListStatuses(ctx, req.Filters...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	var resp api.ListStatusesResponse
 	for _, status := range statuses {
 		resp.Statuses = append(resp.Statuses, &api.Status{
-			StartedAt: protobuf.ToTimestamp(status.StartedAt),
-			UpdatedAt: protobuf.ToTimestamp(status.UpdatedAt),
+			StartedAt: over_protobuf.ToTimestamp(status.StartedAt),
+			UpdatedAt: over_protobuf.ToTimestamp(status.UpdatedAt),
 			Ref:       status.Ref,
 			Offset:    status.Offset,
 			Total:     status.Total,
@@ -315,7 +315,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 		content.WithRef(ref),
 		content.WithDescriptor(ocispec.Descriptor{Size: total, Digest: expected}))
 	if err != nil {
-		return errdefs.ToGRPC(err)
+		return over_errdefs.ToGRPC(err)
 	}
 	defer wr.Close()
 
@@ -323,7 +323,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 		msg.Action = req.Action
 		ws, err := wr.Status()
 		if err != nil {
-			return errdefs.ToGRPC(err)
+			return over_errdefs.ToGRPC(err)
 		}
 
 		msg.Offset = ws.Offset // always set the offset.
@@ -376,8 +376,8 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 		switch req.Action {
 		case api.WriteAction_STAT:
 			msg.Digest = wr.Digest().String()
-			msg.StartedAt = protobuf.ToTimestamp(ws.StartedAt)
-			msg.UpdatedAt = protobuf.ToTimestamp(ws.UpdatedAt)
+			msg.StartedAt = over_protobuf.ToTimestamp(ws.StartedAt)
+			msg.UpdatedAt = over_protobuf.ToTimestamp(ws.UpdatedAt)
 			msg.Total = total
 		case api.WriteAction_WRITE, api.WriteAction_COMMIT:
 			if req.Offset > 0 {
@@ -400,7 +400,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 				// maintain the offset as append only, we just issue the write.
 				n, err := wr.Write(req.Data)
 				if err != nil {
-					return errdefs.ToGRPC(err)
+					return over_errdefs.ToGRPC(err)
 				}
 
 				if n != len(req.Data) {
@@ -418,7 +418,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 					opts = append(opts, content.WithLabels(req.Labels))
 				}
 				if err := wr.Commit(ctx, total, expected, opts...); err != nil {
-					return errdefs.ToGRPC(err)
+					return over_errdefs.ToGRPC(err)
 				}
 			}
 
@@ -446,7 +446,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 
 func (s *service) Abort(ctx context.Context, req *api.AbortRequest) (*ptypes.Empty, error) {
 	if err := s.store.Abort(ctx, req.Ref); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &ptypes.Empty{}, nil
@@ -456,8 +456,8 @@ func infoToGRPC(info content.Info) *api.Info {
 	return &api.Info{
 		Digest:    info.Digest.String(),
 		Size:      info.Size,
-		CreatedAt: protobuf.ToTimestamp(info.CreatedAt),
-		UpdatedAt: protobuf.ToTimestamp(info.UpdatedAt),
+		CreatedAt: over_protobuf.ToTimestamp(info.CreatedAt),
+		UpdatedAt: over_protobuf.ToTimestamp(info.UpdatedAt),
 		Labels:    info.Labels,
 	}
 }
@@ -466,8 +466,8 @@ func infoFromGRPC(info *api.Info) content.Info {
 	return content.Info{
 		Digest:    digest.Digest(info.Digest),
 		Size:      info.Size,
-		CreatedAt: protobuf.FromTimestamp(info.CreatedAt),
-		UpdatedAt: protobuf.FromTimestamp(info.UpdatedAt),
+		CreatedAt: over_protobuf.FromTimestamp(info.CreatedAt),
+		UpdatedAt: over_protobuf.FromTimestamp(info.UpdatedAt),
 		Labels:    info.Labels,
 	}
 }

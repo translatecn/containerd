@@ -21,6 +21,9 @@ package lcow
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	over_plugin2 "demo/over/plugin"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,23 +35,21 @@ import (
 	"sync"
 	"time"
 
+	"demo/others/continuity/fs"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/snapshots"
+	"demo/snapshots/storage"
+	"demo/third_party/github.com/Microsoft/hcsshim/pkg/go-runhcs"
 	winfs "github.com/Microsoft/go-winio/pkg/fs"
-	"github.com/Microsoft/hcsshim/pkg/go-runhcs"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/storage"
-	"github.com/containerd/continuity/fs"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.SnapshotPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.SnapshotPlugin,
 		ID:   "windows-lcow",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			ic.Meta.Platforms = append(ic.Meta.Platforms, ocispec.Platform{
 				OS:           "linux",
 				Architecture: runtime.GOARCH,
@@ -79,10 +80,10 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 	if strings.ToLower(fsType) != "ntfs" {
-		return nil, fmt.Errorf("%s is not on an NTFS volume - only NTFS volumes are supported: %w", root, errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("%s is not on an NTFS volume - only NTFS volumes are supported: %w", root, over_errdefs.ErrInvalidArgument)
 	}
 
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 	ms, err := storage.NewMetaStore(filepath.Join(root, "metadata.db"))
@@ -90,7 +91,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 
-	if err := os.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
+	if err := my_mk.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
@@ -313,7 +314,7 @@ func (s *snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 		log.G(ctx).Debug("createSnapshot active")
 		// Create the new snapshot dir
 		snDir := s.getSnapshotDir(newSnapshot.ID)
-		if err = os.MkdirAll(snDir, 0700); err != nil {
+		if err = my_mk.MkdirAll(snDir, 0700); err != nil {
 			return err
 		}
 

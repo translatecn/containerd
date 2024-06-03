@@ -21,6 +21,9 @@ package windows
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
+	over_plugin2 "demo/over/plugin"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,27 +33,25 @@ import (
 	"strconv"
 	"strings"
 
+	"demo/others/continuity/fs"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/over/platforms"
+	"demo/snapshots"
+	"demo/snapshots/storage"
+	"demo/third_party/github.com/Microsoft/hcsshim"
+	"demo/third_party/github.com/Microsoft/hcsshim/pkg/ociwclayer"
 	"github.com/Microsoft/go-winio"
 	winfs "github.com/Microsoft/go-winio/pkg/fs"
-	"github.com/Microsoft/hcsshim"
-	"github.com/Microsoft/hcsshim/pkg/ociwclayer"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/containerd/snapshots/storage"
-	"github.com/containerd/continuity/fs"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.SnapshotPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.SnapshotPlugin,
 		ID:   "windows",
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			ic.Meta.Platforms = []ocispec.Platform{platforms.DefaultSpec()}
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			ic.Meta.Platforms = []ocispec.Platform{over_platforms.DefaultSpec()}
 			return NewSnapshotter(ic.Root)
 		},
 	})
@@ -81,10 +82,10 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 	if strings.ToLower(fsType) != "ntfs" {
-		return nil, fmt.Errorf("%s is not on an NTFS volume - only NTFS volumes are supported: %w", root, errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("%s is not on an NTFS volume - only NTFS volumes are supported: %w", root, over_errdefs.ErrInvalidArgument)
 	}
 
-	if err := os.MkdirAll(root, 0700); err != nil {
+	if err := my_mk.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
 	ms, err := storage.NewMetaStore(filepath.Join(root, "metadata.db"))
@@ -92,7 +93,7 @@ func NewSnapshotter(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 
-	if err := os.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
+	if err := my_mk.Mkdir(filepath.Join(root, "snapshots"), 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
@@ -282,7 +283,7 @@ func (s *snapshotter) Remove(ctx context.Context, key string) error {
 		}
 		// Return the error wrapped in ErrFailedPrecondition so that cleanup of other snapshots will
 		// still continue.
-		return errors.Join(errdefs.ErrFailedPrecondition, err)
+		return errors.Join(over_errdefs.ErrFailedPrecondition, err)
 	}
 
 	if err = hcsshim.DestroyLayer(s.info, renamedID); err != nil {
@@ -357,7 +358,7 @@ func (s *snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 		log.G(ctx).Debug("createSnapshot")
 		// Create the new snapshot dir
 		snDir := s.getSnapshotDir(newSnapshot.ID)
-		if err = os.MkdirAll(snDir, 0700); err != nil {
+		if err = my_mk.MkdirAll(snDir, 0700); err != nil {
 			return fmt.Errorf("failed to create snapshot dir %s: %w", snDir, err)
 		}
 
@@ -376,7 +377,7 @@ func (s *snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 			// When committed, there'll be some post-processing to fill in the rest
 			// of the metadata.
 			filesDir := filepath.Join(snDir, "Files")
-			if err := os.MkdirAll(filesDir, 0700); err != nil {
+			if err := my_mk.MkdirAll(filesDir, 0700); err != nil {
 				return fmt.Errorf("creating Files dir: %w", err)
 			}
 			return nil
@@ -467,7 +468,7 @@ func (s *snapshotter) convertScratchToReadOnlyLayer(ctx context.Context, snapsho
 	// TODO darrenstahlmsft: When this is done isolated, we should disable these.
 	// it currently cannot be disabled, unless we add ref counting. Since this is
 	// temporary, leaving it enabled is OK for now.
-	// https://github.com/containerd/containerd/issues/1681
+	// https://github.com/containerd/issues/1681
 	if err := winio.EnableProcessPrivileges([]string{winio.SeBackupPrivilege, winio.SeRestorePrivilege}); err != nil {
 		return fmt.Errorf("failed to enable necessary privileges: %w", err)
 	}
@@ -522,7 +523,7 @@ func (s *snapshotter) createUVMScratchLayer(ctx context.Context, snDir string, p
 
 	// Move the sandbox.vhdx into a nested vm folder to avoid clashing with a containers sandbox.vhdx.
 	vmScratchDir := filepath.Join(snDir, "vm")
-	if err := os.MkdirAll(vmScratchDir, 0777); err != nil {
+	if err := my_mk.MkdirAll(vmScratchDir, 0777); err != nil {
 		return fmt.Errorf("failed to make `vm` directory for vm's scratch space: %w", err)
 	}
 

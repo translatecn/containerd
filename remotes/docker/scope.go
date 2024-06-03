@@ -18,12 +18,11 @@ package docker
 
 import (
 	"context"
+	"demo/pkg/reference"
 	"fmt"
 	"net/url"
 	"sort"
 	"strings"
-
-	"github.com/containerd/containerd/reference"
 )
 
 // RepositoryScope returns a repository scope string such as "repository:foo/bar:pull"

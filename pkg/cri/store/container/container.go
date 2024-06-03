@@ -19,13 +19,13 @@ package container
 import (
 	"sync"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	"github.com/containerd/containerd/pkg/cri/store"
-	"github.com/containerd/containerd/pkg/cri/store/label"
-	"github.com/containerd/containerd/pkg/cri/store/stats"
-	"github.com/containerd/containerd/pkg/truncindex"
+	"demo/containerd"
+	"demo/over/errdefs"
+	cio "demo/pkg/cri/io"
+	"demo/pkg/cri/store"
+	"demo/pkg/cri/store/label"
+	"demo/pkg/cri/store/stats"
+	"demo/pkg/truncindex"
 
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -122,13 +122,13 @@ func NewStore(labels *label.Store) *Store {
 	}
 }
 
-// Add a container into the store. Returns errdefs.ErrAlreadyExists if the
+// Add a container into the store. Returns over_errdefs.ErrAlreadyExists if the
 // container already exists.
 func (s *Store) Add(c Container) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, ok := s.containers[c.ID]; ok {
-		return errdefs.ErrAlreadyExists
+		return over_errdefs.ErrAlreadyExists
 	}
 	if err := s.labels.Reserve(c.ProcessLabel); err != nil {
 		return err
@@ -140,7 +140,7 @@ func (s *Store) Add(c Container) error {
 	return nil
 }
 
-// Get returns the container with specified id. Returns errdefs.ErrNotFound
+// Get returns the container with specified id. Returns over_errdefs.ErrNotFound
 // if the container doesn't exist.
 func (s *Store) Get(id string) (Container, error) {
 	s.lock.RLock()
@@ -148,14 +148,14 @@ func (s *Store) Get(id string) (Container, error) {
 	id, err := s.idIndex.Get(id)
 	if err != nil {
 		if err == truncindex.ErrNotExist {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return Container{}, err
 	}
 	if c, ok := s.containers[id]; ok {
 		return c, nil
 	}
-	return Container{}, errdefs.ErrNotFound
+	return Container{}, over_errdefs.ErrNotFound
 }
 
 // List lists all containers.
@@ -170,7 +170,7 @@ func (s *Store) List() []Container {
 }
 
 // UpdateContainerStats updates the container specified by ID with the
-// stats present in 'newContainerStats'. Returns errdefs.ErrNotFound
+// stats present in 'newContainerStats'. Returns over_errdefs.ErrNotFound
 // if the container does not exist in the store.
 func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.ContainerStats) error {
 	s.lock.Lock()
@@ -178,13 +178,13 @@ func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.Contain
 	id, err := s.idIndex.Get(id)
 	if err != nil {
 		if err == truncindex.ErrNotExist {
-			err = errdefs.ErrNotFound
+			err = over_errdefs.ErrNotFound
 		}
 		return err
 	}
 
 	if _, ok := s.containers[id]; !ok {
-		return errdefs.ErrNotFound
+		return over_errdefs.ErrNotFound
 	}
 
 	c := s.containers[id]

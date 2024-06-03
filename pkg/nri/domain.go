@@ -18,13 +18,13 @@ package nri
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/pkg/namespaces"
 	"fmt"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/namespaces"
-	nri "github.com/containerd/nri/pkg/adaptation"
+	nri "demo/others/nri/pkg/adaptation"
+	"demo/over/errdefs"
 	"github.com/sirupsen/logrus"
 )
 
@@ -75,7 +75,7 @@ func (t *domainTable) add(d Domain) error {
 	namespace := d.GetName()
 
 	if _, ok := t.domains[namespace]; ok {
-		return errdefs.ErrAlreadyExists
+		return over_errdefs.ErrAlreadyExists
 	}
 
 	t.domains[namespace] = d

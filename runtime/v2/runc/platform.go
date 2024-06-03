@@ -20,6 +20,7 @@ package runc
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"errors"
 	"fmt"
 	"io"
@@ -28,11 +29,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/containerd/pkg/stdio"
-	"github.com/containerd/fifo"
+	"demo/others/console"
+	"demo/others/fifo"
+	"demo/pkg/process"
+	"demo/pkg/stdio"
 )
 
 var bufPool = sync.Pool{

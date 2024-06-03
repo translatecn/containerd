@@ -24,7 +24,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containerd/console"
+	"demo/others/console"
 )
 
 var (

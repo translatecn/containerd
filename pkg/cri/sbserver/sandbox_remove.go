@@ -18,12 +18,11 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-
+	"demo/over/errdefs"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -34,7 +33,7 @@ func (c *criService) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	start := time.Now()
 	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("an error occurred when try to find sandbox %q: %w",
 				r.GetPodSandboxId(), err)
 		}
@@ -86,7 +85,7 @@ func (c *criService) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 		return nil, fmt.Errorf("failed to get sandbox controller: %w", err)
 	}
 
-	if err := controller.Shutdown(ctx, id); err != nil && !errdefs.IsNotFound(err) {
+	if err := controller.Shutdown(ctx, id); err != nil && !over_errdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to delete sandbox %q: %w", id, err)
 	}
 

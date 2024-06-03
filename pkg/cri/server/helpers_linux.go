@@ -18,6 +18,8 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"fmt"
 	"os"
 	"path"
@@ -28,13 +30,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/apparmor"
-	"github.com/containerd/containerd/pkg/seccomp"
-	"github.com/containerd/containerd/pkg/seutil"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/over/mount"
+	"demo/pkg/apparmor"
+	"demo/pkg/seccomp"
+	"demo/pkg/seutil"
+	"demo/snapshots"
 	"github.com/moby/sys/mountinfo"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
@@ -155,7 +156,7 @@ func (c *criService) seccompEnabled() bool {
 
 // openLogFile opens/creates a container log file.
 func openLogFile(path string) (*os.File, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := my_mk.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return nil, err
 	}
 	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)

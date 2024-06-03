@@ -17,6 +17,7 @@
 package config
 
 import (
+	"demo/over/plugin"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -25,8 +26,7 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/plugin"
+	"demo/over/errdefs"
 )
 
 // NOTE: Any new map fields added also need to be handled in mergeConfig.
@@ -177,7 +177,7 @@ type ProxyPlugin struct {
 }
 
 // Decode unmarshals a plugin specific configuration by plugin id
-func (c *Config) Decode(p *plugin.Registration) (interface{}, error) {
+func (c *Config) Decode(p *over_plugin.Registration) (interface{}, error) {
 	id := p.URI()
 	if c.GetVersion() == 1 {
 		id = p.ID
@@ -195,7 +195,7 @@ func (c *Config) Decode(p *plugin.Registration) (interface{}, error) {
 // LoadConfig loads the containerd server config from the provided path
 func LoadConfig(path string, out *Config) error {
 	if out == nil {
-		return fmt.Errorf("argument out must not be nil: %w", errdefs.ErrInvalidArgument)
+		return fmt.Errorf("argument out must not be nil: %w", over_errdefs.ErrInvalidArgument)
 	}
 
 	var (
@@ -322,24 +322,24 @@ func mergeConfig(to, from *Config) error {
 }
 
 // V1DisabledFilter matches based on ID
-func V1DisabledFilter(list []string) plugin.DisableFilter {
+func V1DisabledFilter(list []string) over_plugin.DisableFilter {
 	set := make(map[string]struct{}, len(list))
 	for _, l := range list {
 		set[l] = struct{}{}
 	}
-	return func(r *plugin.Registration) bool {
+	return func(r *over_plugin.Registration) bool {
 		_, ok := set[r.ID]
 		return ok
 	}
 }
 
 // V2DisabledFilter matches based on URI
-func V2DisabledFilter(list []string) plugin.DisableFilter {
+func V2DisabledFilter(list []string) over_plugin.DisableFilter {
 	set := make(map[string]struct{}, len(list))
 	for _, l := range list {
 		set[l] = struct{}{}
 	}
-	return func(r *plugin.Registration) bool {
+	return func(r *over_plugin.Registration) bool {
 		_, ok := set[r.URI()]
 		return ok
 	}

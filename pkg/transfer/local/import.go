@@ -18,17 +18,16 @@ package local
 
 import (
 	"context"
+	"demo/others/log"
 	"encoding/json"
 	"fmt"
-
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/pkg/unpack"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/pkg/transfer"
+	"demo/pkg/unpack"
 )
 
 func (ts *localTransferService) importStream(ctx context.Context, i transfer.ImageImporter, is transfer.ImageStorer, tops *transfer.Config) error {
@@ -51,17 +50,17 @@ func (ts *localTransferService) importStream(ctx context.Context, i transfer.Ima
 
 	var (
 		descriptors []ocispec.Descriptor
-		handler     images.Handler
+		handler     over_images.Handler
 		unpacker    *unpack.Unpacker
 	)
 
 	// If save index, add index
 	descriptors = append(descriptors, index)
 
-	var handlerFunc images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+	var handlerFunc over_images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		// Only save images at top level
 		if desc.Digest != index.Digest {
-			return images.Children(ctx, ts.content, desc)
+			return over_images.Children(ctx, ts.content, desc)
 		}
 
 		p, err := content.ReadBlob(ctx, ts.content, desc)
@@ -86,7 +85,7 @@ func (ts *localTransferService) importStream(ctx context.Context, i transfer.Ima
 		handlerFunc = f.ImageFilter(handlerFunc, ts.content)
 	}
 
-	handler = images.Handlers(handlerFunc)
+	handler = over_images.Handlers(handlerFunc)
 
 	// First find suitable platforms to unpack into
 	// If image storer is also an unpacker type, i.e implemented UnpackPlatforms() func
@@ -112,7 +111,7 @@ func (ts *localTransferService) importStream(ctx context.Context, i transfer.Ima
 		}
 	}
 
-	if err := images.WalkNotEmpty(ctx, handler, index); err != nil {
+	if err := over_images.WalkNotEmpty(ctx, handler, index); err != nil {
 		if unpacker != nil {
 			// wait for unpacker to cleanup
 			unpacker.Wait()
@@ -130,7 +129,7 @@ func (ts *localTransferService) importStream(ctx context.Context, i transfer.Ima
 	for _, desc := range descriptors {
 		imgs, err := is.Store(ctx, desc, ts.images)
 		if err != nil {
-			if errdefs.IsNotFound(err) {
+			if over_errdefs.IsNotFound(err) {
 				log.G(ctx).Infof("No images store for %s", desc.Digest)
 				continue
 			}

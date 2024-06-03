@@ -18,15 +18,15 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"io"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/log"
+	"demo/containerd"
 	"k8s.io/client-go/tools/remotecommand"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	cio "github.com/containerd/containerd/pkg/cri/io"
+	cio "demo/pkg/cri/io"
 )
 
 // Attach prepares a streaming endpoint to attach to a running container, and returns the address.

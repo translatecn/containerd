@@ -19,8 +19,8 @@
 package config
 
 import (
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/pkg/cri/streaming"
+	"demo/containerd"
+	"demo/pkg/cri/streaming"
 	"github.com/pelletier/go-toml"
 )
 

@@ -22,42 +22,42 @@ package windows
 import (
 	"context"
 	"crypto/rand"
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"time"
 
+	"demo/content"
+	"demo/diff"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/over/platforms"
+	"demo/pkg/archive"
+	"demo/pkg/archive/compression"
+	"demo/pkg/epoch"
+	"demo/pkg/labels"
+	"demo/pkg/metadata"
 	"github.com/Microsoft/go-winio"
-	"github.com/containerd/containerd/archive"
-	"github.com/containerd/containerd/archive/compression"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/pkg/epoch"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.DiffPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.DiffPlugin,
 		ID:   "windows",
-		Requires: []plugin.Type{
-			plugin.MetadataPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.MetadataPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			md, err := ic.Get(plugin.MetadataPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			md, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}
 
-			ic.Meta.Platforms = append(ic.Meta.Platforms, platforms.DefaultSpec())
+			ic.Meta.Platforms = append(ic.Meta.Platforms, over_platforms.DefaultSpec())
 			return NewWindowsDiff(md.(*metadata.DB).ContentStore())
 		},
 	})
@@ -139,7 +139,7 @@ func (s windowsDiff) Apply(ctx context.Context, desc ocispec.Descriptor, mounts 
 	// TODO darrenstahlmsft: When this is done isolated, we should disable these.
 	// it currently cannot be disabled, unless we add ref counting. Since this is
 	// temporary, leaving it enabled is OK for now.
-	// https://github.com/containerd/containerd/issues/1681
+	// https://github.com/containerd/issues/1681
 	if err := winio.EnableProcessPrivileges([]string{winio.SeBackupPrivilege, winio.SeRestorePrivilege}); err != nil {
 		return emptyDesc, err
 	}
@@ -196,7 +196,7 @@ func (s windowsDiff) Compare(ctx context.Context, lower, upper []mount.Mount, op
 	case ocispec.MediaTypeImageLayerGzip:
 		isCompressed = true
 	default:
-		return emptyDesc, fmt.Errorf("unsupported diff media type: %v: %w", config.MediaType, errdefs.ErrNotImplemented)
+		return emptyDesc, fmt.Errorf("unsupported diff media type: %v: %w", config.MediaType, over_errdefs.ErrNotImplemented)
 	}
 
 	newReference := false
@@ -233,7 +233,7 @@ func (s windowsDiff) Compare(ctx context.Context, lower, upper []mount.Mount, op
 	// TODO darrenstahlmsft: When this is done isolated, we should disable this.
 	// it currently cannot be disabled, unless we add ref counting. Since this is
 	// temporary, leaving it enabled is OK for now.
-	// https://github.com/containerd/containerd/issues/1681
+	// https://github.com/containerd/issues/1681
 	if err := winio.EnableProcessPrivileges([]string{winio.SeBackupPrivilege}); err != nil {
 		return emptyDesc, err
 	}
@@ -268,7 +268,7 @@ func (s windowsDiff) Compare(ctx context.Context, lower, upper []mount.Mount, op
 
 	dgst := cw.Digest()
 	if err := cw.Commit(ctx, 0, dgst, commitopts...); err != nil {
-		if !errdefs.IsAlreadyExists(err) {
+		if !over_errdefs.IsAlreadyExists(err) {
 			return emptyDesc, fmt.Errorf("failed to commit: %w", err)
 		}
 	}
@@ -317,7 +317,7 @@ func (rc *readCounter) Read(p []byte) (n int, err error) {
 
 func mountsToLayerAndParents(mounts []mount.Mount) (string, []string, error) {
 	if len(mounts) != 1 {
-		return "", nil, fmt.Errorf("number of mounts should always be 1 for Windows layers: %w", errdefs.ErrInvalidArgument)
+		return "", nil, fmt.Errorf("number of mounts should always be 1 for Windows layers: %w", over_errdefs.ErrInvalidArgument)
 	}
 	mnt := mounts[0]
 
@@ -325,7 +325,7 @@ func mountsToLayerAndParents(mounts []mount.Mount) (string, []string, error) {
 		// This is a special case error. When this is received the diff service
 		// will attempt the next differ in the chain which for Windows is the
 		// lcow differ that we want.
-		return "", nil, fmt.Errorf("windowsDiff does not support layer type %s: %w", mnt.Type, errdefs.ErrNotImplemented)
+		return "", nil, fmt.Errorf("windowsDiff does not support layer type %s: %w", mnt.Type, over_errdefs.ErrNotImplemented)
 	}
 
 	parentLayerPaths, err := mnt.GetParentPaths()
@@ -359,9 +359,9 @@ func mountPairToLayerStack(lower, upper []mount.Mount) ([]string, error) {
 	}
 
 	lowerLayer, lowerParentLayerPaths, err := mountsToLayerAndParents(lower)
-	if errdefs.IsNotImplemented(err) {
+	if over_errdefs.IsNotImplemented(err) {
 		// Upper was a windows-layer, lower is not. We can't handle that.
-		return nil, fmt.Errorf("windowsDiff cannot diff a windows-layer against a non-windows-layer: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("windowsDiff cannot diff a windows-layer against a non-windows-layer: %w", over_errdefs.ErrInvalidArgument)
 	} else if err != nil {
 		return nil, fmt.Errorf("Lower mount invalid: %w", err)
 	}
@@ -369,25 +369,25 @@ func mountPairToLayerStack(lower, upper []mount.Mount) ([]string, error) {
 	// Trivial case, diff-against-nothing
 	if lowerLayer == "" {
 		if len(upperParentLayerPaths) != 0 {
-			return nil, fmt.Errorf("windowsDiff cannot diff a layer with parents against a null layer: %w", errdefs.ErrInvalidArgument)
+			return nil, fmt.Errorf("windowsDiff cannot diff a layer with parents against a null layer: %w", over_errdefs.ErrInvalidArgument)
 		}
 		return []string{upperLayer}, nil
 	}
 
 	if len(upperParentLayerPaths) < 1 {
-		return nil, fmt.Errorf("windowsDiff cannot diff a layer with no parents against another layer: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("windowsDiff cannot diff a layer with no parents against another layer: %w", over_errdefs.ErrInvalidArgument)
 	}
 
 	if upperParentLayerPaths[0] != lowerLayer {
-		return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer other than its own parent: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer other than its own parent: %w", over_errdefs.ErrInvalidArgument)
 	}
 
 	if len(upperParentLayerPaths) != len(lowerParentLayerPaths)+1 {
-		return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer with different parents: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer with different parents: %w", over_errdefs.ErrInvalidArgument)
 	}
 	for i, upperParent := range upperParentLayerPaths[1:] {
 		if upperParent != lowerParentLayerPaths[i] {
-			return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer with different parents: %w", errdefs.ErrInvalidArgument)
+			return nil, fmt.Errorf("windowsDiff cannot diff a layer against a layer with different parents: %w", over_errdefs.ErrInvalidArgument)
 		}
 	}
 

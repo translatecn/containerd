@@ -19,10 +19,9 @@
 package rdt
 
 import (
+	"demo/others/log"
 	"fmt"
 	"sync"
-
-	"github.com/containerd/containerd/log"
 
 	"github.com/intel/goresctrl/pkg/rdt"
 )

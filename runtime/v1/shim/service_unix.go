@@ -20,6 +20,7 @@ package shim
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"fmt"
 	"io"
 	"net/url"
@@ -27,10 +28,9 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/process"
-	"github.com/containerd/fifo"
+	"demo/others/console"
+	"demo/others/fifo"
+	"demo/pkg/process"
 )
 
 type unixPlatform struct {

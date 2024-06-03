@@ -19,8 +19,8 @@ package opts
 import (
 	"context"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/runtime/linux/runctypes"
+	"demo/containerd"
+	"demo/runtime/linux/runctypes"
 )
 
 // WithContainerdShimCgroup returns function that sets the containerd

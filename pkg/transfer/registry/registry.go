@@ -18,6 +18,8 @@ package registry
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -25,15 +27,13 @@ import (
 	"strings"
 	"sync"
 
-	transfertypes "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/pkg/transfer/plugins"
-	tstreaming "github.com/containerd/containerd/pkg/transfer/streaming"
-	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/remotes/docker"
-	"github.com/containerd/typeurl/v2"
+	transfertypes "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
+	"demo/pkg/transfer"
+	"demo/pkg/transfer/plugins"
+	tstreaming "demo/pkg/transfer/streaming"
+	"demo/remotes"
+	"demo/remotes/docker"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

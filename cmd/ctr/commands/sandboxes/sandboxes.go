@@ -17,16 +17,15 @@
 package sandboxes
 
 import (
-	"encoding/json"
+	"demo/others/log"
+	"demo/pkg/defaults"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
+	"demo/cmd/ctr/commands"
+	"demo/containerd"
+	"demo/over/oci"
 	"github.com/urfave/cli"
 )
 
@@ -55,23 +54,24 @@ var runCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if context.NArg() != 2 {
-			return cli.ShowSubcommandHelp(context)
-		}
+		//if context.NArg() != 2 {
+		//	return cli.ShowSubcommandHelp(context)
+		//}
 		var (
-			id      = context.Args().Get(1)
+			//id      = context.Args().Get(1)
+			id      = "69ffb43cae82f2bd4b2d367106d5b8ab33644a12ea1b6605b6e9468f3608107a"
 			runtime = context.String("runtime")
 		)
 
-		spec, err := os.ReadFile(context.Args().First())
-		if err != nil {
-			return fmt.Errorf("failed to read sandbox config: %w", err)
-		}
+		//spec, err := os.ReadFile(context.Args().First())
+		//if err != nil {
+		//	return fmt.Errorf("failed to read sandbox config: %w", err)
+		//}
 
-		ociSpec := oci.Spec{}
-		if err = json.Unmarshal(spec, &ociSpec); err != nil {
-			return fmt.Errorf("failed to parse sandbox config: %w", err)
-		}
+		ociSpec := over_oci.Spec{}
+		//if err = json.Unmarshal(spec, &ociSpec); err != nil {
+		//	return fmt.Errorf("failed to parse sandbox config: %w", err)
+		//}
 
 		client, ctx, cancel, err := commands.NewClient(context)
 		if err != nil {

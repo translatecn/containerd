@@ -20,8 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/pkg/cri/streaming"
+	"demo/containerd"
+	"demo/pkg/cri/streaming"
 )
 
 // DefaultConfig returns default configurations of cri plugin.
@@ -48,7 +48,7 @@ func DefaultConfig() PluginConfig {
 					PodAnnotations:       []string{"io.microsoft.virtualmachine.*"},
 					ContainerAnnotations: []string{"io.microsoft.container.*"},
 					// Full set of Windows shim options:
-					// https://pkg.go.dev/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options#Options
+					// https://pkg.go.dev/demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options#Options
 					Options: map[string]interface{}{
 						// SandboxIsolation specifies the isolation level of the sandbox.
 						// PROCESS (0) and HYPERVISOR (1) are the valid options.

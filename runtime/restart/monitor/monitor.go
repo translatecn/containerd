@@ -18,6 +18,8 @@ package monitor
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/namespaces"
 	"fmt"
 	"strconv"
 	"sync"
@@ -25,12 +27,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/deprecation"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/runtime/restart"
-	"github.com/containerd/containerd/services/warning"
+	"demo/containerd"
+	"demo/pkg/deprecation"
+	"demo/runtime/restart"
+	"demo/services/warning"
 )
 
 type duration struct {
@@ -54,12 +54,12 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.InternalPlugin,
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
-			plugin.ServicePlugin,
-			plugin.WarningPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.InternalPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.EventPlugin,
+			over_plugin2.ServicePlugin,
+			over_plugin2.WarningPlugin,
 		},
 		ID: "restart",
 		Config: &Config{
@@ -67,13 +67,13 @@ func init() {
 				Duration: 10 * time.Second,
 			},
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			ic.Meta.Capabilities = []string{"no", "always", "on-failure", "unless-stopped"}
 			client, err := containerd.New("", containerd.WithInMemoryServices(ic))
 			if err != nil {
 				return nil, err
 			}
-			ws, err := ic.Get(plugin.WarningPlugin)
+			ws, err := ic.Get(over_plugin2.WarningPlugin)
 			if err != nil {
 				return nil, err
 			}

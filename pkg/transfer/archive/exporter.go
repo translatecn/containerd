@@ -18,21 +18,21 @@ package archive
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"io"
 
-	"github.com/containerd/typeurl/v2"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/containerd/containerd/api/types"
-	transfertypes "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/images/archive"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/containerd/pkg/transfer/plugins"
-	tstreaming "github.com/containerd/containerd/pkg/transfer/streaming"
-	"github.com/containerd/containerd/platforms"
+	"demo/content"
+	"demo/over/images"
+	"demo/over/images/archive"
+	"demo/over/platforms"
+	"demo/pkg/api/types"
+	transfertypes "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
+	"demo/pkg/transfer/plugins"
+	tstreaming "demo/pkg/transfer/streaming"
 )
 
 func init() {
@@ -87,15 +87,15 @@ func (iis *ImageExportStream) ExportStream(context.Context) (io.WriteCloser, str
 	return iis.stream, iis.mediaType, nil
 }
 
-func (iis *ImageExportStream) Export(ctx context.Context, cs content.Store, imgs []images.Image) error {
+func (iis *ImageExportStream) Export(ctx context.Context, cs content.Store, imgs []over_images.Image) error {
 	opts := []archive.ExportOpt{
 		archive.WithImages(imgs),
 	}
 
 	if len(iis.platforms) > 0 {
-		opts = append(opts, archive.WithPlatform(platforms.Ordered(iis.platforms...)))
+		opts = append(opts, archive.WithPlatform(over_platforms.Ordered(iis.platforms...)))
 	} else {
-		opts = append(opts, archive.WithPlatform(platforms.DefaultStrict()))
+		opts = append(opts, archive.WithPlatform(over_platforms.DefaultStrict()))
 	}
 	if iis.allPlatforms {
 		opts = append(opts, archive.WithAllPlatforms())

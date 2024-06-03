@@ -18,6 +18,7 @@ package docker
 
 import (
 	"context"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"io"
@@ -28,12 +29,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes"
-	remoteserrors "github.com/containerd/containerd/remotes/errors"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/remotes"
+	remoteserrors "demo/remotes/errors"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -58,7 +58,7 @@ func (p dockerPusher) Writer(ctx context.Context, opts ...content.WriterOpt) (co
 		}
 	}
 	if wOpts.Ref == "" {
-		return nil, fmt.Errorf("ref must not be empty: %w", errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("ref must not be empty: %w", over_errdefs.ErrInvalidArgument)
 	}
 	return p.push(ctx, wOpts.Desc, wOpts.Ref, true)
 }
@@ -79,22 +79,22 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 	status, err := p.tracker.GetStatus(ref)
 	if err == nil {
 		if status.Committed && status.Offset == status.Total {
-			return nil, fmt.Errorf("ref %v: %w", ref, errdefs.ErrAlreadyExists)
+			return nil, fmt.Errorf("ref %v: %w", ref, over_errdefs.ErrAlreadyExists)
 		}
 		if unavailableOnFail && status.ErrClosed == nil {
 			// Another push of this ref is happening elsewhere. The rest of function
 			// will continue only when `errdefs.IsNotFound(err) == true` (i.e. there
 			// is no actively-tracked ref already).
-			return nil, fmt.Errorf("push is on-going: %w", errdefs.ErrUnavailable)
+			return nil, fmt.Errorf("push is on-going: %w", over_errdefs.ErrUnavailable)
 		}
 		// TODO: Handle incomplete status
-	} else if !errdefs.IsNotFound(err) {
+	} else if !over_errdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get status: %w", err)
 	}
 
 	hosts := p.filterHosts(HostCapabilityPush)
 	if len(hosts) == 0 {
-		return nil, fmt.Errorf("no push hosts: %w", errdefs.ErrNotFound)
+		return nil, fmt.Errorf("no push hosts: %w", over_errdefs.ErrNotFound)
 	}
 
 	var (
@@ -104,7 +104,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 	)
 
 	switch desc.MediaType {
-	case images.MediaTypeDockerSchema2Manifest, images.MediaTypeDockerSchema2ManifestList,
+	case over_images.MediaTypeDockerSchema2Manifest, over_images.MediaTypeDockerSchema2ManifestList,
 		ocispec.MediaTypeImageManifest, ocispec.MediaTypeImageIndex:
 		isManifest = true
 		existCheck = getManifestPath(p.object, desc.Digest)
@@ -149,7 +149,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 					},
 				})
 				resp.Body.Close()
-				return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, errdefs.ErrAlreadyExists)
+				return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, over_errdefs.ErrAlreadyExists)
 			}
 		} else if resp.StatusCode != http.StatusNotFound {
 			err := remoteserrors.NewUnexpectedStatusErr(resp)
@@ -221,7 +221,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 					Offset: desc.Size,
 				},
 			})
-			return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, errdefs.ErrAlreadyExists)
+			return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, over_errdefs.ErrAlreadyExists)
 		default:
 			err := remoteserrors.NewUnexpectedStatusErr(resp)
 			log.G(ctx).WithField("resp", resp).WithField("body", string(err.(remoteserrors.ErrUnexpectedStatus).Body)).Debug("unexpected response")

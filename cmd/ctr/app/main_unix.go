@@ -18,7 +18,7 @@
 
 package app
 
-import "github.com/containerd/containerd/cmd/ctr/commands/shim"
+import "demo/cmd/ctr/commands/shim"
 
 func init() {
 	extraCmds = append(extraCmds, shim.Command)

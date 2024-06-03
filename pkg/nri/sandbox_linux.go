@@ -19,7 +19,7 @@
 package nri
 
 import (
-	nri "github.com/containerd/nri/pkg/adaptation"
+	nri "demo/others/nri/pkg/adaptation"
 )
 
 func podSandboxToNRI(pod PodSandbox) *nri.PodSandbox {

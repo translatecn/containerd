@@ -20,25 +20,25 @@ package run
 
 import (
 	gocontext "context"
+	"demo/cmd/ctr/commands"
+	"demo/containers"
+	over_oci "demo/over/oci"
+	over_platforms "demo/over/platforms"
+	"demo/pkg/contrib/apparmor"
+	"demo/pkg/contrib/nvidia"
+	"demo/pkg/contrib/seccomp"
+	"demo/snapshots"
 	"errors"
 	"fmt"
+	"github.com/intel/goresctrl/pkg/blockio"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cmd/ctr/commands"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/contrib/apparmor"
-	"github.com/containerd/containerd/contrib/nvidia"
-	"github.com/containerd/containerd/contrib/seccomp"
-	"github.com/containerd/containerd/oci"
-	runtimeoptions "github.com/containerd/containerd/pkg/runtimeoptions/v1"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/runtime/v2/runc/options"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/intel/goresctrl/pkg/blockio"
+	"demo/containerd"
+	runtimeoptions "demo/pkg/runtimeoptions/v1"
+	"demo/runtime/v2/runc/options"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
@@ -82,317 +82,6 @@ var platformRunFlags = []cli.Flag{
 		Usage: "Set the cpu shares",
 		Value: 1024,
 	},
-}
-
-// NewContainer creates a new container
-func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli.Context) (containerd.Container, error) {
-	var (
-		id     string
-		config = context.IsSet("config")
-	)
-	if config {
-		id = context.Args().First()
-	} else {
-		id = context.Args().Get(1)
-	}
-
-	var (
-		opts  []oci.SpecOpts
-		cOpts []containerd.NewContainerOpts
-		spec  containerd.NewContainerOpts
-	)
-
-	if sandbox := context.String("sandbox"); sandbox != "" {
-		cOpts = append(cOpts, containerd.WithSandbox(sandbox))
-	}
-
-	if config {
-		cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
-		opts = append(opts, oci.WithSpecFromFile(context.String("config")))
-	} else {
-		var (
-			ref = context.Args().First()
-			// for container's id is Args[1]
-			args = context.Args()[2:]
-		)
-		opts = append(opts, oci.WithDefaultSpec(), oci.WithDefaultUnixDevices)
-		if ef := context.String("env-file"); ef != "" {
-			opts = append(opts, oci.WithEnvFile(ef))
-		}
-		opts = append(opts, oci.WithEnv(context.StringSlice("env")))
-		opts = append(opts, withMounts(context))
-
-		if context.Bool("rootfs") {
-			rootfs, err := filepath.Abs(ref)
-			if err != nil {
-				return nil, err
-			}
-			opts = append(opts, oci.WithRootFSPath(rootfs))
-			cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
-		} else {
-			snapshotter := context.String("snapshotter")
-			var image containerd.Image
-			i, err := client.ImageService().Get(ctx, ref)
-			if err != nil {
-				return nil, err
-			}
-			if ps := context.String("platform"); ps != "" {
-				platform, err := platforms.Parse(ps)
-				if err != nil {
-					return nil, err
-				}
-				image = containerd.NewImageWithPlatform(client, i, platforms.Only(platform))
-			} else {
-				image = containerd.NewImage(client, i)
-			}
-
-			unpacked, err := image.IsUnpacked(ctx, snapshotter)
-			if err != nil {
-				return nil, err
-			}
-			if !unpacked {
-				if err := image.Unpack(ctx, snapshotter); err != nil {
-					return nil, err
-				}
-			}
-			labels := buildLabels(commands.LabelArgs(context.StringSlice("label")), image.Labels())
-			opts = append(opts, oci.WithImageConfig(image))
-			cOpts = append(cOpts,
-				containerd.WithImage(image),
-				containerd.WithImageConfigLabels(image),
-				containerd.WithAdditionalContainerLabels(labels),
-				containerd.WithSnapshotter(snapshotter))
-			if uidmap, gidmap := context.String("uidmap"), context.String("gidmap"); uidmap != "" && gidmap != "" {
-				uidMap, err := parseIDMapping(uidmap)
-				if err != nil {
-					return nil, err
-				}
-				gidMap, err := parseIDMapping(gidmap)
-				if err != nil {
-					return nil, err
-				}
-				opts = append(opts,
-					oci.WithUserNamespace([]specs.LinuxIDMapping{uidMap}, []specs.LinuxIDMapping{gidMap}))
-				// use snapshotter opts or the remapped snapshot support to shift the filesystem
-				// currently the only snapshotter known to support the labels is fuse-overlayfs:
-				// https://github.com/AkihiroSuda/containerd-fuse-overlayfs
-				if context.Bool("remap-labels") {
-					cOpts = append(cOpts, containerd.WithNewSnapshot(id, image,
-						containerd.WithRemapperLabels(0, uidMap.HostID, 0, gidMap.HostID, uidMap.Size)))
-				} else {
-					cOpts = append(cOpts, containerd.WithRemappedSnapshot(id, image, uidMap.HostID, gidMap.HostID))
-				}
-			} else {
-				// Even when "read-only" is set, we don't use KindView snapshot here. (#1495)
-				// We pass writable snapshot to the OCI runtime, and the runtime remounts it as read-only,
-				// after creating some mount points on demand.
-				// For some snapshotter, such as overlaybd, it can provide 2 kind of writable snapshot(overlayfs dir or block-device)
-				// by command label values.
-				cOpts = append(cOpts, containerd.WithNewSnapshot(id, image,
-					snapshots.WithLabels(commands.LabelArgs(context.StringSlice("snapshotter-label")))))
-			}
-			cOpts = append(cOpts, containerd.WithImageStopSignal(image, "SIGTERM"))
-		}
-		if context.Bool("read-only") {
-			opts = append(opts, oci.WithRootFSReadonly())
-		}
-		if len(args) > 0 {
-			opts = append(opts, oci.WithProcessArgs(args...))
-		}
-		if cwd := context.String("cwd"); cwd != "" {
-			opts = append(opts, oci.WithProcessCwd(cwd))
-		}
-		if user := context.String("user"); user != "" {
-			opts = append(opts, oci.WithUser(user), oci.WithAdditionalGIDs(user))
-		}
-		if context.Bool("tty") {
-			opts = append(opts, oci.WithTTY)
-		}
-
-		privileged := context.Bool("privileged")
-		privilegedWithoutHostDevices := context.Bool("privileged-without-host-devices")
-		if privilegedWithoutHostDevices && !privileged {
-			return nil, fmt.Errorf("can't use 'privileged-without-host-devices' without 'privileged' specified")
-		}
-		if privileged {
-			if privilegedWithoutHostDevices {
-				opts = append(opts, oci.WithPrivileged)
-			} else {
-				opts = append(opts, oci.WithPrivileged, oci.WithAllDevicesAllowed, oci.WithHostDevices)
-			}
-		}
-
-		if context.Bool("net-host") {
-			hostname, err := os.Hostname()
-			if err != nil {
-				return nil, fmt.Errorf("get hostname: %w", err)
-			}
-			opts = append(opts,
-				oci.WithHostNamespace(specs.NetworkNamespace),
-				oci.WithHostHostsFile,
-				oci.WithHostResolvconf,
-				oci.WithEnv([]string{fmt.Sprintf("HOSTNAME=%s", hostname)}),
-			)
-		}
-		if annoStrings := context.StringSlice("annotation"); len(annoStrings) > 0 {
-			annos, err := commands.AnnotationArgs(annoStrings)
-			if err != nil {
-				return nil, err
-			}
-			opts = append(opts, oci.WithAnnotations(annos))
-		}
-
-		if context.Bool("cni") {
-			cniMeta := &commands.NetworkMetaData{EnableCni: true}
-			cOpts = append(cOpts, containerd.WithContainerExtension(commands.CtrCniMetadataExtension, cniMeta))
-		}
-		if caps := context.StringSlice("cap-add"); len(caps) > 0 {
-			for _, cap := range caps {
-				if !strings.HasPrefix(cap, "CAP_") {
-					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
-				}
-			}
-			opts = append(opts, oci.WithAddedCapabilities(caps))
-		}
-
-		if caps := context.StringSlice("cap-drop"); len(caps) > 0 {
-			for _, cap := range caps {
-				if !strings.HasPrefix(cap, "CAP_") {
-					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
-				}
-			}
-			opts = append(opts, oci.WithDroppedCapabilities(caps))
-		}
-
-		seccompProfile := context.String("seccomp-profile")
-
-		if !context.Bool("seccomp") && seccompProfile != "" {
-			return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp-profile")
-		}
-
-		if context.Bool("seccomp") {
-			if seccompProfile != "" {
-				opts = append(opts, seccomp.WithProfile(seccompProfile))
-			} else {
-				opts = append(opts, seccomp.WithDefaultProfile())
-			}
-		}
-
-		if s := context.String("apparmor-default-profile"); len(s) > 0 {
-			opts = append(opts, apparmor.WithDefaultProfile(s))
-		}
-
-		if s := context.String("apparmor-profile"); len(s) > 0 {
-			if len(context.String("apparmor-default-profile")) > 0 {
-				return nil, fmt.Errorf("apparmor-profile conflicts with apparmor-default-profile")
-			}
-			opts = append(opts, apparmor.WithProfile(s))
-		}
-
-		if cpus := context.Float64("cpus"); cpus > 0.0 {
-			var (
-				period = uint64(100000)
-				quota  = int64(cpus * 100000.0)
-			)
-			opts = append(opts, oci.WithCPUCFS(quota, period))
-		}
-
-		if shares := context.Int("cpu-shares"); shares > 0 {
-			opts = append(opts, oci.WithCPUShares(uint64(shares)))
-		}
-
-		quota := context.Int64("cpu-quota")
-		period := context.Uint64("cpu-period")
-		if quota != -1 || period != 0 {
-			if cpus := context.Float64("cpus"); cpus > 0.0 {
-				return nil, errors.New("cpus and quota/period should be used separately")
-			}
-			opts = append(opts, oci.WithCPUCFS(quota, period))
-		}
-
-		joinNs := context.StringSlice("with-ns")
-		for _, ns := range joinNs {
-			nsType, nsPath, ok := strings.Cut(ns, ":")
-			if !ok {
-				return nil, errors.New("joining a Linux namespace using --with-ns requires the format 'nstype:path'")
-			}
-			if !validNamespace(nsType) {
-				return nil, errors.New("the Linux namespace type specified in --with-ns is not valid: " + nsType)
-			}
-			opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{
-				Type: specs.LinuxNamespaceType(nsType),
-				Path: nsPath,
-			}))
-		}
-		if context.IsSet("gpus") {
-			opts = append(opts, nvidia.WithGPUs(nvidia.WithDevices(context.IntSlice("gpus")...), nvidia.WithAllCapabilities))
-		}
-		if context.IsSet("allow-new-privs") {
-			opts = append(opts, oci.WithNewPrivileges)
-		}
-		if context.IsSet("cgroup") {
-			// NOTE: can be set to "" explicitly for disabling cgroup.
-			opts = append(opts, oci.WithCgroup(context.String("cgroup")))
-		}
-		limit := context.Uint64("memory-limit")
-		if limit != 0 {
-			opts = append(opts, oci.WithMemoryLimit(limit))
-		}
-		for _, dev := range context.StringSlice("device") {
-			opts = append(opts, oci.WithDevices(dev, "", "rwm"))
-		}
-
-		rootfsPropagation := context.String("rootfs-propagation")
-		if rootfsPropagation != "" {
-			opts = append(opts, func(_ gocontext.Context, _ oci.Client, _ *containers.Container, s *oci.Spec) error {
-				if s.Linux != nil {
-					s.Linux.RootfsPropagation = rootfsPropagation
-				} else {
-					s.Linux = &specs.Linux{
-						RootfsPropagation: rootfsPropagation,
-					}
-				}
-
-				return nil
-			})
-		}
-
-		if c := context.String("blockio-config-file"); c != "" {
-			if err := blockio.SetConfigFromFile(c, false); err != nil {
-				return nil, fmt.Errorf("blockio-config-file error: %w", err)
-			}
-		}
-
-		if c := context.String("blockio-class"); c != "" {
-			if linuxBlockIO, err := blockio.OciLinuxBlockIO(c); err == nil {
-				opts = append(opts, oci.WithBlockIO(linuxBlockIO))
-			} else {
-				return nil, fmt.Errorf("blockio-class error: %w", err)
-			}
-		}
-		if c := context.String("rdt-class"); c != "" {
-			opts = append(opts, oci.WithRdt(c, "", ""))
-		}
-		if hostname := context.String("hostname"); hostname != "" {
-			opts = append(opts, oci.WithHostname(hostname))
-		}
-	}
-
-	runtimeOpts, err := getRuntimeOptions(context)
-	if err != nil {
-		return nil, err
-	}
-	cOpts = append(cOpts, containerd.WithRuntime(context.String("runtime"), runtimeOpts))
-
-	opts = append(opts, oci.WithAnnotations(commands.LabelArgs(context.StringSlice("label"))))
-	var s specs.Spec
-	spec = containerd.WithSpec(&s, opts...)
-
-	cOpts = append(cOpts, spec)
-
-	// oci.WithImageConfig (WithUsername, WithUserID) depends on access to rootfs for resolving via
-	// the /etc/{passwd,group} files. So cOpts needs to have precedence over opts.
-	return client.NewContainer(ctx, id, cOpts...)
 }
 
 func getRuncOptions(context *cli.Context) (*options.Options, error) {
@@ -477,4 +166,315 @@ func validNamespace(ns string) bool {
 
 func getNetNSPath(_ gocontext.Context, task containerd.Task) (string, error) {
 	return fmt.Sprintf("/proc/%d/ns/net", task.Pid()), nil
+}
+
+// NewContainer creates a new container
+func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli.Context) (containerd.Container, error) {
+	var (
+		id     string
+		config = context.IsSet("config")
+	)
+	if config {
+		id = context.Args().First()
+	} else {
+		id = context.Args().Get(1)
+	}
+
+	var (
+		opts  []over_oci.SpecOpts
+		cOpts []containerd.NewContainerOpts
+		spec  containerd.NewContainerOpts
+	)
+
+	if sandbox := context.String("sandbox"); sandbox != "" {
+		cOpts = append(cOpts, containerd.WithSandbox(sandbox))
+	}
+
+	if config {
+		cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
+		opts = append(opts, over_oci.WithSpecFromFile(context.String("config")))
+	} else {
+		var (
+			ref = context.Args().First()
+			// for container's id is Args[1]
+			args = context.Args()[2:]
+		)
+		opts = append(opts, over_oci.WithDefaultSpec(), over_oci.WithDefaultUnixDevices)
+		if ef := context.String("env-file"); ef != "" {
+			opts = append(opts, over_oci.WithEnvFile(ef))
+		}
+		opts = append(opts, over_oci.WithEnv(context.StringSlice("env")))
+		opts = append(opts, withMounts(context))
+
+		if context.Bool("rootfs") {
+			rootfs, err := filepath.Abs(ref)
+			if err != nil {
+				return nil, err
+			}
+			opts = append(opts, over_oci.WithRootFSPath(rootfs))
+			cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
+		} else {
+			snapshotter := context.String("snapshotter")
+			var image containerd.Image
+			i, err := client.ImageService().Get(ctx, ref)
+			if err != nil {
+				return nil, err
+			}
+			if ps := context.String("platform"); ps != "" {
+				platform, err := over_platforms.Parse(ps)
+				if err != nil {
+					return nil, err
+				}
+				image = containerd.NewImageWithPlatform(client, i, over_platforms.Only(platform))
+			} else {
+				image = containerd.NewImage(client, i)
+			}
+
+			unpacked, err := image.IsUnpacked(ctx, snapshotter)
+			if err != nil {
+				return nil, err
+			}
+			if !unpacked {
+				if err := image.Unpack(ctx, snapshotter); err != nil {
+					return nil, err
+				}
+			}
+			labels := buildLabels(commands.LabelArgs(context.StringSlice("label")), image.Labels())
+			opts = append(opts, over_oci.WithImageConfig(image))
+			cOpts = append(cOpts,
+				containerd.WithImage(image),
+				containerd.WithImageConfigLabels(image),
+				containerd.WithAdditionalContainerLabels(labels),
+				containerd.WithSnapshotter(snapshotter))
+			if uidmap, gidmap := context.String("uidmap"), context.String("gidmap"); uidmap != "" && gidmap != "" {
+				uidMap, err := parseIDMapping(uidmap)
+				if err != nil {
+					return nil, err
+				}
+				gidMap, err := parseIDMapping(gidmap)
+				if err != nil {
+					return nil, err
+				}
+				opts = append(opts,
+					over_oci.WithUserNamespace([]specs.LinuxIDMapping{uidMap}, []specs.LinuxIDMapping{gidMap}))
+				// use snapshotter opts or the remapped snapshot support to shift the filesystem
+				// currently the only snapshotter known to support the labels is fuse-overlayfs:
+				// https://github.com/AkihiroSuda/containerd-fuse-overlayfs
+				if context.Bool("remap-labels") {
+					cOpts = append(cOpts, containerd.WithNewSnapshot(id, image,
+						containerd.WithRemapperLabels(0, uidMap.HostID, 0, gidMap.HostID, uidMap.Size)))
+				} else {
+					cOpts = append(cOpts, containerd.WithRemappedSnapshot(id, image, uidMap.HostID, gidMap.HostID))
+				}
+			} else {
+				// Even when "read-only" is set, we don't use KindView snapshot here. (#1495)
+				// We pass writable snapshot to the OCI runtime, and the runtime remounts it as read-only,
+				// after creating some mount points on demand.
+				// For some snapshotter, such as overlaybd, it can provide 2 kind of writable snapshot(overlayfs dir or block-device)
+				// by command label values.
+				cOpts = append(cOpts, containerd.WithNewSnapshot(id, image,
+					snapshots.WithLabels(commands.LabelArgs(context.StringSlice("snapshotter-label")))))
+			}
+			cOpts = append(cOpts, containerd.WithImageStopSignal(image, "SIGTERM"))
+		}
+		if context.Bool("read-only") {
+			opts = append(opts, over_oci.WithRootFSReadonly())
+		}
+		if len(args) > 0 {
+			opts = append(opts, over_oci.WithProcessArgs(args...))
+		}
+		if cwd := context.String("cwd"); cwd != "" {
+			opts = append(opts, over_oci.WithProcessCwd(cwd))
+		}
+		if user := context.String("user"); user != "" {
+			opts = append(opts, over_oci.WithUser(user), over_oci.WithAdditionalGIDs(user))
+		}
+		if context.Bool("tty") {
+			opts = append(opts, over_oci.WithTTY)
+		}
+
+		privileged := context.Bool("privileged")
+		privilegedWithoutHostDevices := context.Bool("privileged-without-host-devices")
+		if privilegedWithoutHostDevices && !privileged {
+			return nil, fmt.Errorf("can't use 'privileged-without-host-devices' without 'privileged' specified")
+		}
+		if privileged {
+			if privilegedWithoutHostDevices {
+				opts = append(opts, over_oci.WithPrivileged)
+			} else {
+				opts = append(opts, over_oci.WithPrivileged, over_oci.WithAllDevicesAllowed, over_oci.WithHostDevices)
+			}
+		}
+
+		if context.Bool("net-host") {
+			hostname, err := os.Hostname()
+			if err != nil {
+				return nil, fmt.Errorf("get hostname: %w", err)
+			}
+			opts = append(opts,
+				over_oci.WithHostNamespace(specs.NetworkNamespace),
+				over_oci.WithHostHostsFile,
+				over_oci.WithHostResolvconf,
+				over_oci.WithEnv([]string{fmt.Sprintf("HOSTNAME=%s", hostname)}),
+			)
+		}
+		if annoStrings := context.StringSlice("annotation"); len(annoStrings) > 0 {
+			annos, err := commands.AnnotationArgs(annoStrings)
+			if err != nil {
+				return nil, err
+			}
+			opts = append(opts, over_oci.WithAnnotations(annos))
+		}
+
+		if context.Bool("cni") {
+			cniMeta := &commands.NetworkMetaData{EnableCni: true}
+			cOpts = append(cOpts, containerd.WithContainerExtension(commands.CtrCniMetadataExtension, cniMeta))
+		}
+		if caps := context.StringSlice("cap-add"); len(caps) > 0 {
+			for _, cap := range caps {
+				if !strings.HasPrefix(cap, "CAP_") {
+					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
+				}
+			}
+			opts = append(opts, over_oci.WithAddedCapabilities(caps))
+		}
+
+		if caps := context.StringSlice("cap-drop"); len(caps) > 0 {
+			for _, cap := range caps {
+				if !strings.HasPrefix(cap, "CAP_") {
+					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
+				}
+			}
+			opts = append(opts, over_oci.WithDroppedCapabilities(caps))
+		}
+
+		seccompProfile := context.String("seccomp-profile")
+
+		if !context.Bool("seccomp") && seccompProfile != "" {
+			return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp-profile")
+		}
+
+		if context.Bool("seccomp") {
+			if seccompProfile != "" {
+				opts = append(opts, seccomp.WithProfile(seccompProfile))
+			} else {
+				opts = append(opts, seccomp.WithDefaultProfile())
+			}
+		}
+
+		if s := context.String("apparmor-default-profile"); len(s) > 0 {
+			opts = append(opts, apparmor.WithDefaultProfile(s))
+		}
+
+		if s := context.String("apparmor-profile"); len(s) > 0 {
+			if len(context.String("apparmor-default-profile")) > 0 {
+				return nil, fmt.Errorf("apparmor-profile conflicts with apparmor-default-profile")
+			}
+			opts = append(opts, apparmor.WithProfile(s))
+		}
+
+		if cpus := context.Float64("cpus"); cpus > 0.0 {
+			var (
+				period = uint64(100000)
+				quota  = int64(cpus * 100000.0)
+			)
+			opts = append(opts, over_oci.WithCPUCFS(quota, period))
+		}
+
+		if shares := context.Int("cpu-shares"); shares > 0 {
+			opts = append(opts, over_oci.WithCPUShares(uint64(shares)))
+		}
+
+		quota := context.Int64("cpu-quota")
+		period := context.Uint64("cpu-period")
+		if quota != -1 || period != 0 {
+			if cpus := context.Float64("cpus"); cpus > 0.0 {
+				return nil, errors.New("cpus and quota/period should be used separately")
+			}
+			opts = append(opts, over_oci.WithCPUCFS(quota, period))
+		}
+
+		joinNs := context.StringSlice("with-ns")
+		for _, ns := range joinNs {
+			nsType, nsPath, ok := strings.Cut(ns, ":")
+			if !ok {
+				return nil, errors.New("joining a Linux namespace using --with-ns requires the format 'nstype:path'")
+			}
+			if !validNamespace(nsType) {
+				return nil, errors.New("the Linux namespace type specified in --with-ns is not valid: " + nsType)
+			}
+			opts = append(opts, over_oci.WithLinuxNamespace(specs.LinuxNamespace{
+				Type: specs.LinuxNamespaceType(nsType),
+				Path: nsPath,
+			}))
+		}
+		if context.IsSet("gpus") {
+			opts = append(opts, nvidia.WithGPUs(nvidia.WithDevices(context.IntSlice("gpus")...), nvidia.WithAllCapabilities))
+		}
+		if context.IsSet("allow-new-privs") {
+			opts = append(opts, over_oci.WithNewPrivileges)
+		}
+		if context.IsSet("cgroup") {
+			// NOTE: can be set to "" explicitly for disabling cgroup.
+			opts = append(opts, over_oci.WithCgroup(context.String("cgroup")))
+		}
+		limit := context.Uint64("memory-limit")
+		if limit != 0 {
+			opts = append(opts, over_oci.WithMemoryLimit(limit))
+		}
+		for _, dev := range context.StringSlice("device") {
+			opts = append(opts, over_oci.WithDevices(dev, "", "rwm"))
+		}
+
+		rootfsPropagation := context.String("rootfs-propagation")
+		if rootfsPropagation != "" {
+			opts = append(opts, func(_ gocontext.Context, _ over_oci.Client, _ *containers.Container, s *over_oci.Spec) error {
+				if s.Linux != nil {
+					s.Linux.RootfsPropagation = rootfsPropagation
+				} else {
+					s.Linux = &specs.Linux{
+						RootfsPropagation: rootfsPropagation,
+					}
+				}
+
+				return nil
+			})
+		}
+
+		if c := context.String("blockio-config-file"); c != "" {
+			if err := blockio.SetConfigFromFile(c, false); err != nil {
+				return nil, fmt.Errorf("blockio-config-file error: %w", err)
+			}
+		}
+
+		if c := context.String("blockio-class"); c != "" {
+			if linuxBlockIO, err := blockio.OciLinuxBlockIO(c); err == nil {
+				opts = append(opts, over_oci.WithBlockIO(linuxBlockIO))
+			} else {
+				return nil, fmt.Errorf("blockio-class error: %w", err)
+			}
+		}
+		if c := context.String("rdt-class"); c != "" {
+			opts = append(opts, over_oci.WithRdt(c, "", ""))
+		}
+		if hostname := context.String("hostname"); hostname != "" {
+			opts = append(opts, over_oci.WithHostname(hostname))
+		}
+	}
+
+	runtimeOpts, err := getRuntimeOptions(context)
+	if err != nil {
+		return nil, err
+	}
+	cOpts = append(cOpts, containerd.WithRuntime(context.String("runtime"), runtimeOpts))
+
+	opts = append(opts, over_oci.WithAnnotations(commands.LabelArgs(context.StringSlice("label"))))
+	var s specs.Spec
+	spec = containerd.WithSpec(&s, opts...)
+
+	cOpts = append(cOpts, spec)
+
+	// oci.WithImageConfig (WithUsername, WithUserID) depends on access to rootfs for resolving via
+	// the /etc/{passwd,group} files. So cOpts needs to have precedence over opts.
+	return client.NewContainer(ctx, id, cOpts...)
 }

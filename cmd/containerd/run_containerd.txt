@@ -1,0 +1,43 @@
+.
+├── containerd-debug.sock
+├── containerd.sock
+├── containerd.sock.ttrpc
+├── io.containerd.grpc.v1.cri
+│   ├── containers
+│   │   └── ff888b6d7f8c5d8f9e86480a5478e4fac3723e106c7456535590447248c9e8ef
+│   │       └── io
+│   │           └── 774932957
+│   │               ├── ff888b6d7f8c5d8f9e86480a5478e4fac3723e106c7456535590447248c9e8ef-stderr
+│   │               └── ff888b6d7f8c5d8f9e86480a5478e4fac3723e106c7456535590447248c9e8ef-stdout
+│   └── sandboxes
+│       └── e54398e83e32466550278ada5f4f3916411432c58d61d09e16e9f334c45db5e2
+│           └── shm
+├── io.containerd.runtime.v1.linux
+├── io.containerd.runtime.v2.task
+│   └── k8s.io
+│       └── 03053425e2619be070cf85d4c12efffe48a3325b2ded6c42dcb5c499479fee38
+│           ├── address
+│           ├── config.json
+│           ├── init.pid
+│           ├── log
+│           ├── log.json
+│           ├── options.json
+│           ├── rootfs
+│           │   ├── dev
+│           │   ├── etc
+│           │   │   └── resolv.conf
+│           │   ├── pause
+│           │   ├── proc
+│           │   └── sys
+│           ├── runtime
+│           ├── shim-binary-path
+│           └── work -> /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io/03053425e2619be070cf85d4c12efffe48a3325b2ded6c42dcb5c499479fee38
+│
+├── runc
+│   └── k8s.io
+│       └── ff888b6d7f8c5d8f9e86480a5478e4fac3723e106c7456535590447248c9e8ef
+│           └── state.json
+└── s
+    └── f7ca382f2ef09419955d300e5723bc07fb30ec4e781cdcf98cae596b4240e387
+
+2025 directories, 14857 files

@@ -19,5 +19,5 @@
 package builtins
 
 import (
-	_ "github.com/containerd/containerd/tracing/plugin"
+	_ "demo/over/tracing/plugin"
 )

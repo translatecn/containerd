@@ -17,26 +17,26 @@
 package plugin
 
 import (
-	"github.com/containerd/containerd/pkg/shutdown"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/runtime/v2/runc/task"
-	"github.com/containerd/containerd/runtime/v2/shim"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/shutdown"
+	"demo/runtime/v2/runc/task"
+	"demo/runtime/v2/shim"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.TTRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.TTRPCPlugin,
 		ID:   "task",
-		Requires: []plugin.Type{
-			plugin.EventPlugin,
-			plugin.InternalPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.EventPlugin,
+			over_plugin2.InternalPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			pp, err := ic.GetByID(plugin.EventPlugin, "publisher")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			pp, err := ic.GetByID(over_plugin2.EventPlugin, "publisher")
 			if err != nil {
 				return nil, err
 			}
-			ss, err := ic.GetByID(plugin.InternalPlugin, "shutdown")
+			ss, err := ic.GetByID(over_plugin2.InternalPlugin, "shutdown")
 			if err != nil {
 				return nil, err
 			}

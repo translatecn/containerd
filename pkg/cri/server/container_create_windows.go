@@ -25,12 +25,12 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
+	"demo/over/oci"
+	"demo/snapshots"
 
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	"github.com/containerd/containerd/pkg/cri/config"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
+	"demo/pkg/cri/annotations"
+	"demo/pkg/cri/config"
+	customopts "demo/pkg/cri/opts"
 )
 
 // No container mounts for windows.
@@ -51,7 +51,7 @@ func (c *criService) containerSpec(
 	extraMounts []*runtime.Mount,
 	ociRuntime config.Runtime,
 ) (*runtimespec.Spec, error) {
-	var specOpts []oci.SpecOpts
+	var specOpts []over_oci.SpecOpts
 	specOpts = append(specOpts, customopts.WithProcessCommandLineOrArgsForWindows(config, imageConfig))
 
 	// All containers in a pod need to have HostProcess set if it was set on the pod,
@@ -64,13 +64,13 @@ func (c *criService) containerSpec(
 	}
 
 	if config.GetWorkingDir() != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(config.GetWorkingDir()))
 	} else if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if config.GetTty() {
-		specOpts = append(specOpts, oci.WithTTY)
+		specOpts = append(specOpts, over_oci.WithTTY)
 	}
 
 	// Apply envs from image config first, so that envs from container config
@@ -79,14 +79,14 @@ func (c *criService) containerSpec(
 	for _, e := range config.GetEnvs() {
 		env = append(env, e.GetKey()+"="+e.GetValue())
 	}
-	specOpts = append(specOpts, oci.WithEnv(env))
+	specOpts = append(specOpts, over_oci.WithEnv(env))
 
 	specOpts = append(specOpts,
 		// Clear the root location since hcsshim expects it.
 		// NOTE: readonly rootfs doesn't work on windows.
 		customopts.WithoutRoot,
-		oci.WithWindowsNetworkNamespace(netNSPath),
-		oci.WithHostname(sandboxConfig.GetHostname()),
+		over_oci.WithWindowsNetworkNamespace(netNSPath),
+		over_oci.WithHostname(sandboxConfig.GetHostname()),
 	)
 
 	specOpts = append(specOpts, customopts.WithWindowsMounts(c.os, config, extraMounts), customopts.WithWindowsDevices(config))
@@ -114,7 +114,7 @@ func (c *criService) containerSpec(
 	// image as early as here like there is for Linux. Later on in the stack hcsshim
 	// will handle the behavior of erroring out if the user isn't available in the image
 	// when trying to run the init process.
-	specOpts = append(specOpts, oci.WithUser(username))
+	specOpts = append(specOpts, over_oci.WithUser(username))
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
 		ociRuntime.PodAnnotations) {
@@ -135,7 +135,7 @@ func (c *criService) containerSpec(
 }
 
 // No extra spec options needed for windows.
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
 	return nil, nil
 }
 

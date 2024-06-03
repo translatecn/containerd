@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package containerd.linux.runc;
 
-option go_package = "github.com/containerd/containerd/runtime/linux/runctypes;runctypes";
+option go_package = "demo/containerd/runtime/linux/runctypes;runctypes";
 
 message RuncOptions {
 	string runtime = 1;

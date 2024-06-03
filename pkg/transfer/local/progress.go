@@ -18,14 +18,14 @@ package local
 
 import (
 	"context"
+	"demo/others/log"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/remotes"
+	"demo/content"
+	"demo/pkg/transfer"
+	"demo/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

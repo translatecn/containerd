@@ -17,11 +17,11 @@
 package builtins
 
 import (
-	_ "github.com/containerd/containerd/metrics/cgroups"
-	_ "github.com/containerd/containerd/metrics/cgroups/v2"
-	_ "github.com/containerd/containerd/runtime/v1/linux"
-	_ "github.com/containerd/containerd/runtime/v2/runc/options"
-	_ "github.com/containerd/containerd/snapshots/blockfile/plugin"
-	_ "github.com/containerd/containerd/snapshots/native/plugin"
-	_ "github.com/containerd/containerd/snapshots/overlay/plugin"
+	_ "demo/pkg/metrics/cgroups"
+	_ "demo/pkg/metrics/cgroups/v2"
+	_ "demo/runtime/v1/linux"
+	_ "demo/runtime/v2/runc/options"
+	_ "demo/snapshots/blockfile/plugin"
+	_ "demo/snapshots/native/plugin"
+	_ "demo/snapshots/overlay/plugin"
 )

@@ -22,8 +22,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
+	"demo/containerd"
+	"demo/over/errdefs"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,7 +43,7 @@ func ForwardAllSignals(ctx gocontext.Context, task killer) chan os.Signal {
 			}
 			logrus.Debug("forwarding signal ", s)
 			if err := task.Kill(ctx, s.(syscall.Signal)); err != nil {
-				if errdefs.IsNotFound(err) {
+				if over_errdefs.IsNotFound(err) {
 					logrus.WithError(err).Debugf("Not forwarding signal %s", s)
 					return
 				}

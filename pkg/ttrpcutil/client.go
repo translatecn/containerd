@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	v1 "github.com/containerd/containerd/api/services/ttrpc/events/v1"
-	"github.com/containerd/containerd/pkg/dialer"
-	"github.com/containerd/ttrpc"
+	"demo/others/ttrpc"
+	v1 "demo/pkg/api/services/ttrpc/events/v1"
+	"demo/pkg/dialer"
 )
 
 const ttrpcDialTimeout = 5 * time.Second

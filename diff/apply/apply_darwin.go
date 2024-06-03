@@ -21,8 +21,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/containerd/containerd/archive"
-	"github.com/containerd/containerd/mount"
+	"demo/over/mount"
+	"demo/pkg/archive"
 )
 
 func apply(ctx context.Context, mounts []mount.Mount, r io.Reader, _sync bool) error {

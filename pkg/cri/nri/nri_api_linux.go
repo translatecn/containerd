@@ -18,28 +18,27 @@ package nri
 
 import (
 	"context"
+	"demo/containerd"
+	"demo/containers"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
+	"demo/pkg/blockio"
+	"demo/pkg/cri/annotations"
+	"demo/pkg/cri/constants"
+	cstore "demo/pkg/cri/store/container"
+	sstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
 	"encoding/json"
 	"fmt"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/blockio"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	"github.com/containerd/containerd/pkg/cri/constants"
-	cstore "github.com/containerd/containerd/pkg/cri/store/container"
-	sstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/typeurl/v2"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-tools/generate"
 	cri "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/nri"
-	"github.com/containerd/nri/pkg/api"
-	nrigen "github.com/containerd/nri/pkg/runtime-tools/generate"
+	"demo/others/nri/pkg/api"
+	nrigen "demo/others/nri/pkg/runtime-tools/generate"
+	"demo/pkg/nri"
 )
 
 type API struct {
@@ -480,7 +479,7 @@ func (a *API) nriPodSandbox(pod *sstore.Sandbox) *criPodSandbox {
 	ctx := ctrdutil.NamespacedContext()
 	task, err := pod.Container.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			log.L.WithError(err).Errorf("failed to get task for sandbox container %s",
 				pod.Container.ID())
 		}
@@ -666,7 +665,7 @@ func (a *API) nriContainer(ctr interface{}, spec *specs.Spec) *criContainer {
 		}
 		task, err := ctrd.Task(ctx, nil)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				log.L.WithError(err).Errorf("failed to get task for container %s", ctrd.ID())
 			}
 		} else {

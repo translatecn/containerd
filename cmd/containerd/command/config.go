@@ -18,15 +18,15 @@ package command
 
 import (
 	gocontext "context"
+	defaults2 "demo/pkg/defaults"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/pkg/timeout"
-	"github.com/containerd/containerd/services/server"
-	srvconfig "github.com/containerd/containerd/services/server/config"
+	"demo/over/images"
+	"demo/pkg/timeout"
+	"demo/services/server"
+	srvconfig "demo/services/server/config"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pelletier/go-toml"
 	"github.com/urfave/cli"
@@ -124,17 +124,17 @@ var configCommand = cli.Command{
 
 func platformAgnosticDefaultConfig() *srvconfig.Config {
 	return &srvconfig.Config{
-		// see: https://github.com/containerd/containerd/blob/5c6ea7fdc1247939edaddb1eba62a94527418687/RELEASES.md#daemon-configuration
+		// see: https://github.com/containerd/blob/5c6ea7fdc1247939edaddb1eba62a94527418687/RELEASES.md#daemon-configuration
 		// this version MUST remain set to 1 until either there exists a means to
 		// override / configure the default at the containerd cli .. or when
 		// version 1 is no longer supported
 		Version: 1,
-		Root:    defaults.DefaultRootDir,
-		State:   defaults.DefaultStateDir,
+		Root:    defaults2.DefaultRootDir,
+		State:   defaults2.DefaultStateDir,
 		GRPC: srvconfig.GRPCConfig{
-			Address:        defaults.DefaultAddress,
-			MaxRecvMsgSize: defaults.DefaultMaxRecvMsgSize,
-			MaxSendMsgSize: defaults.DefaultMaxSendMsgSize,
+			Address:        defaults2.DefaultAddress,
+			MaxRecvMsgSize: defaults2.DefaultMaxRecvMsgSize,
+			MaxSendMsgSize: defaults2.DefaultMaxSendMsgSize,
 		},
 		DisabledPlugins:  []string{},
 		RequiredPlugins:  []string{},
@@ -147,23 +147,23 @@ func streamProcessors() map[string]srvconfig.StreamProcessor {
 		ctdDecoder = "ctd-decoder"
 		basename   = "io.containerd.ocicrypt.decoder.v1"
 	)
-	decryptionKeysPath := filepath.Join(defaults.DefaultConfigDir, "ocicrypt", "keys")
+	decryptionKeysPath := filepath.Join(defaults2.DefaultConfigDir, "ocicrypt", "keys")
 	ctdDecoderArgs := []string{
 		"--decryption-keys-path", decryptionKeysPath,
 	}
 	ctdDecoderEnv := []string{
-		"OCICRYPT_KEYPROVIDER_CONFIG=" + filepath.Join(defaults.DefaultConfigDir, "ocicrypt", "ocicrypt_keyprovider.conf"),
+		"OCICRYPT_KEYPROVIDER_CONFIG=" + filepath.Join(defaults2.DefaultConfigDir, "ocicrypt", "ocicrypt_keyprovider.conf"),
 	}
 	return map[string]srvconfig.StreamProcessor{
 		basename + ".tar.gzip": {
-			Accepts: []string{images.MediaTypeImageLayerGzipEncrypted},
+			Accepts: []string{over_images.MediaTypeImageLayerGzipEncrypted},
 			Returns: ocispec.MediaTypeImageLayerGzip,
 			Path:    ctdDecoder,
 			Args:    ctdDecoderArgs,
 			Env:     ctdDecoderEnv,
 		},
 		basename + ".tar": {
-			Accepts: []string{images.MediaTypeImageLayerEncrypted},
+			Accepts: []string{over_images.MediaTypeImageLayerEncrypted},
 			Returns: ocispec.MediaTypeImageLayer,
 			Path:    ctdDecoder,
 			Args:    ctdDecoderArgs,

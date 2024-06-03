@@ -21,8 +21,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
+	"demo/over/mount"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

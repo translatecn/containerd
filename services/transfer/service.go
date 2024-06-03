@@ -18,17 +18,16 @@ package transfer
 
 import (
 	"context"
-
-	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
-	transferTypes "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/pkg/transfer/plugins"
-	"github.com/containerd/containerd/plugin"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
+	"demo/over/errdefs"
+	over_plugin2 "demo/over/plugin"
+	ptypes "demo/over/protobuf/types"
+	transferapi "demo/pkg/api/services/transfer/v1"
+	transferTypes "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
+	"demo/pkg/transfer"
+	"demo/pkg/transfer/plugins"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,12 +35,12 @@ import (
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "transfer",
-		Requires: []plugin.Type{
-			plugin.TransferPlugin,
-			plugin.StreamingPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.TransferPlugin,
+			over_plugin2.StreamingPlugin,
 		},
 		InitFn: newService,
 	})
@@ -53,8 +52,8 @@ type service struct {
 	transferapi.UnimplementedTransferServer
 }
 
-func newService(ic *plugin.InitContext) (interface{}, error) {
-	plugins, err := ic.GetByType(plugin.TransferPlugin)
+func newService(ic *over_plugin2.InitContext) (interface{}, error) {
+	plugins, err := ic.GetByType(over_plugin2.TransferPlugin)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func newService(ic *plugin.InitContext) (interface{}, error) {
 		}
 		t = append(t, i.(transfer.Transferrer))
 	}
-	sp, err := ic.GetByID(plugin.StreamingPlugin, "manager")
+	sp, err := ic.GetByID(over_plugin2.StreamingPlugin, "manager")
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,7 @@ func (s *service) Transfer(ctx context.Context, req *transferapi.TransferRequest
 		if req.Options.ProgressStream != "" {
 			stream, err := s.streamManager.Get(ctx, req.Options.ProgressStream)
 			if err != nil {
-				return nil, errdefs.ToGRPC(err)
+				return nil, over_errdefs.ToGRPC(err)
 			}
 			defer stream.Close()
 
@@ -116,18 +115,18 @@ func (s *service) Transfer(ctx context.Context, req *transferapi.TransferRequest
 	}
 	src, err := s.convertAny(ctx, req.Source)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	dst, err := s.convertAny(ctx, req.Destination)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	for _, t := range s.transferrers {
 		if err := t.Transfer(ctx, src, dst, transferOpts...); err == nil {
 			return &ptypes.Empty{}, nil
-		} else if !errdefs.IsNotImplemented(err) {
-			return nil, errdefs.ToGRPC(err)
+		} else if !over_errdefs.IsNotImplemented(err) {
+			return nil, over_errdefs.ToGRPC(err)
 		}
 	}
 	return nil, status.Errorf(codes.Unimplemented, "method Transfer not implemented for %s to %s", req.Source.GetTypeUrl(), req.Destination.GetTypeUrl())
@@ -136,7 +135,7 @@ func (s *service) Transfer(ctx context.Context, req *transferapi.TransferRequest
 func (s *service) convertAny(ctx context.Context, a typeurl.Any) (interface{}, error) {
 	obj, err := plugins.ResolveType(a)
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			return typeurl.UnmarshalAny(a)
 		}
 		return nil, err

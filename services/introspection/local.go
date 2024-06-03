@@ -18,6 +18,10 @@ package introspection
 
 import (
 	context "context"
+	"demo/over/my_mk"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 	"errors"
 	"os"
 	"path/filepath"
@@ -30,28 +34,25 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 
-	api "github.com/containerd/containerd/api/services/introspection/v1"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/filters"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/services"
-	"github.com/containerd/containerd/services/warning"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/introspection/v1"
+	"demo/pkg/api/types"
+	"demo/pkg/filters"
+	"demo/services"
+	"demo/services/warning"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type:     plugin.ServicePlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type:     over_plugin2.ServicePlugin,
 		ID:       services.IntrospectionService,
-		Requires: []plugin.Type{plugin.WarningPlugin},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			sps, err := ic.GetByType(plugin.WarningPlugin)
+		Requires: []over_plugin2.Type{over_plugin2.WarningPlugin},
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			sps, err := ic.GetByType(over_plugin2.WarningPlugin)
 			if err != nil {
 				return nil, err
 			}
-			p, ok := sps[plugin.DeprecationsPlugin]
+			p, ok := sps[over_plugin2.DeprecationsPlugin]
 			if !ok {
 				return nil, errors.New("warning service not found")
 			}
@@ -80,7 +81,7 @@ func init() {
 type Local struct {
 	mu            sync.Mutex
 	root          string
-	plugins       *plugin.Set
+	plugins       *over_plugin2.Set
 	pluginCache   []*api.Plugin
 	warningClient warning.Service
 }
@@ -98,7 +99,7 @@ func (l *Local) UpdateLocal(root string) {
 func (l *Local) Plugins(ctx context.Context, req *api.PluginsRequest, _ ...grpc.CallOption) (*api.PluginsResponse, error) {
 	filter, err := filters.ParseAll(req.Filters...)
 	if err != nil {
-		return nil, errdefs.ToGRPCf(errdefs.ErrInvalidArgument, err.Error())
+		return nil, over_errdefs.ToGRPCf(over_errdefs.ErrInvalidArgument, err.Error())
 	}
 
 	var plugins []*api.Plugin
@@ -129,14 +130,14 @@ func (l *Local) getPlugins() []*api.Plugin {
 func (l *Local) Server(ctx context.Context, _ *ptypes.Empty, _ ...grpc.CallOption) (*api.ServerResponse, error) {
 	u, err := l.getUUID()
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	pid := os.Getpid()
 	var pidns uint64
 	if runtime.GOOS == "linux" {
 		pidns, err = statPIDNS(pid)
 		if err != nil {
-			return nil, errdefs.ToGRPC(err)
+			return nil, over_errdefs.ToGRPC(err)
 		}
 	}
 	return &api.ServerResponse{
@@ -171,7 +172,7 @@ func (l *Local) generateUUID() (string, error) {
 		return "", err
 	}
 	path := l.uuidPath()
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+	if err := my_mk.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return "", err
 	}
 	uu := u.String()
@@ -216,7 +217,7 @@ func adaptPlugin(o interface{}) filters.Adaptor {
 	})
 }
 
-func pluginsToPB(plugins []*plugin.Plugin) []*api.Plugin {
+func pluginsToPB(plugins []*over_plugin2.Plugin) []*api.Plugin {
 	var pluginsPB []*api.Plugin
 	for _, p := range plugins {
 		var platforms []*types.Platform
@@ -235,7 +236,7 @@ func pluginsToPB(plugins []*plugin.Plugin) []*api.Plugin {
 
 		var initErr *rpc.Status
 		if err := p.Err(); err != nil {
-			st, ok := status.FromError(errdefs.ToGRPC(err))
+			st, ok := status.FromError(over_errdefs.ToGRPC(err))
 			if ok {
 				var details []*ptypes.Any
 				for _, d := range st.Proto().Details {
@@ -278,7 +279,7 @@ func warningsPB(ctx context.Context, warnings []warning.Warning) []*api.Deprecat
 		pb = append(pb, &api.DeprecationWarning{
 			ID:             string(w.ID),
 			Message:        w.Message,
-			LastOccurrence: protobuf.ToTimestamp(w.LastOccurrence),
+			LastOccurrence: over_protobuf.ToTimestamp(w.LastOccurrence),
 		})
 	}
 	return pb

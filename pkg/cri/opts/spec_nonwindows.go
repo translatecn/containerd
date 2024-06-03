@@ -21,16 +21,16 @@ package opts
 import (
 	"context"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/oci"
+	"demo/containers"
+	"demo/over/errdefs"
+	"demo/over/oci"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func WithProcessCommandLineOrArgsForWindows(config *runtime.ContainerConfig, image *imagespec.ImageConfig) oci.SpecOpts {
-	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
-		return errdefs.ErrNotImplemented
+func WithProcessCommandLineOrArgsForWindows(config *runtime.ContainerConfig, image *imagespec.ImageConfig) over_oci.SpecOpts {
+	return func(ctx context.Context, client over_oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
+		return over_errdefs.ErrNotImplemented
 	}
 }

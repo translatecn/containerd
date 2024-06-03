@@ -18,14 +18,14 @@ package apply
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
+	"demo/content"
+	"demo/diff"
+	"demo/over/mount"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

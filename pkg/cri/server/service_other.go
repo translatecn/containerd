@@ -19,7 +19,7 @@
 package server
 
 import (
-	cni "github.com/containerd/go-cni"
+	cni "demo/others/go-cni"
 )
 
 // initPlatform handles initialization for the CRI service on non-Windows and non-Linux

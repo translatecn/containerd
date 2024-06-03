@@ -21,6 +21,10 @@ package shim
 import (
 	"context"
 	"crypto/sha256"
+	"demo/over/my_mk"
+	"demo/pkg/defaults"
+	"demo/pkg/namespaces"
+	"demo/pkg/sys"
 	"fmt"
 	"net"
 	"os"
@@ -29,10 +33,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/sys"
 )
 
 const (
@@ -99,7 +99,7 @@ func NewSocket(address string) (*net.UnixListener, error) {
 	}
 
 	if !isAbstract {
-		if err := os.MkdirAll(filepath.Dir(path), perm); err != nil {
+		if err := my_mk.MkdirAll(filepath.Dir(path), perm); err != nil {
 			return nil, fmt.Errorf("mkdir failed for %s: %w", path, err)
 		}
 	}

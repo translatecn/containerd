@@ -17,28 +17,28 @@
 package plugin
 
 import (
-	"github.com/containerd/containerd/diff"
-	"github.com/containerd/containerd/diff/apply"
-	"github.com/containerd/containerd/diff/walking"
-	"github.com/containerd/containerd/metadata"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/plugin"
+	"demo/diff"
+	"demo/diff/apply"
+	"demo/diff/walking"
+	"demo/over/platforms"
+	over_plugin2 "demo/over/plugin"
+	"demo/pkg/metadata"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.DiffPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.DiffPlugin,
 		ID:   "walking",
-		Requires: []plugin.Type{
-			plugin.MetadataPlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.MetadataPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			md, err := ic.Get(plugin.MetadataPlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			md, err := ic.Get(over_plugin2.MetadataPlugin)
 			if err != nil {
 				return nil, err
 			}
 
-			ic.Meta.Platforms = append(ic.Meta.Platforms, platforms.DefaultSpec())
+			ic.Meta.Platforms = append(ic.Meta.Platforms, over_platforms.DefaultSpec())
 			cs := md.(*metadata.DB).ContentStore()
 
 			return diffPlugin{

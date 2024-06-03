@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/containerd/containerd/errdefs"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
+	"demo/over/errdefs"
+	containerstore "demo/pkg/cri/store/container"
 
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -44,7 +44,7 @@ func (c *criService) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 	imageRef := container.ImageRef
 	image, err := c.imageStore.Get(imageRef)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get image %q: %w", imageRef, err)
 		}
 	} else {

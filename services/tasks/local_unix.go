@@ -19,24 +19,23 @@
 package tasks
 
 import (
+	"demo/others/log"
+	over_plugin2 "demo/over/plugin"
+	"demo/runtime"
 	"errors"
-
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/runtime"
 )
 
-var tasksServiceRequires = []plugin.Type{
-	plugin.EventPlugin,
-	plugin.RuntimePlugin,
-	plugin.RuntimePluginV2,
-	plugin.MetadataPlugin,
-	plugin.TaskMonitorPlugin,
-	plugin.WarningPlugin,
+var tasksServiceRequires = []over_plugin2.Type{
+	over_plugin2.EventPlugin,
+	over_plugin2.RuntimePlugin,
+	over_plugin2.RuntimePluginV2,
+	over_plugin2.MetadataPlugin,
+	over_plugin2.TaskMonitorPlugin,
+	over_plugin2.WarningPlugin,
 }
 
-func loadV1Runtimes(ic *plugin.InitContext) (map[string]runtime.PlatformRuntime, error) {
-	rt, err := ic.GetByType(plugin.RuntimePlugin)
+func loadV1Runtimes(ic *over_plugin2.InitContext) (map[string]runtime.PlatformRuntime, error) {
+	rt, err := ic.GetByType(over_plugin2.RuntimePlugin)
 	if err != nil {
 		return nil, err
 	}

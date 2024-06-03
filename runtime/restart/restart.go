@@ -36,9 +36,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/containers"
+	"demo/containerd"
+	"demo/containers"
+	"demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 )
 

@@ -17,14 +17,15 @@
 package main
 
 import (
+	"demo/over/my_mk"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd/cmd/containerd/command"
-	"github.com/containerd/containerd/cmd/ctr/app"
+	"demo/cmd/containerd/command"
+	"demo/cmd/ctr/app"
 	"github.com/urfave/cli"
 )
 
@@ -59,7 +60,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	_ = os.MkdirAll(dir, os.ModePerm)
+	_ = my_mk.MkdirAll(dir, os.ModePerm)
 	if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s.%s", name, section)), []byte(data), 0644); err != nil {
 		return err
 	}

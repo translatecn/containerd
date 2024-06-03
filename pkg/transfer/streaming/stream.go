@@ -19,6 +19,8 @@ package streaming
 import (
 	"context"
 	"crypto/rand"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -26,10 +28,8 @@ import (
 	"sync"
 	"time"
 
-	transferapi "github.com/containerd/containerd/api/types/transfer"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/streaming"
-	"github.com/containerd/typeurl/v2"
+	transferapi "demo/pkg/api/types/transfer"
+	"demo/pkg/streaming"
 )
 
 const maxRead = 32 * 1024

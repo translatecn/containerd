@@ -18,13 +18,13 @@ package proxy
 
 import (
 	"context"
+	"demo/over/protobuf"
 	"fmt"
 	"io"
 
-	contentapi "github.com/containerd/containerd/api/services/content/v1"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/protobuf"
+	"demo/content"
+	"demo/over/errdefs"
+	contentapi "demo/pkg/api/services/content/v1"
 	digest "github.com/opencontainers/go-digest"
 )
 
@@ -58,15 +58,15 @@ func (rw *remoteWriter) Status() (content.Status, error) {
 		Action: contentapi.WriteAction_STAT,
 	})
 	if err != nil {
-		return content.Status{}, fmt.Errorf("error getting writer status: %w", errdefs.FromGRPC(err))
+		return content.Status{}, fmt.Errorf("error getting writer status: %w", over_errdefs.FromGRPC(err))
 	}
 
 	return content.Status{
 		Ref:       rw.ref,
 		Offset:    resp.Offset,
 		Total:     resp.Total,
-		StartedAt: protobuf.FromTimestamp(resp.StartedAt),
-		UpdatedAt: protobuf.FromTimestamp(resp.UpdatedAt),
+		StartedAt: over_protobuf.FromTimestamp(resp.StartedAt),
+		UpdatedAt: over_protobuf.FromTimestamp(resp.UpdatedAt),
 	}, nil
 }
 
@@ -83,7 +83,7 @@ func (rw *remoteWriter) Write(p []byte) (n int, err error) {
 		Data:   p,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to send write: %w", errdefs.FromGRPC(err))
+		return 0, fmt.Errorf("failed to send write: %w", over_errdefs.FromGRPC(err))
 	}
 
 	n = int(resp.Offset - offset)
@@ -120,7 +120,7 @@ func (rw *remoteWriter) Commit(ctx context.Context, size int64, expected digest.
 		Labels:   base.Labels,
 	})
 	if err != nil {
-		return fmt.Errorf("commit failed: %w", errdefs.FromGRPC(err))
+		return fmt.Errorf("commit failed: %w", over_errdefs.FromGRPC(err))
 	}
 
 	if size != 0 && resp.Offset != size {

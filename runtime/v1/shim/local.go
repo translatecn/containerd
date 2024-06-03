@@ -20,11 +20,11 @@ package shim
 
 import (
 	"context"
+	ptypes "demo/over/protobuf/types"
 	"path/filepath"
 
-	"github.com/containerd/containerd/mount"
-	ptypes "github.com/containerd/containerd/protobuf/types"
-	shimapi "github.com/containerd/containerd/runtime/v1/shim/v1"
+	"demo/over/mount"
+	shimapi "demo/runtime/v1/shim/v1"
 )
 
 // NewLocal returns a shim client implementation for issue commands to a shim

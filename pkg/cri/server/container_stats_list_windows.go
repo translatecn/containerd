@@ -20,12 +20,12 @@ import (
 	"errors"
 	"fmt"
 
-	wstats "github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-	"github.com/containerd/containerd/api/types"
-	"github.com/containerd/typeurl/v2"
+	"demo/others/typeurl/v2"
+	"demo/pkg/api/types"
+	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
+	containerstore "demo/pkg/cri/store/container"
 )
 
 func (c *criService) containerMetrics(

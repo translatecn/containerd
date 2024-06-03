@@ -17,11 +17,11 @@
 package opt
 
 import (
+	"demo/over/my_mk"
+	over_plugin2 "demo/over/plugin"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/containerd/containerd/plugin"
 )
 
 // Config for the opt manager
@@ -31,17 +31,17 @@ type Config struct {
 }
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.InternalPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.InternalPlugin,
 		ID:   "opt",
 		Config: &Config{
 			Path: defaultPath,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
 			path := ic.Config.(*Config).Path
 			ic.Meta.Exports["path"] = path
 			bin := filepath.Join(path, "bin")
-			if err := os.MkdirAll(bin, 0711); err != nil {
+			if err := my_mk.MkdirAll(bin, 0711); err != nil {
 				return nil, err
 			}
 			if err := os.Setenv("PATH", fmt.Sprintf("%s%c%s", bin, os.PathListSeparator, os.Getenv("PATH"))); err != nil {
@@ -49,7 +49,7 @@ func init() {
 			}
 
 			lib := filepath.Join(path, "lib")
-			if err := os.MkdirAll(lib, 0711); err != nil {
+			if err := my_mk.MkdirAll(lib, 0711); err != nil {
 				return nil, err
 			}
 			if err := os.Setenv("LD_LIBRARY_PATH", fmt.Sprintf("%s%c%s", lib, os.PathListSeparator, os.Getenv("LD_LIBRARY_PATH"))); err != nil {

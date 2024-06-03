@@ -18,15 +18,15 @@ package v2
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/pkg/namespaces"
 	"errors"
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/pkg/cleanup"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/pkg/cleanup"
 )
 
 func (m *ShimManager) loadExistingTasks(ctx context.Context) error {
@@ -159,7 +159,7 @@ func (m *ShimManager) loadShims(ctx context.Context) error {
 
 		_, sgetErr := m.sandboxStore.Get(ctx, id)
 		pInfo, pidErr := shim.Pids(ctx)
-		if sgetErr != nil && errors.Is(sgetErr, errdefs.ErrNotFound) && (len(pInfo) == 0 || errors.Is(pidErr, errdefs.ErrNotFound)) {
+		if sgetErr != nil && errors.Is(sgetErr, over_errdefs.ErrNotFound) && (len(pInfo) == 0 || errors.Is(pidErr, over_errdefs.ErrNotFound)) {
 			log.G(ctx).WithField("id", id).Info("cleaning leaked shim process")
 			// We are unable to get Pids from the shim and it's not a sandbox
 			// shim. We should clean it up her.

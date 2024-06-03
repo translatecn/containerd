@@ -18,11 +18,10 @@ package introspection
 
 import (
 	context "context"
-
-	api "github.com/containerd/containerd/api/services/introspection/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/others/log"
+	"demo/over/errdefs"
+	ptypes "demo/over/protobuf/types"
+	api "demo/pkg/api/services/introspection/v1"
 )
 
 // Service defines the introspection service interface
@@ -49,7 +48,7 @@ func (i *introspectionRemote) Plugins(ctx context.Context, filters []string) (*a
 	})
 
 	if err != nil {
-		return nil, errdefs.FromGRPC(err)
+		return nil, over_errdefs.FromGRPC(err)
 	}
 
 	return resp, nil
@@ -59,7 +58,7 @@ func (i *introspectionRemote) Server(ctx context.Context, in *ptypes.Empty) (*ap
 	resp, err := i.client.Server(ctx, in)
 
 	if err != nil {
-		return nil, errdefs.FromGRPC(err)
+		return nil, over_errdefs.FromGRPC(err)
 	}
 
 	return resp, nil

@@ -17,29 +17,27 @@
 package app
 
 import (
+	"demo/cmd/ctr/commands/over_events"
+	"demo/cmd/ctr/commands/over_images"
+	"demo/cmd/ctr/commands/over_install"
+	"demo/cmd/ctr/commands/over_leases"
+	namespacesCmd "demo/cmd/ctr/commands/over_namespaces"
+	"demo/cmd/ctr/commands/over_plugins"
+	"demo/cmd/ctr/commands/over_snapshots"
+	versionCmd "demo/cmd/ctr/commands/over_version"
+	"demo/pkg/namespaces"
 	"fmt"
 	"io"
 
-	"github.com/containerd/containerd/cmd/ctr/commands/containers"
-	"github.com/containerd/containerd/cmd/ctr/commands/content"
-	"github.com/containerd/containerd/cmd/ctr/commands/deprecations"
-	"github.com/containerd/containerd/cmd/ctr/commands/events"
-	"github.com/containerd/containerd/cmd/ctr/commands/images"
-	"github.com/containerd/containerd/cmd/ctr/commands/info"
-	"github.com/containerd/containerd/cmd/ctr/commands/install"
-	"github.com/containerd/containerd/cmd/ctr/commands/leases"
-	namespacesCmd "github.com/containerd/containerd/cmd/ctr/commands/namespaces"
-	ociCmd "github.com/containerd/containerd/cmd/ctr/commands/oci"
-	"github.com/containerd/containerd/cmd/ctr/commands/plugins"
-	"github.com/containerd/containerd/cmd/ctr/commands/pprof"
-	"github.com/containerd/containerd/cmd/ctr/commands/run"
-	"github.com/containerd/containerd/cmd/ctr/commands/sandboxes"
-	"github.com/containerd/containerd/cmd/ctr/commands/snapshots"
-	"github.com/containerd/containerd/cmd/ctr/commands/tasks"
-	versionCmd "github.com/containerd/containerd/cmd/ctr/commands/version"
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/version"
+	"demo/cmd/ctr/commands/containers"
+	"demo/cmd/ctr/commands/content"
+	"demo/cmd/ctr/commands/over_info"
+	ociCmd "demo/cmd/ctr/commands/over_oci"
+	"demo/cmd/ctr/commands/pprof"
+	"demo/cmd/ctr/commands/run"
+	"demo/cmd/ctr/commands/sandboxes"
+	"demo/cmd/ctr/commands/tasks"
+	"demo/version"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/grpclog"
@@ -84,7 +82,7 @@ containerd CLI
 		cli.StringFlag{
 			Name:   "address, a",
 			Usage:  "Address for containerd's GRPC server",
-			Value:  defaults.DefaultAddress,
+			Value:  "172.16.244.147:6789",
 			EnvVar: "CONTAINERD_ADDRESS",
 		},
 		cli.DurationFlag{
@@ -103,23 +101,23 @@ containerd CLI
 		},
 	}
 	app.Commands = append([]cli.Command{
-		plugins.Command,
-		versionCmd.Command,
 		containers.Command,
 		content.Command,
-		events.Command,
-		images.Command,
-		leases.Command,
-		namespacesCmd.Command,
 		pprof.Command,
 		run.Command,
-		snapshots.Command,
 		tasks.Command,
-		install.Command,
-		ociCmd.Command,
 		sandboxes.Command,
-		info.Command,
-		deprecations.Command,
+
+		over_install.Command,
+		ociCmd.Command,
+		over_plugins.Command,
+		over_snapshots.Command,
+		over_events.Command,
+		namespacesCmd.Command,
+		versionCmd.Command,
+		over_leases.Command,
+		over_info.Command,
+		over_images.Command,
 	}, extraCmds...)
 	app.Before = func(context *cli.Context) error {
 		if context.GlobalBool("debug") {

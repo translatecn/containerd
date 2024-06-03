@@ -19,7 +19,7 @@
 package sbserver
 
 import (
-	"github.com/containerd/containerd"
+	"demo/containerd"
 )
 
 // taskOpts generates task options for a (sandbox) container.

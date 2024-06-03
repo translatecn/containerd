@@ -22,12 +22,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/pkg/transfer"
-	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/remotes"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/over/platforms"
+	"demo/pkg/transfer"
+	"demo/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -51,7 +51,7 @@ func (ts *localTransferService) push(ctx context.Context, ig transfer.ImageGette
 			}
 		}
 	*/
-	matcher := platforms.All
+	matcher := over_platforms.All
 	// Filter push
 
 	img, err := ig.Get(ctx, ts.images)
@@ -76,7 +76,7 @@ func (ts *localTransferService) push(ctx context.Context, ig transfer.ImageGette
 		return err
 	}
 
-	var wrapper func(images.Handler) images.Handler
+	var wrapper func(over_images.Handler) over_images.Handler
 
 	ctx, cancel := context.WithCancel(ctx)
 	if tops.Progress != nil {
@@ -147,8 +147,8 @@ func newProgressPusher(pusher remotes.Pusher, progress *ProgressTracker) *progre
 
 }
 
-func (p *progressPusher) WrapHandler(h images.Handler) images.Handler {
-	return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) (subdescs []ocispec.Descriptor, err error) {
+func (p *progressPusher) WrapHandler(h over_images.Handler) over_images.Handler {
+	return over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) (subdescs []ocispec.Descriptor, err error) {
 		p.progress.Add(desc)
 		subdescs, err = h.Handle(ctx, desc)
 		p.progress.AddChildren(desc, subdescs)
@@ -161,7 +161,7 @@ func (p *progressPusher) Push(ctx context.Context, d ocispec.Descriptor) (conten
 	p.status.add(ref, d)
 	cw, err := p.Pusher.Push(ctx, d)
 	if err != nil {
-		if errdefs.IsAlreadyExists(err) {
+		if over_errdefs.IsAlreadyExists(err) {
 			p.progress.MarkExists(d)
 			p.status.markComplete(ref, d)
 		}
@@ -259,7 +259,7 @@ func (pw *progressWriter) Write(p []byte) (n int, err error) {
 func (pw *progressWriter) Commit(ctx context.Context, size int64, expected digest.Digest, opts ...content.Opt) error {
 	err := pw.Writer.Commit(ctx, size, expected, opts...)
 	if err != nil {
-		if errdefs.IsAlreadyExists(err) {
+		if over_errdefs.IsAlreadyExists(err) {
 			pw.progress.MarkExists(pw.desc)
 		}
 		// TODO: Handle reset error to reset progress

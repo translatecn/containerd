@@ -19,7 +19,7 @@ package netns
 import (
 	"errors"
 
-	"github.com/Microsoft/hcsshim/hcn"
+	"demo/third_party/github.com/Microsoft/hcsshim/hcn"
 )
 
 var errNotImplementedOnWindows = errors.New("not implemented on windows")

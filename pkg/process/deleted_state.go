@@ -20,12 +20,12 @@ package process
 
 import (
 	"context"
+	google_protobuf "demo/over/protobuf/types"
 	"errors"
 	"fmt"
 
-	"github.com/containerd/console"
-	"github.com/containerd/containerd/errdefs"
-	google_protobuf "github.com/containerd/containerd/protobuf/types"
+	"demo/others/console"
+	"demo/over/errdefs"
 )
 
 type deletedState struct {
@@ -56,11 +56,11 @@ func (s *deletedState) Start(ctx context.Context) error {
 }
 
 func (s *deletedState) Delete(ctx context.Context) error {
-	return fmt.Errorf("cannot delete a deleted process: %w", errdefs.ErrNotFound)
+	return fmt.Errorf("cannot delete a deleted process: %w", over_errdefs.ErrNotFound)
 }
 
 func (s *deletedState) Kill(ctx context.Context, sig uint32, all bool) error {
-	return fmt.Errorf("cannot kill a deleted process: %w", errdefs.ErrNotFound)
+	return fmt.Errorf("cannot kill a deleted process: %w", over_errdefs.ErrNotFound)
 }
 
 func (s *deletedState) SetExited(status int) {

@@ -18,13 +18,12 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
 	"fmt"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-
+	"demo/containerd"
+	"demo/over/errdefs"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -35,7 +34,7 @@ func (c *criService) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	start := time.Now()
 	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("an error occurred when try to find sandbox %q: %w",
 				r.GetPodSandboxId(), err)
 		}
@@ -95,7 +94,7 @@ func (c *criService) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 	// Delete sandbox container.
 	if err := sandbox.Container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to delete sandbox container %q: %w", id, err)
 		}
 		log.G(ctx).Tracef("Remove called for sandbox container %q that does not exist", id)

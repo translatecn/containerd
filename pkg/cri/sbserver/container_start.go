@@ -18,23 +18,23 @@ package sbserver
 
 import (
 	"context"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/containerd/containerd"
-	containerdio "github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
+	"demo/containerd"
+	"demo/over/errdefs"
+	containerdio "demo/pkg/cio"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	cioutil "github.com/containerd/containerd/pkg/ioutil"
+	cio "demo/pkg/cri/io"
+	containerstore "demo/pkg/cri/store/container"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
+	cioutil "demo/pkg/ioutil"
 )
 
 // StartContainer starts the container.
@@ -133,7 +133,7 @@ func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContain
 			deferCtx, deferCancel := ctrdutil.DeferContext()
 			defer deferCancel()
 			// It's possible that task is deleted by event monitor.
-			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
 				log.G(ctx).WithError(err).Errorf("Failed to delete containerd task %q", id)
 			}
 		}

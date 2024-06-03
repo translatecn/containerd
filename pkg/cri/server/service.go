@@ -18,6 +18,7 @@ package server
 
 import (
 	"context"
+	"demo/over/plugin"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,31 +29,30 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/cri/instrument"
-	"github.com/containerd/containerd/pkg/cri/nri"
-	"github.com/containerd/containerd/pkg/cri/streaming"
-	"github.com/containerd/containerd/pkg/kmutex"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/services/warning"
-	runtime_alpha "github.com/containerd/containerd/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	cni "github.com/containerd/go-cni"
+	"demo/containerd"
+	cni "demo/others/go-cni"
+	"demo/over/oci"
+	"demo/pkg/cri/instrument"
+	"demo/pkg/cri/nri"
+	"demo/pkg/cri/streaming"
+	"demo/pkg/kmutex"
+	"demo/services/warning"
+	runtime_alpha "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/pkg/cri/store/label"
+	"demo/pkg/cri/store/label"
 
-	"github.com/containerd/containerd/pkg/atomic"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	imagestore "github.com/containerd/containerd/pkg/cri/store/image"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	snapshotstore "github.com/containerd/containerd/pkg/cri/store/snapshot"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	osinterface "github.com/containerd/containerd/pkg/os"
-	"github.com/containerd/containerd/pkg/registrar"
+	osinterface "demo/over/os"
+	"demo/pkg/atomic"
+	criconfig "demo/pkg/cri/config"
+	containerstore "demo/pkg/cri/store/container"
+	imagestore "demo/pkg/cri/store/image"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	snapshotstore "demo/pkg/cri/store/snapshot"
+	ctrdutil "demo/pkg/cri/util"
+	"demo/pkg/registrar"
 )
 
 // defaultNetworkPlugin is used for the default CNI configuration
@@ -107,7 +107,7 @@ type criService struct {
 	// any valid fs change events from cni network conf dir.
 	cniNetConfMonitor map[string]*cniNetConfSyncer
 	// baseOCISpecs contains cached OCI specs loaded via `Runtime.BaseRuntimeSpec`
-	baseOCISpecs map[string]*oci.Spec
+	baseOCISpecs map[string]*over_oci.Spec
 	// allCaps is the list of the capabilities.
 	// When nil, parsed from CapEff of /proc/self/status.
 	allCaps []string //nolint:nolintlint,unused // Ignore on non-Linux
@@ -354,7 +354,7 @@ func (c *criService) register(s *grpc.Server) error {
 // Note that if containerd changes directory layout, we also needs to change this.
 func imageFSPath(rootDir, snapshotter string, client *containerd.Client) string {
 	introspection := func() (string, error) {
-		filters := []string{fmt.Sprintf("type==%s, id==%s", plugin.SnapshotPlugin, snapshotter)}
+		filters := []string{fmt.Sprintf("type==%s, id==%s", over_plugin.SnapshotPlugin, snapshotter)}
 		in := client.IntrospectionService()
 
 		resp, err := in.Plugins(context.Background(), filters)
@@ -367,7 +367,7 @@ func imageFSPath(rootDir, snapshotter string, client *containerd.Client) string 
 		}
 
 		sn := resp.Plugins[0]
-		if root, ok := sn.Exports[plugin.SnapshotterRootDir]; ok {
+		if root, ok := sn.Exports[over_plugin.SnapshotterRootDir]; ok {
 			return root, nil
 		}
 		return "", errors.New("snapshotter does not export root path")
@@ -379,7 +379,7 @@ func imageFSPath(rootDir, snapshotter string, client *containerd.Client) string 
 		logrus.WithError(err).WithField("snapshotter", snapshotter).Warn("snapshotter doesn't export root path")
 		imageFSPath = filepath.Join(
 			rootDir,
-			plugin.SnapshotPlugin.String()+"."+snapshotter,
+			over_plugin.SnapshotPlugin.String()+"."+snapshotter,
 		)
 	} else {
 		imageFSPath = path
@@ -388,14 +388,14 @@ func imageFSPath(rootDir, snapshotter string, client *containerd.Client) string 
 	return imageFSPath
 }
 
-func loadOCISpec(filename string) (*oci.Spec, error) {
+func loadOCISpec(filename string) (*over_oci.Spec, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open base OCI spec: %s: %w", filename, err)
 	}
 	defer file.Close()
 
-	spec := oci.Spec{}
+	spec := over_oci.Spec{}
 	if err := json.NewDecoder(file).Decode(&spec); err != nil {
 		return nil, fmt.Errorf("failed to parse base OCI spec file: %w", err)
 	}
@@ -403,8 +403,8 @@ func loadOCISpec(filename string) (*oci.Spec, error) {
 	return &spec, nil
 }
 
-func loadBaseOCISpecs(config *criconfig.Config) (map[string]*oci.Spec, error) {
-	specs := map[string]*oci.Spec{}
+func loadBaseOCISpecs(config *criconfig.Config) (map[string]*over_oci.Spec, error) {
+	specs := map[string]*over_oci.Spec{}
 	for _, cfg := range config.Runtimes {
 		if cfg.BaseRuntimeSpec == "" {
 			continue

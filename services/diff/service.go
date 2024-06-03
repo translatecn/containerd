@@ -18,23 +18,23 @@ package diff
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
 	"errors"
 
-	diffapi "github.com/containerd/containerd/api/services/diff/v1"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/services"
+	diffapi "demo/pkg/api/services/diff/v1"
+	"demo/services"
 	"google.golang.org/grpc"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "diff",
-		Requires: []plugin.Type{
-			plugin.ServicePlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.ServicePlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			plugins, err := ic.GetByType(plugin.ServicePlugin)
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			plugins, err := ic.GetByType(over_plugin2.ServicePlugin)
 			if err != nil {
 				return nil, err
 			}

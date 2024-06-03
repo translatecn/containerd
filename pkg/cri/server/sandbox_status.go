@@ -21,13 +21,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	cni "github.com/containerd/go-cni"
+	"demo/containerd"
+	cni "demo/others/go-cni"
+	"demo/over/errdefs"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
+	sandboxstore "demo/pkg/cri/store/sandbox"
 )
 
 // PodSandboxStatus returns the status of the PodSandbox.
@@ -140,14 +140,14 @@ type SandboxInfo struct {
 func toCRISandboxInfo(ctx context.Context, sandbox sandboxstore.Sandbox) (map[string]string, error) {
 	container := sandbox.Container
 	task, err := container.Task(ctx, nil)
-	if err != nil && !errdefs.IsNotFound(err) {
+	if err != nil && !over_errdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get sandbox container task: %w", err)
 	}
 
 	var processStatus containerd.ProcessStatus
 	if task != nil {
 		if taskStatus, err := task.Status(ctx); err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return nil, fmt.Errorf("failed to get task status: %w", err)
 			}
 			processStatus = containerd.Unknown

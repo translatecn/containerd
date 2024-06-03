@@ -20,6 +20,7 @@ package config
 import (
 	"context"
 	"crypto/tls"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"net"
@@ -32,9 +33,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes/docker"
+	"demo/over/errdefs"
+	"demo/remotes/docker"
 	"github.com/pelletier/go-toml"
 )
 
@@ -77,7 +77,7 @@ func ConfigureHosts(ctx context.Context, options HostOptions) docker.RegistryHos
 		var hosts []hostConfig
 		if options.HostDir != nil {
 			dir, err := options.HostDir(host)
-			if err != nil && !errdefs.IsNotFound(err) {
+			if err != nil && !over_errdefs.IsNotFound(err) {
 				return nil, err
 			}
 			if dir != "" {
@@ -283,7 +283,7 @@ func HostDirFromRoot(root string) func(string) (string, error) {
 				return "", err
 			}
 		}
-		return "", errdefs.ErrNotFound
+		return "", over_errdefs.ErrNotFound
 	}
 }
 

@@ -18,6 +18,8 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/others/typeurl/v2"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,25 +29,23 @@ import (
 	"strings"
 	"time"
 
-	cni "github.com/containerd/go-cni"
-	"github.com/containerd/typeurl/v2"
+	cni "demo/others/go-cni"
 	"github.com/davecgh/go-spew/spew"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd"
-	containerdio "github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/cri/annotations"
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
-	customopts "github.com/containerd/containerd/pkg/cri/opts"
-	"github.com/containerd/containerd/pkg/cri/server/bandwidth"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	"github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/pkg/netns"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/over/errdefs"
+	containerdio "demo/pkg/cio"
+	"demo/pkg/cri/annotations"
+	criconfig "demo/pkg/cri/config"
+	customopts "demo/pkg/cri/opts"
+	"demo/pkg/cri/server/bandwidth"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	"demo/pkg/cri/util"
+	"demo/pkg/netns"
+	"demo/snapshots"
 )
 
 func init() {
@@ -367,7 +367,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 			deferCtx, deferCancel := util.DeferContext()
 			defer deferCancel()
 			// Cleanup the sandbox container if an error is returned.
-			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
 				log.G(ctx).WithError(err).Errorf("Failed to delete sandbox container %q", id)
 				cleanupErr = err
 			}

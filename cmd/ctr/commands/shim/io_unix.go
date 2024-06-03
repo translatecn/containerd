@@ -24,7 +24,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/containerd/fifo"
+	"demo/others/fifo"
 	"golang.org/x/sys/unix"
 )
 

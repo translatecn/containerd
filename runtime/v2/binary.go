@@ -19,20 +19,20 @@ package v2
 import (
 	"bytes"
 	"context"
+	"demo/others/log"
+	"demo/over/protobuf"
+	"demo/over/protobuf/proto"
+	"demo/over/protobuf/types"
+	"demo/pkg/api/runtime/task/v2"
+	"demo/pkg/namespaces"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	gruntime "runtime"
 
-	"github.com/containerd/containerd/api/runtime/task/v2"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/protobuf"
-	"github.com/containerd/containerd/protobuf/proto"
-	"github.com/containerd/containerd/protobuf/types"
-	"github.com/containerd/containerd/runtime"
-	client "github.com/containerd/containerd/runtime/v2/shim"
+	"demo/runtime"
+	client "demo/runtime/v2/shim"
 )
 
 type shimBinaryConfig struct {
@@ -203,7 +203,7 @@ func (b *binary) Delete(ctx context.Context) (*runtime.Exit, error) {
 	}
 	return &runtime.Exit{
 		Status:    response.ExitStatus,
-		Timestamp: protobuf.FromTimestamp(response.ExitedAt),
+		Timestamp: over_protobuf.FromTimestamp(response.ExitedAt),
 		Pid:       response.Pid,
 	}, nil
 }

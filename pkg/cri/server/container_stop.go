@@ -18,18 +18,17 @@ package server
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/protobuf"
 	"fmt"
 	"sync/atomic"
 	"syscall"
 	"time"
 
-	eventtypes "github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	containerstore "github.com/containerd/containerd/pkg/cri/store/container"
-	ctrdutil "github.com/containerd/containerd/pkg/cri/util"
-	"github.com/containerd/containerd/protobuf"
-
+	"demo/over/errdefs"
+	eventtypes "demo/pkg/api/events"
+	containerstore "demo/pkg/cri/store/container"
+	ctrdutil "demo/pkg/cri/util"
 	"github.com/moby/sys/signal"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -84,7 +83,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 
 	task, err := container.Container.Task(ctx, nil)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get task for container %q: %w", id, err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -101,7 +100,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task for %q: %w", id, err)
 			}
 			return c.cleanupUnknownContainer(ctx, id, container, sandboxID)
@@ -135,7 +134,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 			// TODO(random-liu): Remove this logic when containerd 1.2 is deprecated.
 			image, err := c.imageStore.Get(container.ImageRef)
 			if err != nil {
-				if !errdefs.IsNotFound(err) {
+				if !over_errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get image %q: %w", container.ImageRef, err)
 				}
 				log.G(ctx).Warningf("Image %q not found, stop container with signal %q", container.ImageRef, stopSignal)
@@ -160,7 +159,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 
 		if sswt {
 			log.G(ctx).Infof("Stop container %q with signal %v", id, sig)
-			if err = task.Kill(ctx, sig); err != nil && !errdefs.IsNotFound(err) {
+			if err = task.Kill(ctx, sig); err != nil && !over_errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to stop container %q: %w", id, err)
 			}
 		} else {
@@ -183,7 +182,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 	}
 
 	log.G(ctx).Infof("Kill container %q", id)
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill container %q: %w", id, err)
 	}
 
@@ -214,6 +213,6 @@ func (c *criService) cleanupUnknownContainer(ctx context.Context, id string, cnt
 		ID:          id,
 		Pid:         0,
 		ExitStatus:  unknownExitCode,
-		ExitedAt:    protobuf.ToTimestamp(time.Now()),
+		ExitedAt:    over_protobuf.ToTimestamp(time.Now()),
 	}, cntr, sandboxID, c)
 }

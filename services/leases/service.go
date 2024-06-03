@@ -18,25 +18,25 @@ package leases
 
 import (
 	"context"
+	over_plugin2 "demo/over/plugin"
+	"demo/over/protobuf"
+	ptypes "demo/over/protobuf/types"
 
-	api "github.com/containerd/containerd/api/services/leases/v1"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/plugin"
-	"github.com/containerd/containerd/protobuf"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	"demo/over/errdefs"
+	api "demo/pkg/api/services/leases/v1"
+	"demo/pkg/leases"
 	"google.golang.org/grpc"
 )
 
 func init() {
-	plugin.Register(&plugin.Registration{
-		Type: plugin.GRPCPlugin,
+	over_plugin2.Register(&over_plugin2.Registration{
+		Type: over_plugin2.GRPCPlugin,
 		ID:   "leases",
-		Requires: []plugin.Type{
-			plugin.LeasePlugin,
+		Requires: []over_plugin2.Type{
+			over_plugin2.LeasePlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			i, err := ic.GetByID(plugin.LeasePlugin, "manager")
+		InitFn: func(ic *over_plugin2.InitContext) (interface{}, error) {
+			i, err := ic.GetByID(over_plugin2.LeasePlugin, "manager")
 			if err != nil {
 				return nil, err
 			}
@@ -67,7 +67,7 @@ func (s *service) Create(ctx context.Context, r *api.CreateRequest) (*api.Create
 
 	l, err := s.lm.Create(ctx, opts...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	return &api.CreateResponse{
@@ -83,7 +83,7 @@ func (s *service) Delete(ctx context.Context, r *api.DeleteRequest) (*ptypes.Emp
 	if err := s.lm.Delete(ctx, leases.Lease{
 		ID: r.ID,
 	}, opts...); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	return &ptypes.Empty{}, nil
 }
@@ -91,7 +91,7 @@ func (s *service) Delete(ctx context.Context, r *api.DeleteRequest) (*ptypes.Emp
 func (s *service) List(ctx context.Context, r *api.ListRequest) (*api.ListResponse, error) {
 	l, err := s.lm.List(ctx, r.Filters...)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	apileases := make([]*api.Lease, len(l))
@@ -113,7 +113,7 @@ func (s *service) AddResource(ctx context.Context, r *api.AddResourceRequest) (*
 		ID:   r.Resource.ID,
 		Type: r.Resource.Type,
 	}); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	return &ptypes.Empty{}, nil
 }
@@ -127,7 +127,7 @@ func (s *service) DeleteResource(ctx context.Context, r *api.DeleteResourceReque
 		ID:   r.Resource.ID,
 		Type: r.Resource.Type,
 	}); err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 	return &ptypes.Empty{}, nil
 }
@@ -139,7 +139,7 @@ func (s *service) ListResources(ctx context.Context, r *api.ListResourcesRequest
 
 	rs, err := s.lm.ListResources(ctx, lease)
 	if err != nil {
-		return nil, errdefs.ToGRPC(err)
+		return nil, over_errdefs.ToGRPC(err)
 	}
 
 	apiResources := make([]*api.Resource, 0, len(rs))
@@ -158,6 +158,6 @@ func leaseToGRPC(l leases.Lease) *api.Lease {
 	return &api.Lease{
 		ID:        l.ID,
 		Labels:    l.Labels,
-		CreatedAt: protobuf.ToTimestamp(l.CreatedAt),
+		CreatedAt: over_protobuf.ToTimestamp(l.CreatedAt),
 	}
 }

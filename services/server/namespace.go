@@ -18,8 +18,8 @@ package server
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 
-	"github.com/containerd/containerd/namespaces"
 	"google.golang.org/grpc"
 )
 

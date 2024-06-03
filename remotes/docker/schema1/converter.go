@@ -22,6 +22,8 @@ package schema1
 import (
 	"bytes"
 	"context"
+	"demo/others/log"
+	"demo/pkg/labels"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -32,13 +34,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/archive/compression"
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/remotes"
+	"demo/content"
+	"demo/over/errdefs"
+	"demo/over/images"
+	"demo/pkg/archive/compression"
+	"demo/remotes"
 	digest "github.com/opencontainers/go-digest"
 	specs "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -80,7 +80,7 @@ func NewConverter(contentStore content.Store, fetcher remotes.Fetcher) *Converte
 // Handle fetching descriptors for a docker media type
 func (c *Converter) Handle(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 	switch desc.MediaType {
-	case images.MediaTypeDockerSchema1Manifest:
+	case over_images.MediaTypeDockerSchema1Manifest:
 		if err := c.fetchManifest(ctx, desc); err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (c *Converter) Handle(ctx context.Context, desc ocispec.Descriptor) ([]ocis
 				if !empty {
 					descs = append([]ocispec.Descriptor{
 						{
-							MediaType: images.MediaTypeDockerSchema2LayerGzip,
+							MediaType: over_images.MediaTypeDockerSchema2LayerGzip,
 							Digest:    c.pulledManifest.FSLayers[i].BlobSum,
 							Size:      -1,
 						},
@@ -114,7 +114,7 @@ func (c *Converter) Handle(ctx context.Context, desc ocispec.Descriptor) ([]ocis
 			}
 		}
 		return descs, nil
-	case images.MediaTypeDockerSchema2LayerGzip:
+	case over_images.MediaTypeDockerSchema2LayerGzip:
 		if c.pulledManifest == nil {
 			return nil, errors.New("manifest required for schema 1 blob pull")
 		}
@@ -141,8 +141,8 @@ type ConvertOpt func(context.Context, *ConvertOptions) error
 // converted into the media types for a docker schema2 manifest.
 func UseDockerSchema2() ConvertOpt {
 	return func(ctx context.Context, o *ConvertOptions) error {
-		o.ManifestMediaType = images.MediaTypeDockerSchema2Manifest
-		o.ConfigMediaType = images.MediaTypeDockerSchema2Config
+		o.ManifestMediaType = over_images.MediaTypeDockerSchema2Manifest
+		o.ConfigMediaType = over_images.MediaTypeDockerSchema2Config
 		return nil
 	}
 }
@@ -283,7 +283,7 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 
 	cw, err := content.OpenWriter(ctx, c.contentStore, content.WithRef(ref), content.WithDescriptor(ingestDesc))
 	if err != nil {
-		if !errdefs.IsAlreadyExists(err) {
+		if !over_errdefs.IsAlreadyExists(err) {
 			return err
 		}
 
@@ -359,7 +359,7 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 
 	if compressMethod == compression.Uncompressed {
 		log.G(ctx).WithField("id", desc.Digest).Debugf("changed media type for uncompressed schema1 layer blob")
-		desc.MediaType = images.MediaTypeDockerSchema2Layer
+		desc.MediaType = over_images.MediaTypeDockerSchema2Layer
 	}
 
 	state := calc.State()
@@ -417,9 +417,9 @@ func (c *Converter) reuseLabelBlobState(ctx context.Context, desc ocispec.Descri
 	// NOTE: there is no need to read header to get compression method
 	// because there are only two kinds of methods.
 	if bState.diffID == desc.Digest {
-		desc.MediaType = images.MediaTypeDockerSchema2Layer
+		desc.MediaType = over_images.MediaTypeDockerSchema2Layer
 	} else {
-		desc.MediaType = images.MediaTypeDockerSchema2LayerGzip
+		desc.MediaType = over_images.MediaTypeDockerSchema2LayerGzip
 	}
 
 	c.mu.Lock()

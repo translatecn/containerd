@@ -18,19 +18,20 @@ package opts
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/over/my_mk"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/containerd/continuity/fs"
+	"demo/others/continuity/fs"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/snapshots"
+	"demo/containerd"
+	"demo/containers"
+	"demo/over/errdefs"
+	"demo/over/mount"
+	"demo/snapshots"
 )
 
 // WithNewSnapshot wraps `containerd.WithNewSnapshot` so that if creating the
@@ -39,7 +40,7 @@ func WithNewSnapshot(id string, i containerd.Image, opts ...snapshots.Opt) conta
 	f := containerd.WithNewSnapshot(id, i, opts...)
 	return func(ctx context.Context, client *containerd.Client, c *containers.Container) error {
 		if err := f(ctx, client, c); err != nil {
-			if !errdefs.IsNotFound(err) {
+			if !over_errdefs.IsNotFound(err) {
 				return err
 			}
 
@@ -74,14 +75,14 @@ func WithVolumes(volumeMounts map[string]string) containerd.NewContainerOpts {
 			mounts[0].Options = append(mounts[0].Options, "ro")
 		}
 
-		root, err := os.MkdirTemp("", "ctd-volume")
+		root, err := my_mk.MkdirTemp("", "ctd-volume")
 		if err != nil {
 			return err
 		}
 		// We change RemoveAll to Remove so that we either leak a temp dir
 		// if it fails but not RM snapshot data.
-		// refer to https://github.com/containerd/containerd/pull/1868
-		// https://github.com/containerd/containerd/pull/1785
+		// refer to https://github.com/containerd/pull/1868
+		// https://github.com/containerd/pull/1785
 		defer os.Remove(root)
 
 		if err := mount.All(mounts, root); err != nil {

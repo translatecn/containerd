@@ -18,20 +18,20 @@ package docker
 
 import (
 	"context"
+	"demo/others/log"
+	"demo/pkg/reference"
 	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/labels"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/reference"
+	"demo/content"
+	"demo/over/images"
+	"demo/pkg/labels"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // AppendDistributionSourceLabel updates the label of blob with distribution source.
-func AppendDistributionSourceLabel(manager content.Manager, ref string) (images.HandlerFunc, error) {
+func AppendDistributionSourceLabel(manager content.Manager, ref string) (over_images.HandlerFunc, error) {
 	refspec, err := reference.Parse(ref)
 	if err != nil {
 		return nil, err

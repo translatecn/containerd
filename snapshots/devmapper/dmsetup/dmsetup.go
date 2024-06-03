@@ -29,7 +29,7 @@ import (
 	"strconv"
 	"strings"
 
-	blkdiscard "github.com/containerd/containerd/snapshots/devmapper/blkdiscard"
+	blkdiscard "demo/snapshots/devmapper/blkdiscard"
 	"golang.org/x/sys/unix"
 )
 

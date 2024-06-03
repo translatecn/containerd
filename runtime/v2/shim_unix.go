@@ -27,7 +27,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containerd/fifo"
+	"demo/others/fifo"
 	"golang.org/x/sys/unix"
 )
 

@@ -18,11 +18,11 @@ package runtime
 
 import (
 	"context"
+	"demo/pkg/namespaces"
 	"fmt"
 	"sync"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
+	"demo/over/errdefs"
 )
 
 type object interface {
@@ -32,7 +32,7 @@ type object interface {
 // NSMap extends Map type with a notion of namespaces passed via Context.
 type NSMap[T object] struct {
 	mu      sync.Mutex
-	objects map[string]map[string]T
+	objects map[string]map[string]T // {ns}:map[string]T
 }
 
 // NewNSMap returns a new NSMap
@@ -53,11 +53,11 @@ func (m *NSMap[T]) Get(ctx context.Context, id string) (T, error) {
 	}
 	tasks, ok := m.objects[namespace]
 	if !ok {
-		return t, errdefs.ErrNotFound
+		return t, over_errdefs.ErrNotFound
 	}
 	t, ok = tasks[id]
 	if !ok {
-		return t, errdefs.ErrNotFound
+		return t, over_errdefs.ErrNotFound
 	}
 	return t, nil
 }
@@ -89,7 +89,6 @@ func (m *NSMap[T]) GetAll(ctx context.Context, noNS bool) ([]T, error) {
 	return o, nil
 }
 
-// Add a task
 func (m *NSMap[T]) Add(ctx context.Context, t T) error {
 	namespace, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
@@ -108,7 +107,7 @@ func (m *NSMap[T]) AddWithNamespace(namespace string, t T) error {
 		m.objects[namespace] = make(map[string]T)
 	}
 	if _, ok := m.objects[namespace][id]; ok {
-		return fmt.Errorf("%s: %w", id, errdefs.ErrAlreadyExists)
+		return fmt.Errorf("%s: %w", id, over_errdefs.ErrAlreadyExists)
 	}
 	m.objects[namespace][id] = t
 	return nil

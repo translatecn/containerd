@@ -21,8 +21,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
+	"demo/content"
+	"demo/over/errdefs"
 )
 
 // readerat implements io.ReaderAt in a completely stateless manner by opening
@@ -40,7 +40,7 @@ func OpenReader(p string) (content.ReaderAt, error) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("blob not found: %w", errdefs.ErrNotFound)
+		return nil, fmt.Errorf("blob not found: %w", over_errdefs.ErrNotFound)
 	}
 
 	fp, err := os.Open(p)
@@ -49,7 +49,7 @@ func OpenReader(p string) (content.ReaderAt, error) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("blob not found: %w", errdefs.ErrNotFound)
+		return nil, fmt.Errorf("blob not found: %w", over_errdefs.ErrNotFound)
 	}
 
 	return sizeReaderAt{size: fi.Size(), fp: fp}, nil

@@ -18,4 +18,4 @@
 
 package builtins
 
-import _ "github.com/containerd/containerd/snapshots/btrfs/plugin"
+import _ "demo/snapshots/btrfs/plugin"

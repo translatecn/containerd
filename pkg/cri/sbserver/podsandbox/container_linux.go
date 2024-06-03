@@ -24,8 +24,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containerd/containerd/contrib/seccomp"
-	"github.com/containerd/containerd/oci"
+	"demo/over/oci"
+	"demo/pkg/contrib/seccomp"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -41,7 +41,7 @@ const (
 )
 
 // generateSeccompSpecOpts generates containerd SpecOpts for seccomp.
-func (c *Controller) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
+func (c *Controller) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (over_oci.SpecOpts, error) {
 	if privileged {
 		// Do not set seccomp profile when container is privileged
 		return nil, nil

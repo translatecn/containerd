@@ -25,7 +25,7 @@ import (
 	"syscall"
 	"text/template"
 
-	"github.com/containerd/containerd/oci"
+	"demo/over/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
@@ -38,7 +38,7 @@ var ociHook = cli.Command{
 		if err != nil {
 			return err
 		}
-		specFile := filepath.Join(state.Bundle, oci.ConfigFilename)
+		specFile := filepath.Join(state.Bundle, over_oci.ConfigFilename)
 		spec, err := loadSpec(specFile)
 		if err != nil {
 			return err
@@ -58,7 +58,7 @@ var ociHook = cli.Command{
 	},
 }
 
-// hookSpec is a shallow version of [oci.Spec] containing only the
+// hookSpec is a shallow version of [over_oci.Spec] containing only the
 // fields we need for the hook. We use a shallow struct to reduce
 // the overhead of unmarshaling.
 type hookSpec struct {

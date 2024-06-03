@@ -19,6 +19,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"demo/others/log"
 	"fmt"
 	"io"
 	"net"
@@ -26,9 +27,8 @@ import (
 
 	"k8s.io/utils/exec"
 
-	"github.com/containerd/containerd/log"
-	sandboxstore "github.com/containerd/containerd/pkg/cri/store/sandbox"
-	cioutil "github.com/containerd/containerd/pkg/ioutil"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	cioutil "demo/pkg/ioutil"
 )
 
 func (c *criService) portForward(ctx context.Context, id string, port int32, stream io.ReadWriter) error {

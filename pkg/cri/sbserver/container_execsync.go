@@ -19,22 +19,22 @@ package sbserver
 import (
 	"bytes"
 	"context"
+	"demo/others/log"
 	"fmt"
 	"io"
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	containerdio "github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/oci"
+	"demo/containerd"
+	"demo/over/errdefs"
+	"demo/over/oci"
+	containerdio "demo/pkg/cio"
 	"k8s.io/client-go/tools/remotecommand"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	cio "github.com/containerd/containerd/pkg/cri/io"
-	"github.com/containerd/containerd/pkg/cri/util"
-	cioutil "github.com/containerd/containerd/pkg/ioutil"
+	cio "demo/pkg/cri/io"
+	"demo/pkg/cri/util"
+	cioutil "demo/pkg/ioutil"
 )
 
 type cappedWriter struct {
@@ -140,7 +140,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 
 	pspec.Terminal = opts.tty
 	if opts.tty {
-		if err := oci.WithEnv([]string{"TERM=xterm"})(ctx, nil, nil, spec); err != nil {
+		if err := over_oci.WithEnv([]string{"TERM=xterm"})(ctx, nil, nil, spec); err != nil {
 			return nil, fmt.Errorf("add TERM env var to spec: %w", err)
 		}
 	}
@@ -170,7 +170,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 	defer func() {
 		deferCtx, deferCancel := util.DeferContext()
 		defer deferCancel()
-		if _, err := process.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+		if _, err := process.Delete(deferCtx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
 			log.G(ctx).WithError(err).Errorf("Failed to delete exec process %q for container %q", execID, id)
 		}
 	}()
@@ -210,7 +210,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 	select {
 	case <-execCtx.Done():
 		// Ignore the not found error because the process may exit itself before killing.
-		if err := process.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
+		if err := process.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to kill exec %q: %w", execID, err)
 		}
 		// Wait for the process to be killed.
@@ -298,7 +298,7 @@ func drainExecSyncIO(ctx context.Context, execProcess containerd.Process, drainE
 	log.G(ctx).Debugf("Exec process %q exits but the io is still held by other processes. Trying to delete exec process to release io", execProcess.ID())
 	_, err := execProcess.Delete(ctx, containerd.WithProcessKill)
 	if err != nil {
-		if !errdefs.IsNotFound(err) {
+		if !over_errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to release exec io by deleting exec process %q: %w",
 				execProcess.ID(), err)
 		}

@@ -19,6 +19,7 @@ package io
 import (
 	"bufio"
 	"bytes"
+	"demo/others/log"
 	"fmt"
 	"io"
 	"time"
@@ -26,8 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/containerd/containerd/log"
-	cioutil "github.com/containerd/containerd/pkg/ioutil"
+	cioutil "demo/pkg/ioutil"
 )
 
 const (

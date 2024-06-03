@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
+	"demo/over/errdefs"
 )
 
 // Handles locking references
@@ -46,7 +46,7 @@ func tryLock(ref string) error {
 		now := time.Now()
 		return fmt.Errorf(
 			"ref %s locked for %s (since %s): %w", ref, now.Sub(v.since), v.since,
-			errdefs.ErrUnavailable,
+			over_errdefs.ErrUnavailable,
 		)
 	}
 

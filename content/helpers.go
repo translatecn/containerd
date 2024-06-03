@@ -18,15 +18,15 @@ package content
 
 import (
 	"context"
+	"demo/others/log"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/pkg/randutil"
+	"demo/over/errdefs"
+	"demo/pkg/randutil"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -89,7 +89,7 @@ func ReadBlob(ctx context.Context, provider Provider, desc ocispec.Descriptor) (
 func WriteBlob(ctx context.Context, cs Ingester, ref string, r io.Reader, desc ocispec.Descriptor, opts ...Opt) error {
 	cw, err := OpenWriter(ctx, cs, WithRef(ref), WithDescriptor(desc))
 	if err != nil {
-		if !errdefs.IsAlreadyExists(err) {
+		if !over_errdefs.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to open writer: %w", err)
 		}
 
@@ -111,7 +111,7 @@ func OpenWriter(ctx context.Context, cs Ingester, opts ...WriterOpt) (Writer, er
 	for {
 		cw, err = cs.Writer(ctx, opts...)
 		if err != nil {
-			if !errdefs.IsUnavailable(err) {
+			if !over_errdefs.IsUnavailable(err) {
 				return nil, err
 			}
 
@@ -192,7 +192,7 @@ func Copy(ctx context.Context, cw Writer, or io.Reader, size int64, expected dig
 				}
 				continue
 			}
-			if !errdefs.IsAlreadyExists(err) {
+			if !over_errdefs.IsAlreadyExists(err) {
 				return fmt.Errorf("failed commit on ref %q: %w", ws.Ref, err)
 			}
 		}
@@ -332,7 +332,7 @@ func copyWithBuffer(dst io.Writer, src io.Reader) (written int64, err error) {
 // different than ErrNotFound.
 func Exists(ctx context.Context, provider InfoProvider, desc ocispec.Descriptor) (bool, error) {
 	_, err := provider.Info(ctx, desc.Digest)
-	if errdefs.IsNotFound(err) {
+	if over_errdefs.IsNotFound(err) {
 		return false, nil
 	}
 	return err == nil, err

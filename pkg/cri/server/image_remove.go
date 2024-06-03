@@ -18,12 +18,11 @@ package server
 
 import (
 	"context"
+	"demo/over/tracing"
 	"fmt"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/tracing"
-
+	"demo/over/errdefs"
+	"demo/over/images"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -34,28 +33,28 @@ import (
 // Remove the whole image no matter the it's image id or reference. This is the
 // semantic defined in CRI now.
 func (c *criService) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
-	span := tracing.SpanFromContext(ctx)
+	span := over_tracing.SpanFromContext(ctx)
 	image, err := c.localResolve(r.GetImage().GetImage())
 	if err != nil {
-		if errdefs.IsNotFound(err) {
+		if over_errdefs.IsNotFound(err) {
 			span.AddEvent(err.Error())
 			// return empty without error when image not found.
 			return &runtime.RemoveImageResponse{}, nil
 		}
 		return nil, fmt.Errorf("can not resolve %q locally: %w", r.GetImage().GetImage(), err)
 	}
-	span.SetAttributes(tracing.Attribute("image.id", image.ID))
+	span.SetAttributes(over_tracing.Attribute("image.id", image.ID))
 	// Remove all image references.
 	for i, ref := range image.References {
-		var opts []images.DeleteOpt
+		var opts []over_images.DeleteOpt
 		if i == len(image.References)-1 {
 			// Delete the last image reference synchronously to trigger garbage collection.
 			// This is best effort. It is possible that the image reference is deleted by
 			// someone else before this point.
-			opts = []images.DeleteOpt{images.SynchronousDelete()}
+			opts = []over_images.DeleteOpt{over_images.SynchronousDelete()}
 		}
 		err = c.client.ImageService().Delete(ctx, ref, opts...)
-		if err == nil || errdefs.IsNotFound(err) {
+		if err == nil || over_errdefs.IsNotFound(err) {
 			// Update image store to reflect the newest state in containerd.
 			if err := c.imageStore.Update(ctx, ref); err != nil {
 				return nil, fmt.Errorf("failed to update image reference %q for %q: %w", ref, image.ID, err)

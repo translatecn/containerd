@@ -3,7 +3,7 @@
     "name": "busybox"
   },
   "image": {
-    "image": "docker.io/busybox"
+    "image": "registry.cn-hangzhou.aliyuncs.com/acejilam/busybox"
   },
   "command": [
     "sleep",

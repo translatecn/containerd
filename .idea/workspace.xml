@@ -6,77 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a0a5fafa-c684-4e3a-b7ba-d5c11f33ec98" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/call.go" beforeDir="false" afterPath="$PROJECT_DIR$/call.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/containerd/grpc.go" beforeDir="false" afterPath="$PROJECT_DIR$/containerd/grpc.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/cni/libcni/conf.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/cni/libcni/conf.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/cni/pkg/invoke/delegate.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/cni/pkg/invoke/delegate.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/cni/pkg/types/args.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/cni/pkg/types/args.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/cni/pkg/version/version.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/cni/pkg/version/version.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/cri-tools/pkg/common/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/cri-tools/pkg/common/file.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/helpers.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/nri_extend/pkg/api/helpers.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/optional.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/nri_extend/pkg/api/optional.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/api/cri/v1alpha2/api.pb.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/api/cri/v1alpha2/api.proto" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/api/cri/v1alpha2/api_grpc.pb.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/api/cri/v1alpha2/constants.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/content/helpers.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/content/helpers.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/failpoint/fail.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/failpoint/fail.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/seutil/seutil.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/seutil/seutil.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/instrument/instrumented_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/instrument/instrumented_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/version.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/version.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/server/helpers.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/server/helpers.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/server/helpers_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/server/helpers_linux.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/server/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/server/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/server/status.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/server/over_status.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/server/version.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/server/version.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/cri/util/alpha.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/critest/cri_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/container-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/examples/container-config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/sandbox-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/examples/sandbox-config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/docs/crictl.md" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/docs/crictl.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/cloudbuild.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/hostnet-nginx/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/hostnet-nginx/default.conf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/image-predefined-group/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/image-test-win/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/image-test/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/images/image-user/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/benchmark.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/container.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/image.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/pod.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/pod_container.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/benchmark/util.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/framework.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/framework.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/test_context.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/test_context.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/framework/util.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/remote/remote_image.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/over_remote/remote_image.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/remote/remote_runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/over_remote/utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/remote/utils.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/apparmor_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/consts.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/container.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/container_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/e2e.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/image.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/multi_container_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/networking.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/pod.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/pod_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/runtime_info.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/security_context_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/selinux_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/streaming.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/validate/streaming_linux.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/version/version.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/pkg/over_version/version.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/cri/remote/remote_runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/cri/remote/remote_runtime.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/metrics/metrics.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/types/pod_status.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/types/pod_status.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/types/pod_update.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/types/pod_update.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/util/pod_startup_latency_tracker.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/kubelet/util/pod_startup_latency_tracker.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/probe/exec/exec.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/probe/exec/exec.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/probe/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/probe/util.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -133,7 +66,7 @@
       <recent name="$PROJECT_DIR$/over/api/cri" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.crictl info">
+  <component name="RunManager" selected="Go Remote.containerd">
     <configuration name="crictl info" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="containerd" />
       <working_directory value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools" />

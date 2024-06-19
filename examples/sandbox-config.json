@@ -7,6 +7,7 @@
   },
   "log_directory": "/tmp",
   "linux": {
+
   },
   "annotations": {
     "kubernetes.io/ingress-bandwidth": "100M",

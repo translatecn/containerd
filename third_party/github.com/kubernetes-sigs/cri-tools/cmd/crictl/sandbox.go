@@ -305,7 +305,7 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.Po
 
 var runPodCommand = &cli.Command{
 	Name:      "runp",
-	Usage:     "Run a new pod",
+	Usage:     "运行 Pod 沙盒",
 	ArgsUsage: "pod-config.[json|yaml]",
 	Flags: []cli.Flag{
 		&cli.StringFlag{

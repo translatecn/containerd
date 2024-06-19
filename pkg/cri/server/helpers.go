@@ -3,14 +3,10 @@ package server
 import (
 	"context"
 	criconfig "demo/config/cri"
-	runcoptions "demo/config/runc"
 	"demo/containerd"
-	"demo/over/api/runctypes"
-	runtimeoptions "demo/over/api/runtimeoptions/v1"
 	"demo/over/containers"
 	"demo/over/errdefs"
 	clabels "demo/over/labels"
-	"demo/over/plugin"
 	"demo/over/reference/docker"
 	"demo/over/typeurl/v2"
 	containerstore "demo/pkg/cri/store/container"
@@ -27,7 +23,6 @@ import (
 	"time"
 
 	runtime "demo/over/api/cri/v1"
-	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
 )
 
@@ -247,20 +242,6 @@ func parseImageReferences(refs []string) ([]string, []string) {
 // generateRuntimeOptions generates runtime options from cri plugin config.
 
 // getRuntimeOptionsType gets empty runtime options by the runtime type name.
-func getRuntimeOptionsType(t string) interface{} {
-	switch t {
-	case plugin.RuntimeRuncV1:
-		fallthrough
-	case plugin.RuntimeRuncV2:
-		return &runcoptions.Options{}
-	case plugin.RuntimeLinuxV1:
-		return &runctypes.RuncOptions{}
-	case runtimeRunhcsV1:
-		return &runhcsoptions.Options{}
-	default:
-		return &runtimeoptions.Options{}
-	}
-}
 
 // getRuntimeOptions get runtime options from container metadata.
 func getRuntimeOptions(c containers.Container) (interface{}, error) {

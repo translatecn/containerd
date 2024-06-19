@@ -16,17 +16,4 @@ limitations under the License.
 
 package probe
 
-import (
-	"fmt"
-	v1 "k8s.io/api/core/v1"
-)
-
 // findPortByName is a helper function to look up a port in a container by name.
-func findPortByName(container *v1.Container, portName string) (int, error) {
-	for _, port := range container.Ports {
-		if port.Name == portName {
-			return int(port.ContainerPort), nil
-		}
-	}
-	return 0, fmt.Errorf("port %s not found", portName)
-}

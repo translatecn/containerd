@@ -11,16 +11,6 @@ func DupStringSlice(in []string) []string {
 }
 
 // DupStringMap creates a copy of a map with string keys and values.
-func DupStringMap(in map[string]string) map[string]string {
-	if in == nil {
-		return nil
-	}
-	out := map[string]string{}
-	for k, v := range in {
-		out[k] = v
-	}
-	return out
-}
 
 // IsMarkedForRemoval checks if a key is marked for removal.
 //

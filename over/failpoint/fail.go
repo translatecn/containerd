@@ -164,35 +164,6 @@ func (fpe *failpointEntry) evaluate() error {
 	}
 }
 
-func parseTerms(term []byte) ([]*failpointEntry, error) {
-	var entry *failpointEntry
-	var err error
-
-	// count*type[(arg)]
-	term, entry, err = parseTerm(term)
-	if err != nil {
-		return nil, err
-	}
-
-	res := []*failpointEntry{entry}
-
-	// cascading terms
-	for len(term) > 0 {
-		if !bytes.HasPrefix(term, []byte("->")) {
-			return nil, fmt.Errorf("invalid cascading terms: %s", string(term))
-		}
-
-		term = term[2:]
-		term, entry, err = parseTerm(term)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse cascading term: %w", err)
-		}
-
-		res = append(res, entry)
-	}
-	return res, nil
-}
-
 func parseTerm(term []byte) ([]byte, *failpointEntry, error) {
 	var err error
 	var entry = newFailpointEntry()

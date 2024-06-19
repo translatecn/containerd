@@ -19,7 +19,6 @@ package framework
 import (
 	internalapi "demo/over/api/cri"
 
-	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -35,24 +34,6 @@ type InternalAPIClient struct {
 	CRIImageClient   internalapi.ImageManagerService
 }
 
-// NewDefaultCRIFramework makes a new framework and sets up a BeforeEach/AfterEach for
-// you (you can write additional before/after each functions).
-func NewDefaultCRIFramework() *Framework {
-	return NewCRIFramework(nil)
-}
-
-// NewCRIFramework creates a new Framework.
-func NewCRIFramework(client *InternalAPIClient) *Framework {
-	f := &Framework{
-		CRIClient: client,
-	}
-
-	BeforeEach(f.BeforeEach)
-	AfterEach(f.AfterEach)
-
-	return f
-}
-
 // BeforeEach gets a client
 func (f *Framework) BeforeEach() {
 	if f.CRIClient == nil {
@@ -65,9 +46,4 @@ func (f *Framework) BeforeEach() {
 // AfterEach clean resources
 func (f *Framework) AfterEach() {
 	f.CRIClient = nil
-}
-
-// KubeDescribe is a wrapper on Describe.
-func KubeDescribe(text string, body func()) bool {
-	return Describe("[k8s.io] "+text, body)
 }

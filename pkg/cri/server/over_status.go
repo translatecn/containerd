@@ -2,18 +2,54 @@ package server
 
 import (
 	"context"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/api/services/introspection/v1"
 	"demo/over/log"
 	ptypes "demo/over/protobuf/types"
 	"encoding/json"
 	"fmt"
 	goruntime "runtime"
-
-	runtime "demo/over/api/cri/v1"
-	"demo/over/api/services/introspection/v1"
 )
 
 // networkNotReadyReason is the reason reported when network is not ready.
 const networkNotReadyReason = "NetworkPluginNotReady"
+
+func runtimeConditionContainerdHasNoDeprecationWarnings(deprecations []*introspection.DeprecationWarning, ignore []string) (*runtime.RuntimeCondition, error) {
+	cond := &runtime.RuntimeCondition{
+		Type:   ContainerdHasNoDeprecationWarnings,
+		Status: true,
+	}
+	ignoreM := make(map[string]struct{})
+	for _, f := range ignore {
+		ignoreM[f] = struct{}{}
+	}
+	messages := make(map[string]string) // key: id, value: message
+	for _, d := range deprecations {
+		if _, ok := ignoreM[d.ID]; !ok {
+			messages[d.ID] = d.Message
+		}
+	}
+	if len(messages) > 0 {
+		cond.Status = false
+		cond.Reason = ContainerdHasDeprecationWarnings
+		messageJ, err := json.Marshal(messages)
+		if err != nil {
+			return nil, err
+		}
+		cond.Message = string(messageJ) // Arbitrary string
+	}
+	return cond, nil
+}
+
+const (
+	// ContainerdHasNoDeprecationWarnings is a string for [runtime.RuntimeCondition.Type].
+	ContainerdHasNoDeprecationWarnings = "ContainerdHasNoDeprecationWarnings"
+
+	// ContainerdHasDeprecationWarnings is a string for [runtime.RuntimeCondition.Reason].
+	// CamelCase is demanded by the spec.
+	// https://github.com/kubernetes/cri-api/blob/v0.29.1/pkg/apis/runtime/v1/api.proto#L1514
+	ContainerdHasDeprecationWarnings = "ContainerdHasDeprecationWarnings"
+)
 
 // Status returns the status of the runtime.
 func (c *criService) Status(ctx context.Context, r *runtime.StatusRequest) (*runtime.StatusResponse, error) {
@@ -91,40 +127,3 @@ func (c *criService) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 	resp.Status.Conditions = append(resp.Status.Conditions, cond)
 	return resp, nil
 }
-
-func runtimeConditionContainerdHasNoDeprecationWarnings(deprecations []*introspection.DeprecationWarning, ignore []string) (*runtime.RuntimeCondition, error) {
-	cond := &runtime.RuntimeCondition{
-		Type:   ContainerdHasNoDeprecationWarnings,
-		Status: true,
-	}
-	ignoreM := make(map[string]struct{})
-	for _, f := range ignore {
-		ignoreM[f] = struct{}{}
-	}
-	messages := make(map[string]string) // key: id, value: message
-	for _, d := range deprecations {
-		if _, ok := ignoreM[d.ID]; !ok {
-			messages[d.ID] = d.Message
-		}
-	}
-	if len(messages) > 0 {
-		cond.Status = false
-		cond.Reason = ContainerdHasDeprecationWarnings
-		messageJ, err := json.Marshal(messages)
-		if err != nil {
-			return nil, err
-		}
-		cond.Message = string(messageJ) // Arbitrary string
-	}
-	return cond, nil
-}
-
-const (
-	// ContainerdHasNoDeprecationWarnings is a string for [runtime.RuntimeCondition.Type].
-	ContainerdHasNoDeprecationWarnings = "ContainerdHasNoDeprecationWarnings"
-
-	// ContainerdHasDeprecationWarnings is a string for [runtime.RuntimeCondition.Reason].
-	// CamelCase is demanded by the spec.
-	// https://github.com/kubernetes/cri-api/blob/v0.29.1/pkg/apis/runtime/v1/api.proto#L1514
-	ContainerdHasDeprecationWarnings = "ContainerdHasDeprecationWarnings"
-)

@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/kubernetes-sigs/cri-tools/pkg/remote"
+	"github.com/kubernetes-sigs/cri-tools/pkg/over_remote"
 	"os"
 	"runtime"
 	"sort"
@@ -29,7 +29,7 @@ import (
 
 	internalapi "demo/over/api/cri"
 
-	"github.com/kubernetes-sigs/cri-tools/pkg/version"
+	"github.com/kubernetes-sigs/cri-tools/pkg/over_version"
 )
 
 const defaultTimeout = 2 * time.Second
@@ -87,7 +87,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		//}
 		return res, err
 	}
-	return remote.NewRemoteImageService(ImageEndpoint, Timeout, nil)
+	return over_remote.NewRemoteImageService(ImageEndpoint, Timeout, nil)
 }
 
 func getTimeout(timeDuration time.Duration) time.Duration {
@@ -106,7 +106,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = version.Version
+	app.Version = over_version.Version
 
 	app.Commands = []*cli.Command{
 		runtimeAttachCommand,

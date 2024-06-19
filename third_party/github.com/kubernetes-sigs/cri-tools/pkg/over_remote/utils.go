@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2016 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package validate
+package over_remote
 
-// TestE2ECRI checks configuration parameters (specified through flags) and then runs
-// E2ECRI tests using the Ginkgo runner.
-// If a "report directory" is specified, one or more JUnit test reports will be
-// generated in this directory.
-// This function is called on each Ginkgo node in parallel mode.
+// maxMsgSize use 16MB as the default message size limit.
+// grpc library default is 4MB
+const maxMsgSize = 1024 * 1024 * 16

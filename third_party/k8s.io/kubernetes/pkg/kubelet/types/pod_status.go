@@ -21,7 +21,7 @@ import (
 )
 
 // PodConditionsByKubelet is the list of pod conditions owned by kubelet
-var PodConditionsByKubelet = []v1.PodConditionType{
+var _ = []v1.PodConditionType{
 	v1.PodScheduled,
 	v1.PodReady,
 	v1.PodInitialized,

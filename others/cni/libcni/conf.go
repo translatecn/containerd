@@ -15,14 +15,12 @@
 package libcni
 
 import (
+	"demo/others/cni/pkg/types"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
-
-	"demo/others/cni/pkg/types"
 )
 
 type NotFoundError struct {
@@ -141,28 +139,6 @@ func ConfFiles(dir string, extensions []string) ([]string, error) {
 		}
 	}
 	return confFiles, nil
-}
-
-func LoadConf(dir, name string) (*NetworkConfig, error) {
-	files, err := ConfFiles(dir, []string{".conf", ".json"})
-	switch {
-	case err != nil:
-		return nil, err
-	case len(files) == 0:
-		return nil, NoConfigsFoundError{Dir: dir}
-	}
-	sort.Strings(files)
-
-	for _, confFile := range files {
-		conf, err := ConfFromFile(confFile)
-		if err != nil {
-			return nil, err
-		}
-		if conf.Network.Name == name {
-			return conf, nil
-		}
-	}
-	return nil, NotFoundError{dir, name}
 }
 
 func InjectConf(original *NetworkConfig, newValues map[string]interface{}) (*NetworkConfig, error) {

@@ -16,7 +16,6 @@ package types
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -58,9 +57,6 @@ type CommonArgs struct {
 
 // GetKeyField is a helper function to receive Values
 // Values that represent a pointer to a struct
-func GetKeyField(keyString string, v reflect.Value) reflect.Value {
-	return v.Elem().FieldByName(keyString)
-}
 
 // UnmarshalableArgsError is used to indicate error unmarshalling args
 // from the args-string in the form "K=V;K2=V2;..."

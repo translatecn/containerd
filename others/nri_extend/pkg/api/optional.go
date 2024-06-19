@@ -75,30 +75,6 @@ func (o *OptionalInt) Get() *int {
 }
 
 // Int32 creates an Optional wrapper from its argument.
-func Int32(v interface{}) *OptionalInt32 {
-	var value int32
-
-	switch o := v.(type) {
-	case int32:
-		value = o
-	case *int32:
-		if o == nil {
-			return nil
-		}
-		value = *o
-	case *OptionalInt32:
-		if o == nil {
-			return nil
-		}
-		value = o.Value
-	default:
-		return nil
-	}
-
-	return &OptionalInt32{
-		Value: value,
-	}
-}
 
 // Get returns nil if its value is unset or a pointer to the value itself.
 func (o *OptionalInt32) Get() *int32 {

@@ -21,7 +21,6 @@ import (
 
 	"demo/containerd"
 	runtime "demo/over/api/cri/v1"
-	runtime_alpha "demo/over/api/cri/v1alpha2"
 	"demo/pkg/cri/instrument"
 	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver/podsandbox"
@@ -320,10 +319,6 @@ func (c *criService) register(s *grpc.Server) error {
 	instrumented := instrument.NewService(c)
 	runtime.RegisterRuntimeServiceServer(s, instrumented)
 	runtime.RegisterImageServiceServer(s, instrumented)
-
-	instrumentedAlpha := instrument.NewAlphaService(c, c.warn)
-	runtime_alpha.RegisterRuntimeServiceServer(s, instrumentedAlpha)
-	runtime_alpha.RegisterImageServiceServer(s, instrumentedAlpha)
 
 	return nil
 }

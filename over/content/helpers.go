@@ -209,21 +209,6 @@ func CopyReaderAt(cw Writer, ra ReaderAt, n int64) error {
 // of bytes read may be greater than those copied if the reader
 // is not an io.Seeker.
 // This copy does not commit the writer.
-func CopyReader(cw Writer, r io.Reader) (int64, error) {
-	ws, err := cw.Status()
-	if err != nil {
-		return 0, fmt.Errorf("failed to get status: %w", err)
-	}
-
-	if ws.Offset > 0 {
-		r, err = seekReader(r, ws.Offset, 0)
-		if err != nil {
-			return 0, fmt.Errorf("unable to resume write to %v: %w", ws.Ref, err)
-		}
-	}
-
-	return copyWithBuffer(cw, r)
-}
 
 // seekReader attempts to seek the reader to the given offset, either by
 // resolving `io.Seeker`, by detecting `io.ReaderAt`, or discarding

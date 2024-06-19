@@ -140,18 +140,6 @@ func IsStaticPod(pod *v1.Pod) bool {
 }
 
 // IsCriticalPod returns true if pod's priority is greater than or equal to SystemCriticalPriority.
-func IsCriticalPod(pod *v1.Pod) bool {
-	if IsStaticPod(pod) {
-		return true
-	}
-	if IsMirrorPod(pod) {
-		return true
-	}
-	if pod.Spec.Priority != nil && IsCriticalPodBasedOnPriority(*pod.Spec.Priority) {
-		return true
-	}
-	return false
-}
 
 // Preemptable returns true if preemptor pod can preempt preemptee pod
 // if preemptee is not critical or if preemptor's priority is greater than preemptee's priority

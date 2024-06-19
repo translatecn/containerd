@@ -31,7 +31,7 @@ func Current() string {
 // Any future CNI spec versions which meet this definition should be added to
 // this list.
 var _ = PluginSupports("0.1.0", "0.2.0")
-var All = PluginSupports("0.1.0", "0.2.0", "0.3.0", "0.3.1", "0.4.0", "1.0.0")
+var _ = PluginSupports("0.1.0", "0.2.0", "0.3.0", "0.3.1", "0.4.0", "1.0.0")
 
 // VersionsFrom returns a list of versions starting from min, inclusive
 

@@ -14,25 +14,6 @@
 
 package invoke
 
-import (
-	"os"
-	"path/filepath"
-)
-
-func delegateCommon(delegatePlugin string, exec Exec) (string, Exec, error) {
-	if exec == nil {
-		exec = defaultExec
-	}
-
-	paths := filepath.SplitList(os.Getenv("CNI_PATH"))
-	pluginPath, err := exec.FindInPath(delegatePlugin, paths)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return pluginPath, exec, nil
-}
-
 // DelegateAdd calls the given delegate plugin with the CNI ADD action and
 // JSON configuration
 
@@ -43,8 +24,3 @@ func delegateCommon(delegatePlugin string, exec Exec) (string, Exec, error) {
 // JSON configuration
 
 // return CNIArgs used by delegation
-func delegateArgs(action string) *DelegateArgs {
-	return &DelegateArgs{
-		Command: action,
-	}
-}

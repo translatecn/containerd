@@ -18,7 +18,6 @@ package common
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strconv"
 
 	"gopkg.in/yaml.v3"
@@ -38,22 +37,6 @@ type Config struct {
 
 // ReadConfig reads from a file with the given name and returns a config or
 // an error if the file was unable to be parsed.
-func ReadConfig(filepath string) (*Config, error) {
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-	yamlConfig := yaml.Node{}
-	err = yaml.Unmarshal(data, &yamlConfig)
-	if err != nil {
-		return nil, err
-	}
-	config, err := getConfigOptions(yamlConfig)
-	if err != nil {
-		return nil, err
-	}
-	return config, err
-}
 
 // WriteConfig writes config to file
 // an error if the file was unable to be written to.
@@ -113,14 +96,6 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 }
 
 // Set config options on yaml data for persistece to file
-func setConfigOptions(config *Config) {
-	setConfigOption("runtime-endpoint", config.RuntimeEndpoint, config.yamlData)
-	setConfigOption("image-endpoint", config.ImageEndpoint, config.yamlData)
-	setConfigOption("timeout", strconv.Itoa(config.Timeout), config.yamlData)
-	setConfigOption("debug", strconv.FormatBool(config.Debug), config.yamlData)
-	setConfigOption("pull-image-on-create", strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
-	setConfigOption("disable-pull-on-run", strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
-}
 
 // Set config option on yaml
 func setConfigOption(configName, configValue string, yamlData *yaml.Node) {

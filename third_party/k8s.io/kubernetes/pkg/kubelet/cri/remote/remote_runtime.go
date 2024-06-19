@@ -27,7 +27,6 @@ import (
 	internalapi "demo/over/api/cri"
 	runtimeapi "demo/over/api/cri/v1"
 	"demo/third_party/k8s.io/kubernetes/pkg/features"
-	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/metrics"
 	"demo/third_party/k8s.io/kubernetes/pkg/probe/exec"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
@@ -795,9 +794,6 @@ func (r *remoteRuntimeService) GetContainerEvents(containerEventsCh chan *runtim
 		klog.ErrorS(err, "GetContainerEvents failed to get streaming client")
 		return err
 	}
-
-	// The connection is successfully established and we have a streaming client ready for use.
-	metrics.EventedPLEGConn.Inc()
 
 	for {
 		resp, err := containerEventsStreamingClient.Recv()

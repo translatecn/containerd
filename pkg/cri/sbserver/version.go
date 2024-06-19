@@ -5,7 +5,6 @@ import (
 	"demo/over/version"
 
 	runtime "demo/over/api/cri/v1"
-	runtime_alpha "demo/over/api/cri/v1alpha2"
 
 	"demo/pkg/cri/constants"
 )
@@ -24,15 +23,5 @@ func (c *criService) Version(ctx context.Context, r *runtime.VersionRequest) (*r
 		RuntimeName:       containerName,
 		RuntimeVersion:    version.Version,
 		RuntimeApiVersion: constants.CRIVersion,
-	}, nil
-}
-
-// Version returns the runtime name, runtime version and runtime API version.
-func (c *criService) AlphaVersion(ctx context.Context, r *runtime_alpha.VersionRequest) (*runtime_alpha.VersionResponse, error) {
-	return &runtime_alpha.VersionResponse{
-		Version:           kubeAPIVersion,
-		RuntimeName:       containerName,
-		RuntimeVersion:    version.Version,
-		RuntimeApiVersion: constants.CRIVersionAlpha,
 	}, nil
 }

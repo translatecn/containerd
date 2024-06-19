@@ -17,11 +17,8 @@ limitations under the License.
 package framework
 
 import (
-	"flag"
 	"fmt"
 	"time"
-
-	"github.com/onsi/ginkgo/v2"
 )
 
 var (
@@ -121,39 +118,6 @@ const (
 	DockerShimSockPathUnix    = "unix:///var/run/dockershim.sock"
 	DockerShimSockPathWindows = "npipe:////./pipe/dockershim"
 )
-
-// RegisterFlags registers flags to e2e test suites.
-func RegisterFlags() {
-	suite, reporter := ginkgo.GinkgoConfiguration()
-
-	// Turn on verbose by default to get spec names
-	reporter.Verbose = true
-
-	// Turn on ShowNodeEvents to get spec progress (especially on interrupt)
-	reporter.ShowNodeEvents = true
-
-	// Randomize specs as well as suites
-	suite.RandomizeAllSpecs = true
-
-	flag.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
-	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
-	flag.StringVar(&testImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
-	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
-
-	defaultConfigPath := "/etc/crictl.yaml"
-	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")
-
-	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", "vm:6789", "Runtime service socket for client to connect.")
-	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "vm:6789", "Image service socket for client to connect.")
-
-	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
-	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
-
-	flag.StringVar(&benchamrkSettingFilePath, "benchmarking-params-file", "", "Optional path to a YAML file specifying benchmarking configuration options.")
-	flag.StringVar(&TestContext.BenchmarkingOutputDir, "benchmarking-output-dir", "", "Optional path to a directory in which benchmarking data should be placed.")
-
-	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000'")
-}
 
 // Loads any external file-based parameters into the TestContextType.
 func (tc TestContextType) LoadYamlConfigFiles() error {

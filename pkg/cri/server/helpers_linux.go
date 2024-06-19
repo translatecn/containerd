@@ -237,7 +237,7 @@ func ensureRemoveAll(ctx context.Context, dir string) error {
 	}
 }
 
-var vmbasedRuntimes = []string{
+var _ = []string{
 	"io.containerd.kata",
 }
 

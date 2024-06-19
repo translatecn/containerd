@@ -1,35 +1,18 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package command
 
 import (
 	gocontext "context"
-	defaults2 "demo/pkg/defaults"
-	"io"
-	"os"
-	"path/filepath"
-
+	srvconfig "demo/config/server"
+	"demo/over/defaults"
 	"demo/over/images"
-	"demo/pkg/timeout"
-	"demo/services/server"
-	srvconfig "demo/services/server/config"
+	"demo/over/timeout"
+	"demo/plugins/containerd/content"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pelletier/go-toml"
 	"github.com/urfave/cli"
+	"io"
+	"os"
+	"path/filepath"
 )
 
 // Config is a wrapper of server config for printing out.
@@ -49,7 +32,7 @@ func outputConfig(cfg *srvconfig.Config) error {
 		Config: cfg,
 	}
 
-	plugins, err := server.LoadPlugins(gocontext.Background(), config.Config)
+	plugins, err := content.LoadPlugins(gocontext.Background(), config.Config)
 	if err != nil {
 		return err
 	}
@@ -129,12 +112,12 @@ func platformAgnosticDefaultConfig() *srvconfig.Config {
 		// override / configure the default at the containerd cli .. or when
 		// version 1 is no longer supported
 		Version: 1,
-		Root:    defaults2.DefaultRootDir,
-		State:   defaults2.DefaultStateDir,
+		Root:    defaults.DefaultRootDir,
+		State:   defaults.DefaultStateDir,
 		GRPC: srvconfig.GRPCConfig{
-			Address:        defaults2.DefaultAddress,
-			MaxRecvMsgSize: defaults2.DefaultMaxRecvMsgSize,
-			MaxSendMsgSize: defaults2.DefaultMaxSendMsgSize,
+			Address:        defaults.DefaultAddress,
+			MaxRecvMsgSize: defaults.DefaultMaxRecvMsgSize,
+			MaxSendMsgSize: defaults.DefaultMaxSendMsgSize,
 		},
 		DisabledPlugins:  []string{},
 		RequiredPlugins:  []string{},
@@ -147,23 +130,23 @@ func streamProcessors() map[string]srvconfig.StreamProcessor {
 		ctdDecoder = "ctd-decoder"
 		basename   = "io.containerd.ocicrypt.decoder.v1"
 	)
-	decryptionKeysPath := filepath.Join(defaults2.DefaultConfigDir, "ocicrypt", "keys")
+	decryptionKeysPath := filepath.Join(defaults.DefaultConfigDir, "ocicrypt", "keys")
 	ctdDecoderArgs := []string{
 		"--decryption-keys-path", decryptionKeysPath,
 	}
 	ctdDecoderEnv := []string{
-		"OCICRYPT_KEYPROVIDER_CONFIG=" + filepath.Join(defaults2.DefaultConfigDir, "ocicrypt", "ocicrypt_keyprovider.conf"),
+		"OCICRYPT_KEYPROVIDER_CONFIG=" + filepath.Join(defaults.DefaultConfigDir, "ocicrypt", "ocicrypt_keyprovider.conf"),
 	}
 	return map[string]srvconfig.StreamProcessor{
 		basename + ".tar.gzip": {
-			Accepts: []string{over_images.MediaTypeImageLayerGzipEncrypted},
+			Accepts: []string{images.MediaTypeImageLayerGzipEncrypted},
 			Returns: ocispec.MediaTypeImageLayerGzip,
 			Path:    ctdDecoder,
 			Args:    ctdDecoderArgs,
 			Env:     ctdDecoderEnv,
 		},
 		basename + ".tar": {
-			Accepts: []string{over_images.MediaTypeImageLayerEncrypted},
+			Accepts: []string{images.MediaTypeImageLayerEncrypted},
 			Returns: ocispec.MediaTypeImageLayer,
 			Path:    ctdDecoder,
 			Args:    ctdDecoderArgs,

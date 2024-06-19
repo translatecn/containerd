@@ -1,24 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package archive
 
 import (
-	"demo/pkg/reference"
-	"demo/pkg/reference/docker"
+	"demo/over/reference"
+	docker2 "demo/over/reference/docker"
 	"fmt"
 	"strings"
 
@@ -73,7 +57,7 @@ func isImagePrefix(s, prefix string) bool {
 
 func normalizeReference(ref string) (string, error) {
 	// TODO: Replace this function to not depend on reference package
-	normalized, err := docker.ParseDockerRef(ref)
+	normalized, err := docker2.ParseDockerRef(ref)
 	if err != nil {
 		return "", fmt.Errorf("normalize image ref %q: %w", ref, err)
 	}
@@ -82,13 +66,13 @@ func normalizeReference(ref string) (string, error) {
 }
 
 func familiarizeReference(ref string) (string, error) {
-	named, err := docker.ParseNormalizedNamed(ref)
+	named, err := docker2.ParseNormalizedNamed(ref)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %q: %w", ref, err)
 	}
-	named = docker.TagNameOnly(named)
+	named = docker2.TagNameOnly(named)
 
-	return docker.FamiliarString(named), nil
+	return docker2.FamiliarString(named), nil
 }
 
 func ociReferenceName(name string) string {

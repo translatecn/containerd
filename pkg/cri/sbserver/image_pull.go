@@ -1,28 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"demo/others/log"
-	"demo/over/tracing"
-	distribution "demo/pkg/reference/docker"
+	criconfig "demo/config/cri"
+	"demo/over/ctr_tracing"
+	"demo/over/log"
+	distribution "demo/over/reference/docker"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -39,18 +24,17 @@ import (
 
 	"demo/others/imgcrypt"
 	"demo/others/imgcrypt/images/encryption"
+	runtime "demo/over/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/containerd"
 	"demo/over/errdefs"
 	containerdimages "demo/over/images"
-	"demo/pkg/cri/annotations"
-	criconfig "demo/pkg/cri/config"
-	crilabels "demo/pkg/cri/labels"
-	snpkg "demo/pkg/snapshotters"
-	"demo/remotes/docker"
-	"demo/remotes/docker/config"
+	"demo/over/remotes/docker"
+	"demo/over/remotes/docker/config"
+	snpkg "demo/over/snapshotters"
+	"demo/pkg/cri/over/annotations"
+	crilabels "demo/pkg/cri/over/labels"
 )
 
 // For image management:
@@ -96,7 +80,7 @@ import (
 
 // PullImage pulls an image with authentication config.
 func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (_ *runtime.PullImageResponse, err error) {
-	span := over_tracing.SpanFromContext(ctx)
+	span := tracing.SpanFromContext(ctx)
 	defer func() {
 		// TODO: add domain label for imagePulls metrics, and we may need to provide a mechanism
 		// for the user to configure the set of registries that they are interested in.
@@ -152,8 +136,8 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	}
 	log.G(ctx).Debugf("PullImage %q with snapshotter %s", ref, snapshotter)
 	span.SetAttributes(
-		over_tracing.Attribute("image.ref", ref),
-		over_tracing.Attribute("snapshotter.name", snapshotter),
+		tracing.Attribute("image.ref", ref),
+		tracing.Attribute("snapshotter.name", snapshotter),
 	)
 
 	labels := c.getLabels(ctx, ref)
@@ -281,7 +265,7 @@ func (c *criService) createImageReference(ctx context.Context, name string, desc
 	// TODO(random-liu): Figure out which is the more performant sequence create then update or
 	// update then create.
 	_, err := c.client.ImageService().Create(ctx, img)
-	if err == nil || !over_errdefs.IsAlreadyExists(err) {
+	if err == nil || !errdefs.IsAlreadyExists(err) {
 		return err
 	}
 	// Retrieve oldImg from image store here because Create routine returns an
@@ -328,7 +312,7 @@ func (c *criService) getLabels(ctx context.Context, name string) map[string]stri
 // generates necessary metadata for the image and make it managed.
 func (c *criService) updateImage(ctx context.Context, r string) error {
 	img, err := c.client.GetImage(ctx, r)
-	if err != nil && !over_errdefs.IsNotFound(err) {
+	if err != nil && !errdefs.IsNotFound(err) {
 		return fmt.Errorf("get image by reference: %w", err)
 	}
 	if err == nil && img.Labels()[crilabels.ImageLabelKey] != crilabels.ImageLabelValue {
@@ -409,7 +393,7 @@ func hostDirFromRoots(roots []string) func(string) (string, error) {
 	return func(host string) (dir string, err error) {
 		for _, fn := range rootfn {
 			dir, err = fn(host)
-			if (err != nil && !over_errdefs.IsNotFound(err)) || (dir != "") {
+			if (err != nil && !errdefs.IsNotFound(err)) || (dir != "") {
 				break
 			}
 		}

@@ -1,30 +1,14 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-package over_images
+package images
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
-	"demo/content"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/platforms"
 	digest "github.com/opencontainers/go-digest"
@@ -93,7 +77,7 @@ type Store interface {
 //
 // The caller can then use the descriptor to resolve and process the
 // configuration of the image.
-func (image *Image) Config(ctx context.Context, provider content.Provider, platform over_platforms.MatchComparer) (ocispec.Descriptor, error) {
+func (image *Image) Config(ctx context.Context, provider content.Provider, platform platforms.MatchComparer) (ocispec.Descriptor, error) {
 	return Config(ctx, provider, image.Target, platform)
 }
 
@@ -101,7 +85,7 @@ func (image *Image) Config(ctx context.Context, provider content.Provider, platf
 //
 // These are used to verify that a set of layers unpacked to the expected
 // values.
-func (image *Image) RootFS(ctx context.Context, provider content.Provider, platform over_platforms.MatchComparer) ([]digest.Digest, error) {
+func (image *Image) RootFS(ctx context.Context, provider content.Provider, platform platforms.MatchComparer) ([]digest.Digest, error) {
 	desc, err := image.Config(ctx, provider, platform)
 	if err != nil {
 		return nil, err
@@ -110,7 +94,7 @@ func (image *Image) RootFS(ctx context.Context, provider content.Provider, platf
 }
 
 // Size returns the total size of an image's packed resources.
-func (image *Image) Size(ctx context.Context, provider content.Provider, platform over_platforms.MatchComparer) (int64, error) {
+func (image *Image) Size(ctx context.Context, provider content.Provider, platform platforms.MatchComparer) (int64, error) {
 	var size int64
 	return size, Walk(ctx, Handlers(HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		if desc.Size < 0 {
@@ -139,7 +123,7 @@ type platformManifest struct {
 // package by returning a specific manifest type. We'll need to refactor this
 // to return a manifest descriptor or decide that we want to bring the API in
 // this direction because this abstraction is not needed.
-func Manifest(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform over_platforms.MatchComparer) (ocispec.Manifest, error) {
+func Manifest(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform platforms.MatchComparer) (ocispec.Manifest, error) {
 	var (
 		limit    = 1
 		m        []platformManifest
@@ -179,7 +163,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 						return nil, err
 					}
 
-					if !platform.Match(over_platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture})) {
+					if !platform.Match(platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture})) {
 						return nil, nil
 					}
 
@@ -235,15 +219,15 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 			}
 			return descs, nil
 		}
-		return nil, fmt.Errorf("unexpected media type %v for %v: %w", desc.MediaType, desc.Digest, over_errdefs.ErrNotFound)
+		return nil, fmt.Errorf("unexpected media type %v for %v: %w", desc.MediaType, desc.Digest, errdefs.ErrNotFound)
 	}), image); err != nil {
 		return ocispec.Manifest{}, err
 	}
 
 	if len(m) == 0 {
-		err := fmt.Errorf("manifest %v: %w", image.Digest, over_errdefs.ErrNotFound)
+		err := fmt.Errorf("manifest %v: %w", image.Digest, errdefs.ErrNotFound)
 		if wasIndex {
-			err = fmt.Errorf("no match for platform in manifest %v: %w", image.Digest, over_errdefs.ErrNotFound)
+			err = fmt.Errorf("no match for platform in manifest %v: %w", image.Digest, errdefs.ErrNotFound)
 		}
 		return ocispec.Manifest{}, err
 	}
@@ -255,7 +239,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 //
 // The caller can then use the descriptor to resolve and process the
 // configuration of the image.
-func Config(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform over_platforms.MatchComparer) (ocispec.Descriptor, error) {
+func Config(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform platforms.MatchComparer) (ocispec.Descriptor, error) {
 	manifest, err := Manifest(ctx, provider, image, platform)
 	if err != nil {
 		return ocispec.Descriptor{}, err
@@ -285,7 +269,7 @@ func Platforms(ctx context.Context, provider content.Provider, image ocispec.Des
 			}
 
 			platformSpecs = append(platformSpecs,
-				over_platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture}))
+				platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture}))
 		}
 		return nil, nil
 	}), ChildrenHandler(provider)), image)
@@ -301,10 +285,10 @@ func Platforms(ctx context.Context, provider content.Provider, image ocispec.Des
 // in the provider.
 //
 // If there is a problem resolving content, an error will be returned.
-func Check(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform over_platforms.MatchComparer) (available bool, required, present, missing []ocispec.Descriptor, err error) {
+func Check(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform platforms.MatchComparer) (available bool, required, present, missing []ocispec.Descriptor, err error) {
 	mfst, err := Manifest(ctx, provider, image, platform)
 	if err != nil {
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return false, []ocispec.Descriptor{image}, nil, []ocispec.Descriptor{image}, nil
 		}
 
@@ -319,7 +303,7 @@ func Check(ctx context.Context, provider content.Provider, image ocispec.Descrip
 	for _, desc := range required {
 		ra, err := provider.ReaderAt(ctx, desc)
 		if err != nil {
-			if over_errdefs.IsNotFound(err) {
+			if errdefs.IsNotFound(err) {
 				missing = append(missing, desc)
 				continue
 			} else {

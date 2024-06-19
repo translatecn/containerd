@@ -1,27 +1,11 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
 	"demo/containerd"
-	"demo/others/log"
-	"demo/others/nri"
-	v1 "demo/others/nri/types/v1"
+	"demo/others/nri_extend"
+	v1 "demo/others/nri_extend/types/v1"
+	"demo/over/log"
 )
 
 // WithNRISandboxDelete calls delete for a sandbox'd task
@@ -31,7 +15,7 @@ func WithNRISandboxDelete(sandboxID string) containerd.ProcessDeleteOpts {
 		if !ok {
 			return nil
 		}
-		nric, err := nri.New()
+		nric, err := nri_extend.New()
 		if err != nil {
 			log.G(ctx).WithError(err).Error("unable to create nri client")
 			return nil
@@ -39,7 +23,7 @@ func WithNRISandboxDelete(sandboxID string) containerd.ProcessDeleteOpts {
 		if nric == nil {
 			return nil
 		}
-		sb := &nri.Sandbox{
+		sb := &nri_extend.Sandbox{
 			ID: sandboxID,
 		}
 		if _, err := nric.InvokeWithSandbox(ctx, task, v1.Delete, sb); err != nil {

@@ -1,33 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package encryption
 
 import (
 	"context"
+	"demo/over/typeurl"
 	"fmt"
 
 	"demo/containerd"
-	"demo/containers"
-	"demo/diff"
 	"demo/others/imgcrypt"
-	"demo/others/typeurl"
-	"demo/over/errdefs"
-
-	encconfig "github.com/containers/ocicrypt/config"
+	"demo/over/diff"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -56,25 +36,6 @@ func WithUnpackConfigApplyOpts(opt diff.ApplyOpt) containerd.UnpackOpt {
 }
 
 // WithUnpackOpts is used to add unpack options to the unpacker.
-func WithUnpackOpts(opts []containerd.UnpackOpt) containerd.RemoteOpt {
-	return func(_ *containerd.Client, c *containerd.RemoteContext) error {
-		c.UnpackOpts = append(c.UnpackOpts, opts...)
-		return nil
-	}
-}
 
 // WithAuthorizationCheck checks the authorization of keys used for encrypted containers
 // be checked upon creation of a container
-func WithAuthorizationCheck(dc *encconfig.DecryptConfig) containerd.NewContainerOpts {
-	return func(ctx context.Context, client *containerd.Client, c *containers.Container) error {
-		image, err := client.ImageService().Get(ctx, c.Image)
-		if over_errdefs.IsNotFound(err) {
-			// allow creation of container without a existing image
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		return CheckAuthorization(ctx, client.ContentStore(), image.Target, dc)
-	}
-}

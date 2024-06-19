@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
@@ -24,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"demo/over/api/services/tasks/v1"
+	"demo/over/cio"
 	"demo/over/errdefs"
-	"demo/pkg/api/services/tasks/v1"
-	"demo/pkg/cio"
 )
 
 // Process represents a system process
@@ -37,7 +21,6 @@ type Process interface {
 	Pid() uint32
 	// Start starts the process executing the user's defined binary
 	Start(context.Context) error
-	// Delete removes the process and any resources allocated returning the exit status
 	Delete(context.Context, ...ProcessDeleteOpts) (*ExitStatus, error)
 	// Kill sends the provided signal to the process
 	Kill(context.Context, syscall.Signal, ...KillOpts) error
@@ -128,7 +111,7 @@ func (p *process) Start(ctx context.Context) error {
 			p.io.Wait()
 			p.io.Close()
 		}
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 	p.pid = r.Pid
 	return nil
@@ -147,7 +130,7 @@ func (p *process) Kill(ctx context.Context, s syscall.Signal, opts ...KillOpts) 
 		ExecID:      p.id,
 		All:         i.All,
 	})
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (p *process) Wait(ctx context.Context) (<-chan ExitStatus, error) {
@@ -167,7 +150,7 @@ func (p *process) Wait(ctx context.Context) (<-chan ExitStatus, error) {
 		}
 		c <- ExitStatus{
 			code:     r.ExitStatus,
-			exitedAt: over_protobuf.FromTimestamp(r.ExitedAt),
+			exitedAt: protobuf.FromTimestamp(r.ExitedAt),
 		}
 	}()
 	return c, nil
@@ -184,7 +167,7 @@ func (p *process) CloseIO(ctx context.Context, opts ...IOCloserOpts) error {
 	}
 	r.Stdin = i.Stdin
 	_, err := p.task.client.TaskService().CloseIO(ctx, r)
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (p *process) IO() cio.IO {
@@ -198,7 +181,7 @@ func (p *process) Resize(ctx context.Context, w, h uint32) error {
 		Height:      h,
 		ExecID:      p.id,
 	})
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (p *process) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitStatus, error) {
@@ -213,21 +196,21 @@ func (p *process) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitS
 	}
 	switch status.Status {
 	case Running, Paused, Pausing:
-		return nil, fmt.Errorf("current process state: %s, process must be stopped before deletion: %w", status.Status, over_errdefs.ErrFailedPrecondition)
+		return nil, fmt.Errorf("current process state: %s, process must be stopped before deletion: %w", status.Status, errdefs.ErrFailedPrecondition)
 	}
 	r, err := p.task.client.TaskService().DeleteProcess(ctx, &tasks.DeleteProcessRequest{
 		ContainerID: p.task.id,
 		ExecID:      p.id,
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	if p.io != nil {
 		p.io.Cancel()
 		p.io.Wait()
 		p.io.Close()
 	}
-	return &ExitStatus{code: r.ExitStatus, exitedAt: over_protobuf.FromTimestamp(r.ExitedAt)}, nil
+	return &ExitStatus{code: r.ExitStatus, exitedAt: protobuf.FromTimestamp(r.ExitedAt)}, nil
 }
 
 func (p *process) Status(ctx context.Context) (Status, error) {
@@ -236,7 +219,7 @@ func (p *process) Status(ctx context.Context) (Status, error) {
 		ExecID:      p.id,
 	})
 	if err != nil {
-		return Status{}, over_errdefs.FromGRPC(err)
+		return Status{}, errdefs.FromGRPC(err)
 	}
 	return Status{
 		Status:     ProcessStatus(strings.ToLower(r.Process.Status.String())),

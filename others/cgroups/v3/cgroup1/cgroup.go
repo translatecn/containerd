@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package cgroup1
 
 import (
@@ -212,7 +196,7 @@ func writeCgroupProcs(path string, content []byte, perm fs.FileMode) error {
 		// If the process's associated task's state is TASK_NEW, the kernel
 		// returns EINVAL. The function will retry on the error like runc.
 		// https://github.com/torvalds/linux/blob/v6.0/kernel/sched/core.c#L10308-L10337
-		// https://github.com/opencontainers/runc/pull/1950
+		// https://demo/3rd_party/runc/pull/1950
 		if !errors.Is(err, syscall.EINVAL) {
 			return err
 		}
@@ -299,51 +283,6 @@ func (c *cgroup) Delete() error {
 }
 
 // Stat returns the current metrics for the cgroup
-func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.err != nil {
-		return nil, c.err
-	}
-	if len(handlers) == 0 {
-		handlers = append(handlers, errPassthrough)
-	}
-	var (
-		stats = &v1.Metrics{
-			CPU: &v1.CPUStat{
-				Throttling: &v1.Throttle{},
-				Usage:      &v1.CPUUsage{},
-			},
-		}
-		wg   = &sync.WaitGroup{}
-		errs = make(chan error, len(c.subsystems))
-	)
-	for _, s := range c.subsystems {
-		if ss, ok := s.(stater); ok {
-			sp, err := c.path(s.Name())
-			if err != nil {
-				return nil, err
-			}
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if err := ss.Stat(sp, stats); err != nil {
-					for _, eh := range handlers {
-						if herr := eh(err); herr != nil {
-							errs <- herr
-						}
-					}
-				}
-			}()
-		}
-	}
-	wg.Wait()
-	close(errs)
-	for err := range errs {
-		return nil, err
-	}
-	return stats, nil
-}
 
 // Update updates the cgroup with the new resource values provided
 //
@@ -572,4 +511,49 @@ func (c *cgroup) checkExists() {
 			}
 		}
 	}
+}
+func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
+	if len(handlers) == 0 {
+		handlers = append(handlers, errPassthrough)
+	}
+	var (
+		stats = &v1.Metrics{
+			CPU: &v1.CPUStat{
+				Throttling: &v1.Throttle{},
+				Usage:      &v1.CPUUsage{},
+			},
+		}
+		wg   = &sync.WaitGroup{}
+		errs = make(chan error, len(c.subsystems))
+	)
+	for _, s := range c.subsystems {
+		if ss, ok := s.(stater); ok {
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return nil, err
+			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ss.Stat(sp, stats); err != nil {
+					for _, eh := range handlers {
+						if herr := eh(err); herr != nil {
+							errs <- herr
+						}
+					}
+				}
+			}()
+		}
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		return nil, err
+	}
+	return stats, nil
 }

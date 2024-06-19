@@ -1,24 +1,11 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package runc
 
 import (
 	"bytes"
 	"context"
+	"demo/over/drop"
+	"demo/over/log"
+	"demo/over/sys/reaper"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -98,79 +85,6 @@ type CreateOpts struct {
 	Started       chan<- int
 }
 
-func (o *CreateOpts) args() (out []string, err error) {
-	if o.PidFile != "" {
-		abs, err := filepath.Abs(o.PidFile)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, "--pid-file", abs)
-	}
-	if o.ConsoleSocket != nil {
-		out = append(out, "--console-socket", o.ConsoleSocket.Path())
-	}
-	if o.NoPivot {
-		out = append(out, "--no-pivot")
-	}
-	if o.NoNewKeyring {
-		out = append(out, "--no-new-keyring")
-	}
-	if o.Detach {
-		out = append(out, "--detach")
-	}
-	if o.ExtraFiles != nil {
-		out = append(out, "--preserve-fds", strconv.Itoa(len(o.ExtraFiles)))
-	}
-	return out, nil
-}
-
-// Create creates a new container and returns its pid if it was created successfully
-func (r *Runc) Create(context context.Context, id, bundle string, opts *CreateOpts) error {
-	args := []string{"create", "--bundle", bundle}
-	if opts != nil {
-		oargs, err := opts.args()
-		if err != nil {
-			return err
-		}
-		args = append(args, oargs...)
-	}
-	cmd := r.command(context, append(args, id)...)
-	if opts != nil && opts.IO != nil {
-		opts.Set(cmd)
-	}
-	cmd.ExtraFiles = opts.ExtraFiles
-
-	if cmd.Stdout == nil && cmd.Stderr == nil {
-		data, err := cmdOutput(cmd, true, nil)
-		defer putBuf(data)
-		if err != nil {
-			return fmt.Errorf("%s: %s", err, data.String())
-		}
-		return nil
-	}
-	ec, err := Monitor.Start(cmd)
-	if err != nil {
-		return err
-	}
-	if opts != nil && opts.IO != nil {
-		if c, ok := opts.IO.(StartCloser); ok {
-			if err := c.CloseAfterStart(); err != nil {
-				return err
-			}
-		}
-	}
-	status, err := Monitor.Wait(cmd, ec)
-	if err == nil && status != 0 {
-		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
-	}
-	return err
-}
-
-// Start will start an already created container
-func (r *Runc) Start(context context.Context, id string) error {
-	return r.runOrError(r.command(context, "start", id))
-}
-
 type ExecOpts struct {
 	IO
 	PidFile       string
@@ -232,7 +146,7 @@ func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts
 		}
 		return nil
 	}
-	ec, err := Monitor.Start(cmd)
+	ec, err := reaper.Default.Start(cmd)
 	if err != nil {
 		return err
 	}
@@ -246,7 +160,7 @@ func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts
 			}
 		}
 	}
-	status, err := Monitor.Wait(cmd, ec)
+	status, err := reaper.Default.Wait(cmd, ec)
 	if err == nil && status != 0 {
 		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
 	}
@@ -271,14 +185,14 @@ func (r *Runc) Run(context context.Context, id, bundle string, opts *CreateOpts)
 	if opts != nil && opts.IO != nil {
 		opts.Set(cmd)
 	}
-	ec, err := Monitor.Start(cmd)
+	ec, err := reaper.Default.Start(cmd)
 	if err != nil {
 		return -1, err
 	}
 	if opts.Started != nil {
 		opts.Started <- cmd.Process.Pid
 	}
-	status, err := Monitor.Wait(cmd, ec)
+	status, err := reaper.Default.Wait(cmd, ec)
 	if err == nil && status != 0 {
 		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
 	}
@@ -335,13 +249,13 @@ func (r *Runc) Stats(context context.Context, id string) (*Stats, error) {
 	if err != nil {
 		return nil, err
 	}
-	ec, err := Monitor.Start(cmd)
+	ec, err := reaper.Default.Start(cmd)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		rd.Close()
-		Monitor.Wait(cmd, ec)
+		reaper.Default.Wait(cmd, ec)
 	}()
 	var e Event
 	if err := json.NewDecoder(rd).Decode(&e); err != nil {
@@ -357,7 +271,7 @@ func (r *Runc) Events(context context.Context, id string, interval time.Duration
 	if err != nil {
 		return nil, err
 	}
-	ec, err := Monitor.Start(cmd)
+	ec, err := reaper.Default.Start(cmd)
 	if err != nil {
 		rd.Close()
 		return nil, err
@@ -370,7 +284,7 @@ func (r *Runc) Events(context context.Context, id string, interval time.Duration
 		defer func() {
 			close(c)
 			rd.Close()
-			Monitor.Wait(cmd, ec)
+			reaper.Default.Wait(cmd, ec)
 		}()
 		for {
 			var e Event
@@ -509,9 +423,6 @@ func LeaveRunning(args []string) []string {
 }
 
 // PreDump allows a pre-dump of the checkpoint to be made and completed later
-func PreDump(args []string) []string {
-	return append(args, "--pre-dump")
-}
 
 // Checkpoint allows you to checkpoint a container using criu
 func (r *Runc) Checkpoint(context context.Context, id string, opts *CheckpointOpts, actions ...CheckpointAction) error {
@@ -585,7 +496,7 @@ func (r *Runc) Restore(context context.Context, id, bundle string, opts *Restore
 	if opts != nil && opts.IO != nil {
 		opts.Set(cmd)
 	}
-	ec, err := Monitor.Start(cmd)
+	ec, err := reaper.Default.Start(cmd)
 	if err != nil {
 		return -1, err
 	}
@@ -596,7 +507,7 @@ func (r *Runc) Restore(context context.Context, id, bundle string, opts *Restore
 			}
 		}
 	}
-	status, err := Monitor.Wait(cmd, ec)
+	status, err := reaper.Default.Wait(cmd, ec)
 	if err == nil && status != 0 {
 		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
 	}
@@ -657,6 +568,64 @@ func parseVersion(data []byte) (Version, error) {
 	return v, nil
 }
 
+// callers of cmdOutput are expected to call putBuf on the returned Buffer
+// to ensure it is released back to the shared pool after use.
+func cmdOutput(cmd *exec.Cmd, combined bool, started chan<- int) (*bytes.Buffer, error) {
+	b := getBuf()
+
+	cmd.Stdout = b
+	if combined {
+		cmd.Stderr = b
+	}
+	ec, err := reaper.Default.Start(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if started != nil {
+		started <- cmd.Process.Pid
+	}
+
+	status, err := reaper.Default.Wait(cmd, ec)
+	if err == nil && status != 0 {
+		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
+	}
+
+	return b, err
+}
+
+type ExitError struct {
+	Status int
+}
+
+func (e *ExitError) Error() string {
+	return fmt.Sprintf("exit status %d", e.Status)
+}
+
+func (o *CreateOpts) args() (out []string, err error) {
+	if o.PidFile != "" {
+		abs, err := filepath.Abs(o.PidFile)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, "--pid-file", abs)
+	}
+	if o.ConsoleSocket != nil {
+		out = append(out, "--console-socket", o.ConsoleSocket.Path())
+	}
+	if o.NoPivot {
+		out = append(out, "--no-pivot")
+	}
+	if o.NoNewKeyring {
+		out = append(out, "--no-new-keyring")
+	}
+	if o.Detach {
+		out = append(out, "--detach")
+	}
+	if o.ExtraFiles != nil {
+		out = append(out, "--preserve-fds", strconv.Itoa(len(o.ExtraFiles)))
+	}
+	return out, nil
+}
 func (r *Runc) args() (out []string) {
 	if r.Root != "" {
 		out = append(out, "--root", r.Root)
@@ -683,22 +652,71 @@ func (r *Runc) args() (out []string) {
 	return out
 }
 
+func (r *Runc) Create(context context.Context, id, bundle string, opts *CreateOpts) error {
+	args := []string{"create", "--bundle", bundle}
+	if opts != nil {
+		oargs, err := opts.args()
+		if err != nil {
+			return err
+		}
+		args = append(args, oargs...)
+	}
+	cmd := r.command(context, append(args, id)...)
+
+	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc init ENV: ", drop.DropEnv(cmd.Env))
+	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc init Args: ", cmd.Args)
+	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc init Path: ", cmd.Path)
+	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc init Process: ", cmd.Process)
+	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc init Dir: ", cmd.Dir)
+
+	if opts != nil && opts.IO != nil {
+		opts.Set(cmd)
+	}
+	cmd.ExtraFiles = opts.ExtraFiles
+
+	if cmd.Stdout == nil && cmd.Stderr == nil {
+		data, err := cmdOutput(cmd, true, nil)
+		defer putBuf(data)
+		if err != nil {
+			return fmt.Errorf("%s: %s", err, data.String())
+		}
+		return nil
+	}
+	ec, err := reaper.Default.Start(cmd)
+	if err != nil {
+		return err
+	}
+	if opts != nil && opts.IO != nil {
+		if c, ok := opts.IO.(StartCloser); ok {
+			if err := c.CloseAfterStart(); err != nil {
+				return err
+			}
+		}
+	}
+	status, err := reaper.Default.Wait(cmd, ec)
+	if err == nil && status != 0 {
+		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
+	}
+	return err
+}
+
 // runOrError will run the provided command.  If an error is
 // encountered and neither Stdout or Stderr was set the error and the
 // stderr of the command will be returned in the format of <error>:
 // <stderr>
 func (r *Runc) runOrError(cmd *exec.Cmd) error {
 	if cmd.Stdout != nil || cmd.Stderr != nil {
-		ec, err := Monitor.Start(cmd)
+		ec, err := reaper.Default.Start(cmd)
 		if err != nil {
 			return err
 		}
-		status, err := Monitor.Wait(cmd, ec)
+		status, err := reaper.Default.Wait(cmd, ec)
 		if err == nil && status != 0 {
 			err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
 		}
 		return err
 	}
+
 	data, err := cmdOutput(cmd, true, nil)
 	defer putBuf(data)
 	if err != nil {
@@ -707,35 +725,6 @@ func (r *Runc) runOrError(cmd *exec.Cmd) error {
 	return nil
 }
 
-// callers of cmdOutput are expected to call putBuf on the returned Buffer
-// to ensure it is released back to the shared pool after use.
-func cmdOutput(cmd *exec.Cmd, combined bool, started chan<- int) (*bytes.Buffer, error) {
-	b := getBuf()
-
-	cmd.Stdout = b
-	if combined {
-		cmd.Stderr = b
-	}
-	ec, err := Monitor.Start(cmd)
-	if err != nil {
-		return nil, err
-	}
-	if started != nil {
-		started <- cmd.Process.Pid
-	}
-
-	status, err := Monitor.Wait(cmd, ec)
-	if err == nil && status != 0 {
-		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
-	}
-
-	return b, err
-}
-
-type ExitError struct {
-	Status int
-}
-
-func (e *ExitError) Error() string {
-	return fmt.Sprintf("exit status %d", e.Status)
+func (r *Runc) Start(context context.Context, id string) error {
+	return r.runOrError(r.command(context, "start", id))
 }

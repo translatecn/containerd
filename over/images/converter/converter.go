@@ -1,28 +1,11 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 // Package converter provides image converter
 package converter
 
 import (
 	"context"
-	"demo/pkg/leases"
-
-	"demo/content"
+	"demo/over/content"
 	"demo/over/images"
+	"demo/over/leases"
 	"demo/over/platforms"
 )
 
@@ -30,7 +13,7 @@ type convertOpts struct {
 	layerConvertFunc ConvertFunc
 	docker2oci       bool
 	indexConvertFunc ConvertFunc
-	platformMC       over_platforms.MatchComparer
+	platformMC       platforms.MatchComparer
 }
 
 // Opt is an option for Convert()
@@ -54,7 +37,7 @@ func WithDockerToOCI(v bool) Opt {
 
 // WithPlatform specifies the platform.
 // Defaults to all platforms.
-func WithPlatform(p over_platforms.MatchComparer) Opt {
+func WithPlatform(p platforms.MatchComparer) Opt {
 	return func(copts *convertOpts) error {
 		copts.platformMC = p
 		return nil
@@ -63,22 +46,16 @@ func WithPlatform(p over_platforms.MatchComparer) Opt {
 
 // WithIndexConvertFunc specifies the function that converts manifests and index (manifest lists).
 // Defaults to DefaultIndexConvertFunc.
-func WithIndexConvertFunc(fn ConvertFunc) Opt {
-	return func(copts *convertOpts) error {
-		copts.indexConvertFunc = fn
-		return nil
-	}
-}
 
 // Client is implemented by *containerd.Client .
 type Client interface {
 	WithLease(ctx context.Context, opts ...leases.Opt) (context.Context, func(context.Context) error, error)
 	ContentStore() content.Store
-	ImageService() over_images.Store
+	ImageService() images.Store
 }
 
 // Convert converts an image.
-func Convert(ctx context.Context, client Client, dstRef, srcRef string, opts ...Opt) (*over_images.Image, error) {
+func Convert(ctx context.Context, client Client, dstRef, srcRef string, opts ...Opt) (*images.Image, error) {
 	var copts convertOpts
 	for _, o := range opts {
 		if err := o(&copts); err != nil {
@@ -86,7 +63,7 @@ func Convert(ctx context.Context, client Client, dstRef, srcRef string, opts ...
 		}
 	}
 	if copts.platformMC == nil {
-		copts.platformMC = over_platforms.All
+		copts.platformMC = platforms.All
 	}
 	if copts.indexConvertFunc == nil {
 		copts.indexConvertFunc = DefaultIndexConvertFunc(copts.layerConvertFunc, copts.docker2oci, copts.platformMC)
@@ -115,7 +92,7 @@ func Convert(ctx context.Context, client Client, dstRef, srcRef string, opts ...
 	if dstDesc != nil {
 		dstImg.Target = *dstDesc
 	}
-	var res over_images.Image
+	var res images.Image
 	if dstRef != srcRef {
 		_ = is.Delete(ctx, dstRef)
 		res, err = is.Create(ctx, dstImg)

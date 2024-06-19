@@ -1,25 +1,15 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
+	criconfig "demo/config/cri"
 	"demo/others/go-cni"
+	"demo/over/atomic"
+	"demo/over/kmutex"
 	"demo/over/plugin"
+	"demo/over/registrar"
+	"demo/pkg/oci"
 	"demo/pkg/sandbox"
+	"demo/plugins/containerd/over/warning"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,29 +20,23 @@ import (
 	"time"
 
 	"demo/containerd"
-	"demo/over/oci"
+	runtime "demo/over/api/cri/v1"
+	runtime_alpha "demo/over/api/cri/v1alpha2"
 	"demo/pkg/cri/instrument"
 	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver/podsandbox"
 	"demo/pkg/cri/streaming"
-	"demo/pkg/kmutex"
-	"demo/services/warning"
-	runtime_alpha "demo/third_party/k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/pkg/cri/store/label"
 
 	osinterface "demo/over/os"
-	"demo/pkg/atomic"
-	criconfig "demo/pkg/cri/config"
 	containerstore "demo/pkg/cri/store/container"
 	imagestore "demo/pkg/cri/store/image"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	snapshotstore "demo/pkg/cri/store/snapshot"
 	ctrdutil "demo/pkg/cri/util"
-	"demo/pkg/registrar"
 )
 
 // defaultNetworkPlugin is used for the default CNI configuration
@@ -110,7 +94,7 @@ type criService struct {
 	// any valid fs change events from cni network conf dir.
 	cniNetConfMonitor map[string]*cniNetConfSyncer
 	// baseOCISpecs contains cached OCI specs loaded via `Runtime.BaseRuntimeSpec`
-	baseOCISpecs map[string]*over_oci.Spec
+	baseOCISpecs map[string]*oci.Spec
 	// allCaps is the list of the capabilities.
 	// When nil, parsed from CapEff of /proc/self/status.
 	allCaps []string //nolint:nolintlint,unused // Ignore on non-Linux
@@ -127,7 +111,6 @@ type criService struct {
 	warn warning.Service
 }
 
-// NewCRIService returns a new instance of CRIService
 func NewCRIService(config criconfig.Config, client *containerd.Client, nri *nri.API, warn warning.Service) (CRIService, error) {
 	var err error
 	labels := label.NewStore()
@@ -212,15 +195,6 @@ func (c *criService) BackOffEvent(id string, event interface{}) {
 // This is used by containerd cri plugin.
 func (c *criService) Register(s *grpc.Server) error {
 	return c.register(s)
-}
-
-// RegisterTCP register all required services onto a GRPC server on TCP.
-// This is used by containerd CRI plugin.
-func (c *criService) RegisterTCP(s *grpc.Server) error {
-	if !c.config.DisableTCPService {
-		return c.register(s)
-	}
-	return nil
 }
 
 // Run starts the CRI service.
@@ -357,17 +331,17 @@ func (c *criService) register(s *grpc.Server) error {
 // imageFSPath returns containerd image filesystem path.
 // Note that if containerd changes directory layout, we also needs to change this.
 func imageFSPath(rootDir, snapshotter string) string {
-	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", over_plugin.SnapshotPlugin, snapshotter))
+	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", plugin.SnapshotPlugin, snapshotter))
 }
 
-func loadOCISpec(filename string) (*over_oci.Spec, error) {
+func loadOCISpec(filename string) (*oci.Spec, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open base OCI spec: %s: %w", filename, err)
 	}
 	defer file.Close()
 
-	spec := over_oci.Spec{}
+	spec := oci.Spec{}
 	if err := json.NewDecoder(file).Decode(&spec); err != nil {
 		return nil, fmt.Errorf("failed to parse base OCI spec file: %w", err)
 	}
@@ -375,8 +349,8 @@ func loadOCISpec(filename string) (*over_oci.Spec, error) {
 	return &spec, nil
 }
 
-func loadBaseOCISpecs(config *criconfig.Config) (map[string]*over_oci.Spec, error) {
-	specs := map[string]*over_oci.Spec{}
+func loadBaseOCISpecs(config *criconfig.Config) (map[string]*oci.Spec, error) {
+	specs := map[string]*oci.Spec{}
 	for _, cfg := range config.Runtimes {
 		if cfg.BaseRuntimeSpec == "" {
 			continue

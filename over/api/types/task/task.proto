@@ -1,0 +1,41 @@
+
+
+syntax = "proto3";
+
+package containerd.v1.types;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "demo/containerd/api/types/task";
+
+enum Status {
+	UNKNOWN = 0;
+	CREATED = 1;
+	RUNNING = 2;
+	STOPPED = 3;
+	PAUSED = 4;
+	PAUSING = 5;
+}
+
+message Process {
+	string container_id = 1;
+	string id = 2;
+	uint32 pid = 3;
+	Status status = 4;
+	string stdin = 5;
+	string stdout = 6;
+	string stderr = 7;
+	bool terminal = 8;
+	uint32 exit_status = 9;
+	google.protobuf.Timestamp exited_at = 10;
+}
+
+message ProcessInfo {
+	// PID is the process ID.
+	uint32 pid = 1;
+	// Info contains additional process information.
+	//
+	// Info varies by platform.
+	google.protobuf.Any info = 2;
+}

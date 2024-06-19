@@ -8,19 +8,15 @@ import (
 )
 
 func Mount(source string, target string, fstype string, flags uintptr, data string) (err error) {
-	if fstype == "overlay" {
-		color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), data, target)
-
-	} else {
-		color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), source, target, data)
-
+	if os.Getenv("DEBUG") != "" {
+		if fstype == "overlay" {
+			color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), data, target)
+		} else {
+			color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), source, target, data)
+		}
 	}
-	return unix.Mount(source, target, fstype, flags, data)
-}
 
-func Unmount(target string, flags int) (err error) {
-	color.New(color.FgGreen).SetWriter(os.Stderr).Println("umount ", flag2str("", int64(flags)), target)
-	return unix.Unmount(target, flags)
+	return unix.Mount(source, target, fstype, flags, data)
 }
 
 func flag2str(fstype string, flag int64) string {

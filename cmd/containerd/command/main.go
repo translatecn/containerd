@@ -1,25 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package command
 
 import (
 	gocontext "context"
-	"demo/others/log"
-	"demo/pkg/sys"
+	serconfig "demo/config/server"
+	"demo/over/defaults"
+	"demo/over/log"
+	"demo/over/sys"
+	"demo/over/version"
+	"demo/plugins/containerd/content"
 	"fmt"
 	"io"
 	"net"
@@ -30,12 +18,8 @@ import (
 	"time"
 
 	"demo/over/errdefs"
+	_ "demo/over/metrics" // import containerd build info
 	"demo/over/mount"
-	"demo/pkg/defaults"
-	_ "demo/pkg/metrics" // import containerd build info
-	"demo/services/server"
-	srvconfig "demo/services/server/config"
-	"demo/version"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/grpclog"
 )
@@ -109,7 +93,7 @@ can be used and modified as necessary as a custom configuration.`
 		var (
 			start       = time.Now()
 			signals     = make(chan os.Signal, 2048)
-			serverC     = make(chan *server.Server, 1)
+			serverC     = make(chan *content.Server, 1)
 			ctx, cancel = gocontext.WithCancel(gocontext.Background())
 			config      = defaultConfig()
 		)
@@ -121,7 +105,7 @@ can be used and modified as necessary as a custom configuration.`
 		configPath := context.GlobalString("config")
 		_, err := os.Stat(configPath)
 		if !os.IsNotExist(err) || context.GlobalIsSet("config") {
-			if err := srvconfig.LoadConfig(configPath, config); err != nil {
+			if err := serconfig.LoadConfig(configPath, config); err != nil {
 				return err
 			}
 		}
@@ -132,7 +116,7 @@ can be used and modified as necessary as a custom configuration.`
 		}
 
 		if config.GRPC.Address == "" {
-			return fmt.Errorf("grpc address cannot be empty: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("grpc address cannot be empty: %w", errdefs.ErrInvalidArgument)
 		}
 		if config.TTRPC.Address == "" {
 			// If TTRPC was not explicitly configured, use defaults based on GRPC.
@@ -142,7 +126,7 @@ can be used and modified as necessary as a custom configuration.`
 		}
 
 		// Make sure top-level directories are created early.
-		if err := server.CreateTopLevelDirectories(config); err != nil {
+		if err := content.CreateTopLevelDirectories(config); err != nil {
 			return err
 		}
 
@@ -179,7 +163,7 @@ can be used and modified as necessary as a custom configuration.`
 		}).Info("starting containerd")
 
 		type srvResp struct {
-			s   *server.Server
+			s   *content.Server
 			err error
 		}
 
@@ -191,7 +175,7 @@ can be used and modified as necessary as a custom configuration.`
 		go func() {
 			defer close(chsrv)
 
-			server, err := server.New(ctx, config)
+			server, err := content.New(ctx, config)
 			if err != nil {
 				select {
 				case chsrv <- srvResp{err: err}:
@@ -211,7 +195,7 @@ can be used and modified as necessary as a custom configuration.`
 			}
 		}()
 
-		var server *server.Server
+		var server *content.Server
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -301,7 +285,7 @@ func serve(ctx gocontext.Context, l net.Listener, serveFunc func(net.Listener) e
 	}()
 }
 
-func applyFlags(context *cli.Context, config *srvconfig.Config) error {
+func applyFlags(context *cli.Context, config *serconfig.Config) error {
 	// the order for config vs flag values is that flags will always override
 	// the config values if they are set
 	if err := setLogLevel(context, config); err != nil {
@@ -345,7 +329,7 @@ func applyFlags(context *cli.Context, config *srvconfig.Config) error {
 	return nil
 }
 
-func setLogLevel(context *cli.Context, config *srvconfig.Config) error {
+func setLogLevel(context *cli.Context, config *serconfig.Config) error {
 	l := context.GlobalString("log-level")
 	if l == "" {
 		l = config.Debug.Level
@@ -356,7 +340,7 @@ func setLogLevel(context *cli.Context, config *srvconfig.Config) error {
 	return nil
 }
 
-func setLogFormat(config *srvconfig.Config) error {
+func setLogFormat(config *serconfig.Config) error {
 	f := log.OutputFormat(config.Debug.Format)
 	if f == "" {
 		f = log.TextFormat

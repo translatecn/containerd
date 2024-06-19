@@ -1,33 +1,17 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
 	"errors"
 	"fmt"
 	"time"
 
 	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
 	containerstore "demo/pkg/cri/store/container"
 	"github.com/sirupsen/logrus"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // RemoveContainer removes the container.
@@ -36,7 +20,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	ctrID := r.GetContainerId()
 	container, err := c.containerStore.Get(ctrID)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("an error occurred when try to find container %q: %w", ctrID, err)
 		}
 		// Do not return error if container metadata doesn't exist.
@@ -46,7 +30,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	id := container.ID
 	i, err := container.Container.Info(ctx)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("get container info: %w", err)
 		}
 		// Since containerd doesn't see the container and criservice's content store does,
@@ -100,7 +84,7 @@ func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 	// Delete containerd container.
 	if err := container.Container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to delete containerd container %q: %w", id, err)
 		}
 		log.G(ctx).Tracef("Remove called for containerd container %q that does not exist", id)

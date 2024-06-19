@@ -1,31 +1,15 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"fmt"
 	goruntime "runtime"
 	"time"
 
+	runtime "demo/over/api/cri/v1"
 	"demo/pkg/netns"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/containerd"
 	"demo/over/errdefs"
@@ -78,12 +62,12 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 
 		// Load sandbox state.
 		t, err := cntr.Task(ctx, nil)
-		if err != nil && !over_errdefs.IsNotFound(err) {
+		if err != nil && !errdefs.IsNotFound(err) {
 			return status, fmt.Errorf("failed to load task: %w", err)
 		}
 		var taskStatus containerd.Status
 		var notFound bool
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Task is not found.
 			notFound = true
 		} else {
@@ -91,7 +75,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 			taskStatus, err = t.Status(ctx)
 			if err != nil {
 				// It's still possible that task is deleted during this window.
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return status, fmt.Errorf("failed to get task status: %w", err)
 				}
 				notFound = true
@@ -106,7 +90,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 				// wait is a long running background request, no timeout needed.
 				exitCh, err := t.Wait(ctrdutil.NamespacedContext())
 				if err != nil {
-					if !over_errdefs.IsNotFound(err) {
+					if !errdefs.IsNotFound(err) {
 						return status, fmt.Errorf("failed to wait for task: %w", err)
 					}
 					status.State = sandboxstore.StateNotReady
@@ -121,7 +105,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 				}
 			} else {
 				// Task is not running. Delete the task and set sandbox state as NOTREADY.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 					return status, fmt.Errorf("failed to delete task: %w", err)
 				}
 				status.State = sandboxstore.StateNotReady

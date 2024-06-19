@@ -1,30 +1,14 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package tasks
 
 import (
+	"demo/config/runc"
+	"demo/over/api/runctypes"
 	"demo/over/plugin"
 	"errors"
 	"fmt"
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/runtime/linux/runctypes"
-	"demo/runtime/v2/runc/options"
 	"github.com/urfave/cli"
 )
 
@@ -87,11 +71,11 @@ func withCheckpointOpts(rt string, context *cli.Context) containerd.CheckpointTa
 		workPath := context.String("work-path")
 
 		switch rt {
-		case over_plugin.RuntimeRuncV1, over_plugin.RuntimeRuncV2:
+		case plugin.RuntimeRuncV1, plugin.RuntimeRuncV2:
 			if r.Options == nil {
-				r.Options = &options.CheckpointOptions{}
+				r.Options = &runc.CheckpointOptions{}
 			}
-			opts, _ := r.Options.(*options.CheckpointOptions)
+			opts, _ := r.Options.(*runc.CheckpointOptions)
 
 			if context.Bool("exit") {
 				opts.Exit = true
@@ -102,7 +86,7 @@ func withCheckpointOpts(rt string, context *cli.Context) containerd.CheckpointTa
 			if workPath != "" {
 				opts.WorkPath = workPath
 			}
-		case over_plugin.RuntimeLinuxV1:
+		case plugin.RuntimeLinuxV1:
 			if r.Options == nil {
 				r.Options = &runctypes.CheckpointOptions{}
 			}

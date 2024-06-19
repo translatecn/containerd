@@ -1,22 +1,3 @@
-//go:build linux || darwin
-// +build linux darwin
-
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sysx
 
 import (
@@ -29,11 +10,6 @@ import (
 // and returns a string array
 func Listxattr(path string) ([]string, error) {
 	return listxattrAll(path, unix.Listxattr)
-}
-
-// Removexattr calls syscall removexattr
-func Removexattr(path string, attr string) (err error) {
-	return unix.Removexattr(path, attr)
 }
 
 // Setxattr calls syscall setxattr
@@ -49,11 +25,6 @@ func Getxattr(path, attr string) ([]byte, error) {
 // LListxattr lists xattrs, not following symlinks
 func LListxattr(path string) ([]string, error) {
 	return listxattrAll(path, unix.Llistxattr)
-}
-
-// LRemovexattr removes an xattr, not following symlinks
-func LRemovexattr(path string, attr string) (err error) {
-	return unix.Lremovexattr(path, attr)
 }
 
 // LSetxattr sets an xattr, not following symlinks

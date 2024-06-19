@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package cgroup1
 
 import (
@@ -38,30 +22,8 @@ type MemoryEvent interface {
 	EventFile() string
 }
 
-type memoryThresholdEvent struct {
-	threshold uint64
-	swap      bool
-}
-
 // MemoryThresholdEvent returns a new [MemoryEvent] representing the memory threshold set.
 // If swap is true, the event will be registered using memory.memsw.usage_in_bytes
-func MemoryThresholdEvent(threshold uint64, swap bool) MemoryEvent {
-	return &memoryThresholdEvent{
-		threshold,
-		swap,
-	}
-}
-
-func (m *memoryThresholdEvent) Arg() string {
-	return strconv.FormatUint(m.threshold, 10)
-}
-
-func (m *memoryThresholdEvent) EventFile() string {
-	if m.swap {
-		return "memory.memsw.usage_in_bytes"
-	}
-	return "memory.usage_in_bytes"
-}
 
 type oomEvent struct{}
 
@@ -78,26 +40,7 @@ func (oom *oomEvent) EventFile() string {
 	return "memory.oom_control"
 }
 
-type memoryPressureEvent struct {
-	pressureLevel MemoryPressureLevel
-	hierarchy     EventNotificationMode
-}
-
 // MemoryPressureEvent returns a new [MemoryEvent] representing the memory pressure set.
-func MemoryPressureEvent(pressureLevel MemoryPressureLevel, hierarchy EventNotificationMode) MemoryEvent {
-	return &memoryPressureEvent{
-		pressureLevel,
-		hierarchy,
-	}
-}
-
-func (m *memoryPressureEvent) Arg() string {
-	return string(m.pressureLevel) + "," + string(m.hierarchy)
-}
-
-func (m *memoryPressureEvent) EventFile() string {
-	return "memory.pressure_level"
-}
 
 // MemoryPressureLevel corresponds to the memory pressure levels defined
 // for memory cgroups.
@@ -167,24 +110,9 @@ func NewMemory(root string, options ...func(*memoryController)) *memoryControlle
 
 // IgnoreModules configure the memory controller to not read memory metrics for some
 // module names (e.g. passing "memsw" would avoid all the memory.memsw.* entries)
-func IgnoreModules(names ...string) func(*memoryController) {
-	return func(mc *memoryController) {
-		for _, name := range names {
-			mc.ignored[name] = struct{}{}
-		}
-	}
-}
 
 // OptionalSwap allows the memory controller to not fail if cgroups is not accounting
 // Swap memory (there are no memory.memsw.* entries)
-func OptionalSwap() func(*memoryController) {
-	return func(mc *memoryController) {
-		_, err := os.Stat(filepath.Join(mc.root, "memory.memsw.usage_in_bytes"))
-		if os.IsNotExist(err) {
-			mc.ignored["memsw"] = struct{}{}
-		}
-	}
-}
 
 type memoryController struct {
 	root    string

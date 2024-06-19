@@ -1,35 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-/*
-Copyright 2016 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package remotecommand
 
 import (
@@ -64,28 +32,6 @@ type Options struct {
 }
 
 // NewOptions creates a new Options from the Request.
-func NewOptions(req *http.Request) (*Options, error) {
-	tty := req.FormValue(api.ExecTTYParam) == "1"
-	stdin := req.FormValue(api.ExecStdinParam) == "1"
-	stdout := req.FormValue(api.ExecStdoutParam) == "1"
-	stderr := req.FormValue(api.ExecStderrParam) == "1"
-	if tty && stderr {
-		// TODO: make this an error before we reach this method
-		klog.V(4).Infof("Access to exec with tty and stderr is not supported, bypassing stderr")
-		stderr = false
-	}
-
-	if !stdin && !stdout && !stderr {
-		return nil, fmt.Errorf("you must specify at least 1 of stdin, stdout, stderr")
-	}
-
-	return &Options{
-		Stdin:  stdin,
-		Stdout: stdout,
-		Stderr: stderr,
-		TTY:    tty,
-	}, nil
-}
 
 // context contains the connection and streams used when
 // forwarding an attach or execute session into a container.

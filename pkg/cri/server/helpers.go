@@ -1,26 +1,24 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
+	criconfig "demo/config/cri"
+	runcoptions "demo/config/runc"
+	"demo/containerd"
+	"demo/over/api/runctypes"
+	runtimeoptions "demo/over/api/runtimeoptions/v1"
+	"demo/over/containers"
+	"demo/over/errdefs"
+	clabels "demo/over/labels"
 	"demo/over/plugin"
-	docker2 "demo/pkg/reference/docker"
+	"demo/over/reference/docker"
+	"demo/over/typeurl/v2"
+	containerstore "demo/pkg/cri/store/container"
+	imagestore "demo/pkg/cri/store/image"
+	sandboxstore "demo/pkg/cri/store/sandbox"
 	"fmt"
+	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/sirupsen/logrus"
 	"path"
 	"path/filepath"
 	goruntime "runtime"
@@ -28,25 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"demo/containerd"
-	"demo/containers"
-	"demo/others/typeurl/v2"
-	"demo/over/errdefs"
-	criconfig "demo/pkg/cri/config"
-	containerstore "demo/pkg/cri/store/container"
-	imagestore "demo/pkg/cri/store/image"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	clabels "demo/pkg/labels"
-	runtimeoptions "demo/pkg/runtimeoptions/v1"
-	"demo/runtime/linux/runctypes"
-	runcoptions "demo/runtime/v2/runc/options"
-	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
-
+	runtime "demo/over/api/cri/v1"
 	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
 	"github.com/pelletier/go-toml"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 const (
@@ -145,23 +128,8 @@ func criContainerStateToString(state runtime.ContainerState) string {
 	return runtime.ContainerState_name[int32(state)]
 }
 
-// getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
-func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
-	var repoTag, repoDigest string
-	if _, ok := namedRef.(docker2.NamedTagged); ok {
-		repoTag = namedRef.String()
-	}
-	if _, ok := namedRef.(docker2.Canonical); ok {
-		repoDigest = namedRef.String()
-	} else if !schema1 {
-		// digest is not actual repo digest for schema1 image.
-		repoDigest = namedRef.Name() + "@" + digest.String()
-	}
-	return repoDigest, repoTag
-}
-
 // localResolve resolves image reference locally and returns corresponding image metadata. It
-// returns over_errdefs.ErrNotFound if the reference doesn't exist.
+// returns errdefs.ErrNotFound if the reference doesn't exist.
 func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 	getImageID := func(refOrId string) string {
 		if _, err := imagedigest.Parse(refOrID); err == nil {
@@ -170,7 +138,7 @@ func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 		return func(ref string) string {
 			// ref is not image id, try to resolve it locally.
 			// TODO(random-liu): Handle this error better for debugging.
-			normalized, err := docker2.ParseDockerRef(ref)
+			normalized, err := docker.ParseDockerRef(ref)
 			if err != nil {
 				return ""
 			}
@@ -190,15 +158,6 @@ func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 	return c.imageStore.Get(imageID)
 }
 
-// toContainerdImage converts an image object in image store to containerd image handler.
-func (c *criService) toContainerdImage(ctx context.Context, image imagestore.Image) (containerd.Image, error) {
-	// image should always have at least one reference.
-	if len(image.References) == 0 {
-		return nil, fmt.Errorf("invalid image with no reference %q", image.ID)
-	}
-	return c.client.GetImage(ctx, image.References[0])
-}
-
 // getUserFromImage gets uid or user name of the image user.
 // If user is numeric, it will be treated as uid; or else, it is treated as user name.
 func getUserFromImage(user string) (*int64, string) {
@@ -216,30 +175,6 @@ func getUserFromImage(user string) (*int64, string) {
 	}
 	// If user is a numeric uid.
 	return &uid, ""
-}
-
-// ensureImageExists returns corresponding metadata of the image reference, if image is not
-// pulled yet, the function will pull the image.
-func (c *criService) ensureImageExists(ctx context.Context, ref string, config *runtime.PodSandboxConfig) (*imagestore.Image, error) {
-	image, err := c.localResolve(ref)
-	if err != nil && !over_errdefs.IsNotFound(err) {
-		return nil, fmt.Errorf("failed to get image %q: %w", ref, err)
-	}
-	if err == nil {
-		return &image, nil
-	}
-	// Pull image to ensure the image exists
-	resp, err := c.PullImage(ctx, &runtime.PullImageRequest{Image: &runtime.ImageSpec{Image: ref}, SandboxConfig: config})
-	if err != nil {
-		return nil, fmt.Errorf("failed to pull image %q: %w", ref, err)
-	}
-	imageID := resp.GetImageRef()
-	newImage, err := c.imageStore.Get(imageID)
-	if err != nil {
-		// It's still possible that someone removed the image right after it is pulled.
-		return nil, fmt.Errorf("failed to get image %q after pulling: %w", imageID, err)
-	}
-	return &newImage, nil
 }
 
 // validateTargetContainer checks that a container is a valid
@@ -282,27 +217,6 @@ func filterLabel(k, v string) string {
 	return fmt.Sprintf("labels.%q==%q", k, v)
 }
 
-// buildLabel builds the labels from config to be passed to containerd
-func buildLabels(configLabels, imageConfigLabels map[string]string, containerType string) map[string]string {
-	labels := make(map[string]string)
-
-	for k, v := range imageConfigLabels {
-		if err := clabels.Validate(k, v); err == nil {
-			labels[k] = v
-		} else {
-			// In case the image label is invalid, we output a warning and skip adding it to the
-			// container.
-			logrus.WithError(err).Warnf("unable to add image label with key %s to the container", k)
-		}
-	}
-	// labels from the CRI request (config) will override labels in the image config
-	for k, v := range configLabels {
-		labels[k] = v
-	}
-	labels[containerKindLabel] = containerType
-	return labels
-}
-
 // toRuntimeAuthConfig converts cri plugin auth config to runtime auth config.
 func toRuntimeAuthConfig(a criconfig.AuthConfig) *runtime.AuthConfig {
 	return &runtime.AuthConfig{
@@ -318,13 +232,13 @@ func toRuntimeAuthConfig(a criconfig.AuthConfig) *runtime.AuthConfig {
 func parseImageReferences(refs []string) ([]string, []string) {
 	var tags, digests []string
 	for _, ref := range refs {
-		parsed, err := docker2.ParseAnyReference(ref)
+		parsed, err := docker.ParseAnyReference(ref)
 		if err != nil {
 			continue
 		}
-		if _, ok := parsed.(docker2.Canonical); ok {
+		if _, ok := parsed.(docker.Canonical); ok {
 			digests = append(digests, parsed.String())
-		} else if _, ok := parsed.(docker2.Tagged); ok {
+		} else if _, ok := parsed.(docker.Tagged); ok {
 			tags = append(tags, parsed.String())
 		}
 	}
@@ -334,7 +248,7 @@ func parseImageReferences(refs []string) ([]string, []string) {
 // generateRuntimeOptions generates runtime options from cri plugin config.
 func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{}, error) {
 	if r.Options == nil {
-		if r.Type != over_plugin.RuntimeLinuxV1 {
+		if r.Type != plugin.RuntimeLinuxV1 { // io.containerd.runc.v2
 			return nil, nil
 		}
 		// This is a legacy config, generate runctypes.RuncOptions.
@@ -368,11 +282,11 @@ func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{
 // getRuntimeOptionsType gets empty runtime options by the runtime type name.
 func getRuntimeOptionsType(t string) interface{} {
 	switch t {
-	case over_plugin.RuntimeRuncV1:
+	case plugin.RuntimeRuncV1:
 		fallthrough
-	case over_plugin.RuntimeRuncV2:
+	case plugin.RuntimeRuncV2:
 		return &runcoptions.Options{}
-	case over_plugin.RuntimeLinuxV1:
+	case plugin.RuntimeLinuxV1:
 		return &runctypes.RuncOptions{}
 	case runtimeRunhcsV1:
 		return &runhcsoptions.Options{}
@@ -523,6 +437,94 @@ func copyResourcesToStatus(spec *runtimespec.Spec, status containerstore.Status)
 	return status
 }
 
+// hostNetwork handles checking if host networking was requested.
+func hostNetwork(config *runtime.PodSandboxConfig) bool {
+	var hostNet bool
+	switch goruntime.GOOS {
+	case "windows":
+		// Windows HostProcess pods can only run on the host network
+		hostNet = config.GetWindows().GetSecurityContext().GetHostProcess()
+	case "darwin":
+		// No CNI on Darwin yet.
+		hostNet = true
+	default:
+		// Even on other platforms, the logic containerd uses is to check if NamespaceMode == NODE.
+		// So this handles Linux, as well as any other platforms not governed by the cases above
+		// that have special quirks.
+		hostNet = config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
+	}
+	return hostNet
+}
+
+// getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
+func getRepoDigestAndTag(namedRef docker.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
+	var repoTag, repoDigest string
+	if _, ok := namedRef.(docker.NamedTagged); ok {
+		repoTag = namedRef.String()
+	}
+	if _, ok := namedRef.(docker.Canonical); ok {
+		repoDigest = namedRef.String()
+	} else if !schema1 {
+		// digest is not actual repo digest for schema1 image.
+		repoDigest = namedRef.Name() + "@" + digest.String()
+	}
+	return repoDigest, repoTag
+}
+
+// ensureImageExists returns corresponding metadata of the image reference, if image is not
+// pulled yet, the function will pull the image.
+func (c *criService) ensureImageExists(ctx context.Context, ref string, config *runtime.PodSandboxConfig) (*imagestore.Image, error) {
+	image, err := c.localResolve(ref)
+	if err != nil && !errdefs.IsNotFound(err) {
+		return nil, fmt.Errorf("failed to get image %q: %w", ref, err)
+	}
+	if err == nil {
+		return &image, nil
+	}
+	// Pull image to ensure the image exists
+	resp, err := c.PullImage(ctx, &runtime.PullImageRequest{Image: &runtime.ImageSpec{Image: ref}, SandboxConfig: config})
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull image %q: %w", ref, err)
+	}
+	imageID := resp.GetImageRef()
+	newImage, err := c.imageStore.Get(imageID)
+	if err != nil {
+		// It's still possible that someone removed the image right after it is pulled.
+		return nil, fmt.Errorf("failed to get image %q after pulling: %w", imageID, err)
+	}
+	return &newImage, nil
+}
+
+// toContainerdImage converts an image object in image store to containerd image handler.
+func (c *criService) toContainerdImage(ctx context.Context, image imagestore.Image) (containerd.Image, error) {
+	// image should always have at least one reference.
+	if len(image.References) == 0 {
+		return nil, fmt.Errorf("invalid image with no reference %q", image.ID)
+	}
+	return c.client.GetImage(ctx, image.References[0])
+}
+
+// buildLabel builds the labels from config to be passed to containerd
+func buildLabels(configLabels, imageConfigLabels map[string]string, containerType string) map[string]string {
+	labels := make(map[string]string)
+
+	for k, v := range imageConfigLabels {
+		if err := clabels.Validate(k, v); err == nil {
+			labels[k] = v
+		} else {
+			// In case the image label is invalid, we output a warning and skip adding it to the
+			// container.
+			logrus.WithError(err).Warnf("unable to add image label with key %s to the container", k)
+		}
+	}
+	// labels from the CRI request (config) will override labels in the image config
+	for k, v := range configLabels {
+		labels[k] = v
+	}
+	labels[containerKindLabel] = containerType
+	return labels
+}
+
 func (c *criService) generateAndSendContainerEvent(ctx context.Context, containerID string, sandboxID string, eventType runtime.ContainerEventType) {
 	podSandboxStatus, err := c.getPodSandboxStatus(ctx, sandboxID)
 	if err != nil {
@@ -549,7 +551,6 @@ func (c *criService) generateAndSendContainerEvent(ctx context.Context, containe
 		logrus.Debugf("containerEventsChan is full, discarding event %+v", event)
 	}
 }
-
 func (c *criService) getPodSandboxStatus(ctx context.Context, podSandboxID string) (*runtime.PodSandboxStatus, error) {
 	request := &runtime.PodSandboxStatusRequest{PodSandboxId: podSandboxID}
 	response, err := c.PodSandboxStatus(ctx, request)
@@ -558,7 +559,6 @@ func (c *criService) getPodSandboxStatus(ctx context.Context, podSandboxID strin
 	}
 	return response.GetStatus(), nil
 }
-
 func (c *criService) getContainerStatuses(ctx context.Context, podSandboxID string) ([]*runtime.ContainerStatus, error) {
 	response, err := c.ListContainers(ctx, &runtime.ListContainersRequest{
 		Filter: &runtime.ContainerFilter{
@@ -575,7 +575,7 @@ func (c *criService) getContainerStatuses(ctx context.Context, podSandboxID stri
 			Verbose:     false,
 		})
 		if err != nil {
-			if over_errdefs.IsNotFound(err) {
+			if errdefs.IsNotFound(err) {
 				continue
 			}
 			return nil, err
@@ -583,23 +583,4 @@ func (c *criService) getContainerStatuses(ctx context.Context, podSandboxID stri
 		containerStatuses = append(containerStatuses, statusResp.GetStatus())
 	}
 	return containerStatuses, nil
-}
-
-// hostNetwork handles checking if host networking was requested.
-func hostNetwork(config *runtime.PodSandboxConfig) bool {
-	var hostNet bool
-	switch goruntime.GOOS {
-	case "windows":
-		// Windows HostProcess pods can only run on the host network
-		hostNet = config.GetWindows().GetSecurityContext().GetHostProcess()
-	case "darwin":
-		// No CNI on Darwin yet.
-		hostNet = true
-	default:
-		// Even on other platforms, the logic containerd uses is to check if NamespaceMode == NODE.
-		// So this handles Linux, as well as any other platforms not governed by the cases above
-		// that have special quirks.
-		hostNet = config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
-	}
-	return hostNet
 }

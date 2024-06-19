@@ -1,43 +1,22 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
-	"demo/others/log"
-	docker2 "demo/pkg/reference/docker"
+	criconfig "demo/config/cri"
+	clabels "demo/over/labels"
+	"demo/over/log"
 	"fmt"
 	"path"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
 	"demo/containerd"
-	"demo/containers"
-	"demo/over/oci"
-	criconfig "demo/pkg/cri/config"
+	"demo/over/containers"
 	imagestore "demo/pkg/cri/store/image"
 	ctrdutil "demo/pkg/cri/util"
-	clabels "demo/pkg/labels"
+	"demo/pkg/oci"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
-
-	imagedigest "github.com/opencontainers/go-digest"
 )
 
 const (
@@ -79,21 +58,6 @@ func (c *Controller) getVolatileSandboxRootDir(id string) string {
 	return filepath.Join(c.config.StateDir, sandboxesDir, id)
 }
 
-// getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
-func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
-	var repoTag, repoDigest string
-	if _, ok := namedRef.(docker2.NamedTagged); ok {
-		repoTag = namedRef.String()
-	}
-	if _, ok := namedRef.(docker2.Canonical); ok {
-		repoDigest = namedRef.String()
-	} else if !schema1 {
-		// digest is not actual repo digest for schema1 image.
-		repoDigest = namedRef.Name() + "@" + digest.String()
-	}
-	return repoDigest, repoTag
-}
-
 // toContainerdImage converts an image object in image store to containerd image handler.
 func (c *Controller) toContainerdImage(ctx context.Context, image imagestore.Image) (containerd.Image, error) {
 	// image should always have at least one reference.
@@ -101,25 +65,6 @@ func (c *Controller) toContainerdImage(ctx context.Context, image imagestore.Ima
 		return nil, fmt.Errorf("invalid image with no reference %q", image.ID)
 	}
 	return c.client.GetImage(ctx, image.References[0])
-}
-
-// getUserFromImage gets uid or user name of the image user.
-// If user is numeric, it will be treated as uid; or else, it is treated as user name.
-func getUserFromImage(user string) (*int64, string) {
-	// return both empty if user is not specified in the image.
-	if user == "" {
-		return nil, ""
-	}
-	// split instances where the id may contain user:group
-	user = strings.Split(user, ":")[0]
-	// user could be either uid or user name. Try to interpret as numeric uid.
-	uid, err := strconv.ParseInt(user, 10, 64)
-	if err != nil {
-		// If user is non numeric, assume it's user name.
-		return nil, user
-	}
-	// If user is a numeric uid.
-	return &uid, ""
 }
 
 // buildLabel builds the labels from config to be passed to containerd
@@ -143,24 +88,6 @@ func buildLabels(configLabels, imageConfigLabels map[string]string, containerTyp
 	return labels
 }
 
-// parseImageReferences parses a list of arbitrary image references and returns
-// the repotags and repodigests
-func parseImageReferences(refs []string) ([]string, []string) {
-	var tags, digests []string
-	for _, ref := range refs {
-		parsed, err := docker2.ParseAnyReference(ref)
-		if err != nil {
-			continue
-		}
-		if _, ok := parsed.(docker2.Canonical); ok {
-			digests = append(digests, parsed.String())
-		} else if _, ok := parsed.(docker2.Tagged); ok {
-			tags = append(tags, parsed.String())
-		}
-	}
-	return tags, digests
-}
-
 // getPassthroughAnnotations filters requested pod annotations by comparing
 // against permitted annotations for the given runtime.
 func getPassthroughAnnotations(podAnnotations map[string]string,
@@ -181,7 +108,7 @@ func getPassthroughAnnotations(podAnnotations map[string]string,
 }
 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...over_oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := ctrdutil.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -192,22 +119,22 @@ func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...over_oc
 			return nil, fmt.Errorf("can't find base OCI spec %q", baseSpecFile)
 		}
 
-		spec := over_oci.Spec{}
+		spec := oci.Spec{}
 		if err := ctrdutil.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
 		// Fix up cgroups path
-		applyOpts := append([]over_oci.SpecOpts{over_oci.WithNamespacedCgroup()}, opts...)
+		applyOpts := append([]oci.SpecOpts{oci.WithNamespacedCgroup()}, opts...)
 
-		if err := over_oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
+		if err := oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
 			return nil, fmt.Errorf("failed to apply OCI options: %w", err)
 		}
 
 		return &spec, nil
 	}
 
-	spec, err := over_oci.GenerateSpec(ctx, nil, container, opts...)
+	spec, err := oci.GenerateSpec(ctx, nil, container, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate spec: %w", err)
 	}

@@ -1,36 +1,20 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
 	"demo/over/protobuf"
 	"fmt"
 	"sync/atomic"
 	"syscall"
 	"time"
 
+	runtime "demo/over/api/cri/v1"
+	eventtypes "demo/over/api/events"
 	"demo/over/errdefs"
-	eventtypes "demo/pkg/api/events"
 	containerstore "demo/pkg/cri/store/container"
 	ctrdutil "demo/pkg/cri/util"
 	"github.com/moby/sys/signal"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // StopContainer stops a running container with a grace period (i.e., timeout).
@@ -83,7 +67,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 
 	task, err := container.Container.Task(ctx, nil)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get task for container %q: %w", id, err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -100,7 +84,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task for %q: %w", id, err)
 			}
 			return c.cleanupUnknownContainer(ctx, id, container, sandboxID)
@@ -134,7 +118,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 			// TODO(random-liu): Remove this logic when containerd 1.2 is deprecated.
 			image, err := c.imageStore.Get(container.ImageRef)
 			if err != nil {
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get image %q: %w", container.ImageRef, err)
 				}
 				log.G(ctx).Warningf("Image %q not found, stop container with signal %q", container.ImageRef, stopSignal)
@@ -159,7 +143,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 
 		if sswt {
 			log.G(ctx).Infof("Stop container %q with signal %v", id, sig)
-			if err = task.Kill(ctx, sig); err != nil && !over_errdefs.IsNotFound(err) {
+			if err = task.Kill(ctx, sig); err != nil && !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to stop container %q: %w", id, err)
 			}
 		} else {
@@ -182,7 +166,7 @@ func (c *criService) stopContainer(ctx context.Context, container containerstore
 	}
 
 	log.G(ctx).Infof("Kill container %q", id)
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill container %q: %w", id, err)
 	}
 
@@ -213,6 +197,6 @@ func (c *criService) cleanupUnknownContainer(ctx context.Context, id string, cnt
 		ID:          id,
 		Pid:         0,
 		ExitStatus:  unknownExitCode,
-		ExitedAt:    over_protobuf.ToTimestamp(time.Now()),
+		ExitedAt:    protobuf.ToTimestamp(time.Now()),
 	}, cntr, sandboxID, c)
 }

@@ -1,28 +1,15 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"bytes"
 	"context"
+	"demo/config/runc"
+	"demo/over/api/runctypes"
 	"demo/over/plugin"
-	over_protobuf2 "demo/over/protobuf"
+	"demo/over/protobuf"
 	google_protobuf "demo/over/protobuf/types"
-	"demo/pkg/rootfs"
+	"demo/over/rootfs"
+	"demo/over/typeurl/v2"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,18 +19,15 @@ import (
 	"syscall"
 	"time"
 
-	"demo/content"
-	"demo/diff"
-	"demo/others/typeurl/v2"
+	"demo/over/api/services/tasks/v1"
+	"demo/over/api/types"
+	"demo/over/cio"
+	"demo/over/content"
+	"demo/over/diff"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/mount"
-	"demo/over/oci"
-	"demo/pkg/api/services/tasks/v1"
-	"demo/pkg/api/types"
-	"demo/pkg/cio"
-	"demo/runtime/linux/runctypes"
-	"demo/runtime/v2/runc/options"
+	"demo/pkg/oci"
 	digest "github.com/opencontainers/go-digest"
 	is "github.com/opencontainers/image-spec/specs-go"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -183,7 +167,7 @@ type Task interface {
 	// are returned in protobuf format
 	Metrics(context.Context) (*types.Metric, error)
 	// Spec returns the current OCI specification for the task
-	Spec(context.Context) (*over_oci.Spec, error)
+	Spec(context.Context) (*oci.Spec, error)
 }
 
 var _ = (Task)(&task{})
@@ -198,7 +182,7 @@ type task struct {
 }
 
 // Spec returns the current OCI specification for the task
-func (t *task) Spec(ctx context.Context) (*over_oci.Spec, error) {
+func (t *task) Spec(ctx context.Context) (*oci.Spec, error) {
 	return t.c.Spec(ctx)
 }
 
@@ -210,21 +194,6 @@ func (t *task) ID() string {
 // Pid returns the pid or process id for the task
 func (t *task) Pid() uint32 {
 	return t.pid
-}
-
-func (t *task) Start(ctx context.Context) error {
-	r, err := t.client.TaskService().Start(ctx, &tasks.StartRequest{
-		ContainerID: t.id,
-	})
-	if err != nil {
-		if t.io != nil {
-			t.io.Cancel()
-			t.io.Close()
-		}
-		return over_errdefs.FromGRPC(err)
-	}
-	t.pid = r.Pid
-	return nil
 }
 
 func (t *task) Kill(ctx context.Context, s syscall.Signal, opts ...KillOpts) error {
@@ -241,7 +210,7 @@ func (t *task) Kill(ctx context.Context, s syscall.Signal, opts ...KillOpts) err
 		All:         i.All,
 	})
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 	return nil
 }
@@ -250,14 +219,14 @@ func (t *task) Pause(ctx context.Context) error {
 	_, err := t.client.TaskService().Pause(ctx, &tasks.PauseTaskRequest{
 		ContainerID: t.id,
 	})
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (t *task) Resume(ctx context.Context) error {
 	_, err := t.client.TaskService().Resume(ctx, &tasks.ResumeTaskRequest{
 		ContainerID: t.id,
 	})
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (t *task) Status(ctx context.Context) (Status, error) {
@@ -265,35 +234,13 @@ func (t *task) Status(ctx context.Context) (Status, error) {
 		ContainerID: t.id,
 	})
 	if err != nil {
-		return Status{}, over_errdefs.FromGRPC(err)
+		return Status{}, errdefs.FromGRPC(err)
 	}
 	return Status{
 		Status:     ProcessStatus(strings.ToLower(r.Process.Status.String())),
 		ExitStatus: r.Process.ExitStatus,
-		ExitTime:   over_protobuf2.FromTimestamp(r.Process.ExitedAt),
+		ExitTime:   protobuf.FromTimestamp(r.Process.ExitedAt),
 	}, nil
-}
-
-func (t *task) Wait(ctx context.Context) (<-chan ExitStatus, error) {
-	c := make(chan ExitStatus, 1)
-	go func() {
-		defer close(c)
-		r, err := t.client.TaskService().Wait(ctx, &tasks.WaitRequest{
-			ContainerID: t.id,
-		})
-		if err != nil {
-			c <- ExitStatus{
-				code: UnknownExitStatus,
-				err:  err,
-			}
-			return
-		}
-		c <- ExitStatus{
-			code:     r.ExitStatus,
-			exitedAt: over_protobuf2.FromTimestamp(r.ExitedAt),
-		}
-	}()
-	return c, nil
 }
 
 // Delete deletes the task and its runtime state
@@ -306,13 +253,13 @@ func (t *task) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitStat
 		}
 	}
 	status, err := t.Status(ctx)
-	if err != nil && over_errdefs.IsNotFound(err) {
+	if err != nil && errdefs.IsNotFound(err) {
 		return nil, err
 	}
 	switch status.Status {
 	case Stopped, Unknown, "":
 	case Created:
-		if t.client.runtime == fmt.Sprintf("%s.%s", over_plugin.RuntimePlugin, "windows") {
+		if t.client.runtime == fmt.Sprintf("%s.%s", plugin.RuntimePlugin, "windows") {
 			// On windows Created is akin to Stopped
 			break
 		}
@@ -323,13 +270,13 @@ func (t *task) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitStat
 		}
 		fallthrough
 	default:
-		return nil, fmt.Errorf("task must be stopped before deletion: %s: %w", status.Status, over_errdefs.ErrFailedPrecondition)
+		return nil, fmt.Errorf("task must be stopped before deletion: %s: %w", status.Status, errdefs.ErrFailedPrecondition)
 	}
 	if t.io != nil {
 		// io.Wait locks for restored tasks on Windows unless we call
 		// io.Close first (https://github.com/containerd/issues/5621)
 		// in other cases, preserve the contract and let IO finish before closing
-		if t.client.runtime == fmt.Sprintf("%s.%s", over_plugin.RuntimePlugin, "windows") {
+		if t.client.runtime == fmt.Sprintf("%s.%s", plugin.RuntimePlugin, "windows") {
 			t.io.Close()
 		}
 		// io.Cancel is used to cancel the io goroutine while it is in
@@ -343,18 +290,18 @@ func (t *task) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitStat
 		ContainerID: t.id,
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	// Only cleanup the IO after a successful Delete
 	if t.io != nil {
 		t.io.Close()
 	}
-	return &ExitStatus{code: r.ExitStatus, exitedAt: over_protobuf2.FromTimestamp(r.ExitedAt)}, nil
+	return &ExitStatus{code: r.ExitStatus, exitedAt: protobuf.FromTimestamp(r.ExitedAt)}, nil
 }
 
 func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreate cio.Creator) (_ Process, err error) {
 	if id == "" {
-		return nil, fmt.Errorf("exec id must not be empty: %w", over_errdefs.ErrInvalidArgument)
+		return nil, fmt.Errorf("exec id must not be empty: %w", errdefs.ErrInvalidArgument)
 	}
 	i, err := ioCreate(id)
 	if err != nil {
@@ -366,7 +313,7 @@ func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreat
 			i.Close()
 		}
 	}()
-	any, err := over_protobuf2.MarshalAnyToProto(spec)
+	any, err := protobuf.MarshalAnyToProto(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +331,7 @@ func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreat
 		i.Cancel()
 		i.Wait()
 		i.Close()
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	return &process{
 		id:   id,
@@ -398,7 +345,7 @@ func (t *task) Pids(ctx context.Context) ([]ProcessInfo, error) {
 		ContainerID: t.id,
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	var processList []ProcessInfo
 	for _, p := range response.Processes {
@@ -420,7 +367,7 @@ func (t *task) CloseIO(ctx context.Context, opts ...IOCloserOpts) error {
 	}
 	r.Stdin = i.Stdin
 	_, err := t.client.TaskService().CloseIO(ctx, r)
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (t *task) IO() cio.IO {
@@ -433,7 +380,7 @@ func (t *task) Resize(ctx context.Context, w, h uint32) error {
 		Width:       w,
 		Height:      h,
 	})
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 // NOTE: Checkpoint supports to dump task information to a directory, in this way, an empty
@@ -466,7 +413,7 @@ func (t *task) Checkpoint(ctx context.Context, opts ...CheckpointTaskOpts) (Imag
 	}
 	request.ParentCheckpoint = i.ParentCheckpoint.String()
 	if i.Options != nil {
-		any, err := over_protobuf2.MarshalAnyToProto(i.Options)
+		any, err := protobuf.MarshalAnyToProto(i.Options)
 		if err != nil {
 			return nil, err
 		}
@@ -498,7 +445,7 @@ func (t *task) Checkpoint(ctx context.Context, opts ...CheckpointTaskOpts) (Imag
 	// if checkpoint image path passed, jump checkpoint image,
 	// return an empty image
 	if isCheckpointPathExist(cr.Runtime.Name, i.Options) {
-		return NewImage(t.client, over_images.Image{}), nil
+		return NewImage(t.client, images.Image{}), nil
 	}
 
 	if cr.Image != "" {
@@ -516,7 +463,7 @@ func (t *task) Checkpoint(ctx context.Context, opts ...CheckpointTaskOpts) (Imag
 	if err != nil {
 		return nil, err
 	}
-	im := over_images.Image{
+	im := images.Image{
 		Name:   i.Name,
 		Target: desc,
 		Labels: map[string]string{
@@ -555,13 +502,13 @@ func (t *task) Update(ctx context.Context, opts ...UpdateTaskOpts) error {
 		if err != nil {
 			return err
 		}
-		request.Resources = over_protobuf2.FromAny(any)
+		request.Resources = protobuf.FromAny(any)
 	}
 	if i.Annotations != nil {
 		request.Annotations = i.Annotations
 	}
 	_, err := t.client.TaskService().Update(ctx, request)
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 }
 
 func (t *task) LoadProcess(ctx context.Context, id string, ioAttach cio.Attach) (Process, error) {
@@ -573,8 +520,8 @@ func (t *task) LoadProcess(ctx context.Context, id string, ioAttach cio.Attach) 
 		ExecID:      id,
 	})
 	if err != nil {
-		err = over_errdefs.FromGRPC(err)
-		if over_errdefs.IsNotFound(err) {
+		err = errdefs.FromGRPC(err)
+		if errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("no running process found: %w", err)
 		}
 		return nil, err
@@ -599,12 +546,12 @@ func (t *task) Metrics(ctx context.Context) (*types.Metric, error) {
 		},
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 
 	if response.Metrics == nil {
 		_, err := t.Status(ctx)
-		if err != nil && over_errdefs.IsNotFound(err) {
+		if err != nil && errdefs.IsNotFound(err) {
 			return nil, err
 		}
 		return nil, errors.New("no metrics received")
@@ -616,7 +563,7 @@ func (t *task) Metrics(ctx context.Context) (*types.Metric, error) {
 func (t *task) checkpointTask(ctx context.Context, index *v1.Index, request *tasks.CheckpointTaskRequest) error {
 	response, err := t.client.TaskService().Checkpoint(ctx, request)
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 	// NOTE: response.Descriptors can be an empty slice if checkpoint image is jumped
 	// add the checkpoint descriptors to the index
@@ -687,7 +634,7 @@ func writeContent(ctx context.Context, store content.Ingester, mediaType, ref st
 	}
 
 	if err := writer.Commit(ctx, size, "", opts...); err != nil {
-		if !over_errdefs.IsAlreadyExists(err) {
+		if !errdefs.IsAlreadyExists(err) {
 			return d, err
 		}
 	}
@@ -705,16 +652,51 @@ func isCheckpointPathExist(runtime string, v interface{}) bool {
 	}
 
 	switch runtime {
-	case over_plugin.RuntimeRuncV1, over_plugin.RuntimeRuncV2:
-		if opts, ok := v.(*options.CheckpointOptions); ok && opts.ImagePath != "" {
+	case plugin.RuntimeRuncV1, plugin.RuntimeRuncV2:
+		if opts, ok := v.(*runc.CheckpointOptions); ok && opts.ImagePath != "" {
 			return true
 		}
 
-	case over_plugin.RuntimeLinuxV1:
+	case plugin.RuntimeLinuxV1:
 		if opts, ok := v.(*runctypes.CheckpointOptions); ok && opts.ImagePath != "" {
 			return true
 		}
 	}
 
 	return false
+}
+func (t *task) Wait(ctx context.Context) (<-chan ExitStatus, error) {
+	c := make(chan ExitStatus, 1)
+	go func() {
+		defer close(c)
+		r, err := t.client.TaskService().Wait(ctx, &tasks.WaitRequest{
+			ContainerID: t.id,
+		})
+		if err != nil {
+			c <- ExitStatus{
+				code: UnknownExitStatus,
+				err:  err,
+			}
+			return
+		}
+		c <- ExitStatus{
+			code:     r.ExitStatus,
+			exitedAt: protobuf.FromTimestamp(r.ExitedAt),
+		}
+	}()
+	return c, nil
+}
+func (t *task) Start(ctx context.Context) error {
+	r, err := t.client.TaskService().Start(ctx, &tasks.StartRequest{
+		ContainerID: t.id,
+	})
+	if err != nil {
+		if t.io != nil {
+			t.io.Cancel()
+			t.io.Close()
+		}
+		return errdefs.FromGRPC(err)
+	}
+	t.pid = r.Pid
+	return nil
 }

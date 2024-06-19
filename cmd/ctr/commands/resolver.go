@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package commands
 
 import (
@@ -21,8 +5,8 @@ import (
 	gocontext "context"
 	"crypto/tls"
 	"crypto/x509"
-	"demo/others/console"
-	"demo/others/log"
+	"demo/over/console"
+	"demo/over/log"
 	"errors"
 	"fmt"
 	"io"
@@ -32,10 +16,10 @@ import (
 	"os"
 	"strings"
 
-	"demo/pkg/transfer/registry"
-	"demo/remotes"
-	"demo/remotes/docker"
-	"demo/remotes/docker/config"
+	"demo/over/remotes"
+	"demo/over/remotes/docker"
+	"demo/over/remotes/docker/config"
+	"demo/over/transfer/registry"
 	"github.com/urfave/cli"
 )
 

@@ -1,0 +1,8 @@
+go 1.22.0
+
+use (
+	.
+	./third_party/github.com/opencontainers/image-spec
+	./third_party/github.com/opencontainers/runtime-spec
+	./third_party/github.com/kubernetes-sigs/cri-tools
+)

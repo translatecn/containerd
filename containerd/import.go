@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
@@ -21,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"demo/content"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/images/archive"
@@ -36,7 +20,7 @@ type importOpts struct {
 	dgstRefT        func(digest.Digest) string
 	skipDgstRef     func(string) bool
 	allPlatforms    bool
-	platformMatcher over_platforms.MatchComparer
+	platformMatcher platforms.MatchComparer
 	compress        bool
 	discardLayers   bool
 	skipMissing     bool
@@ -91,7 +75,7 @@ func WithAllPlatforms(allPlatforms bool) ImportOpt {
 }
 
 // WithImportPlatform is used to import content for specific platform.
-func WithImportPlatform(platformMacher over_platforms.MatchComparer) ImportOpt {
+func WithImportPlatform(platformMacher platforms.MatchComparer) ImportOpt {
 	return func(c *importOpts) error {
 		c.platformMatcher = platformMacher
 		return nil
@@ -118,17 +102,11 @@ func WithDiscardUnpackedLayers() ImportOpt {
 
 // WithSkipMissing allows to import an archive which doesn't contain all the
 // referenced blobs.
-func WithSkipMissing() ImportOpt {
-	return func(c *importOpts) error {
-		c.skipMissing = true
-		return nil
-	}
-}
 
 // Import imports an image from a Tar stream using reader.
 // Caller needs to specify importer. Future version may use oci.v1 as the default.
 // Note that unreferenced blobs may be imported to the content store as well.
-func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt) ([]over_images.Image, error) {
+func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt) ([]images.Image, error) {
 	var iopts importOpts
 	for _, o := range opts {
 		if err := o(&iopts); err != nil {
@@ -153,31 +131,31 @@ func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt
 	}
 
 	var (
-		imgs []over_images.Image
+		imgs []images.Image
 		cs   = c.ContentStore()
 		is   = c.ImageService()
 	)
 
 	if iopts.indexName != "" {
-		imgs = append(imgs, over_images.Image{
+		imgs = append(imgs, images.Image{
 			Name:   iopts.indexName,
 			Target: index,
 		})
 	}
 	var platformMatcher = c.platform
 	if iopts.allPlatforms {
-		platformMatcher = over_platforms.All
+		platformMatcher = platforms.All
 	} else if iopts.platformMatcher != nil {
 		platformMatcher = iopts.platformMatcher
 	}
 
-	var handler over_images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+	var handler images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		// Only save images at top level
 		if desc.Digest != index.Digest {
 			// Don't set labels on missing content.
-			children, err := over_images.Children(ctx, cs, desc)
-			if iopts.skipMissing && over_errdefs.IsNotFound(err) {
-				return nil, over_images.ErrSkipDesc
+			children, err := images.Children(ctx, cs, desc)
+			if iopts.skipMissing && errdefs.IsNotFound(err) {
+				return nil, images.ErrSkipDesc
 			}
 			return children, err
 		}
@@ -195,7 +173,7 @@ func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt
 		for _, m := range idx.Manifests {
 			name := imageName(m.Annotations, iopts.imageRefT)
 			if name != "" {
-				imgs = append(imgs, over_images.Image{
+				imgs = append(imgs, images.Image{
 					Name:   name,
 					Target: m,
 				})
@@ -208,7 +186,7 @@ func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt
 			if iopts.dgstRefT != nil {
 				ref := iopts.dgstRefT(m.Digest)
 				if ref != "" {
-					imgs = append(imgs, over_images.Image{
+					imgs = append(imgs, images.Image{
 						Name:   ref,
 						Target: m,
 					})
@@ -219,20 +197,20 @@ func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt
 		return idx.Manifests, nil
 	}
 
-	handler = over_images.FilterPlatforms(handler, platformMatcher)
+	handler = images.FilterPlatforms(handler, platformMatcher)
 	if iopts.discardLayers {
-		handler = over_images.SetChildrenMappedLabels(cs, handler, over_images.ChildGCLabelsFilterLayers)
+		handler = images.SetChildrenMappedLabels(cs, handler, images.ChildGCLabelsFilterLayers)
 	} else {
-		handler = over_images.SetChildrenLabels(cs, handler)
+		handler = images.SetChildrenLabels(cs, handler)
 	}
-	if err := over_images.WalkNotEmpty(ctx, handler, index); err != nil {
+	if err := images.WalkNotEmpty(ctx, handler, index); err != nil {
 		return nil, err
 	}
 
 	for i := range imgs {
 		img, err := is.Update(ctx, imgs[i], "target")
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return nil, err
 			}
 
@@ -248,7 +226,7 @@ func (c *Client) Import(ctx context.Context, reader io.Reader, opts ...ImportOpt
 }
 
 func imageName(annotations map[string]string, ociCleanup func(string) string) string {
-	name := annotations[over_images.AnnotationImageName]
+	name := annotations[images.AnnotationImageName]
 	if name != "" {
 		return name
 	}

@@ -1,24 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package content
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
 	"fmt"
 	"io"
 	"net/http/httptrace"
@@ -29,12 +13,12 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/content"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/platforms"
-	"demo/pkg/progress"
-	"demo/remotes"
+	"demo/over/progress"
+	"demo/over/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"
@@ -104,7 +88,7 @@ type FetchConfig struct {
 	// Labels to set on the content
 	Labels []string
 	// PlatformMatcher matches platforms, supersedes Platforms
-	PlatformMatcher over_platforms.MatchComparer
+	PlatformMatcher platforms.MatchComparer
 	// Platforms to fetch
 	Platforms []string
 	// Whether or not download all metadata
@@ -132,7 +116,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 	if !clicontext.Bool("all-platforms") {
 		p := clicontext.StringSlice("platform")
 		if len(p) == 0 {
-			p = append(p, over_platforms.DefaultString())
+			p = append(p, platforms.DefaultString())
 		}
 		config.Platforms = p
 	}
@@ -140,7 +124,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 	if clicontext.Bool("metadata-only") {
 		config.AllMetadata = true
 		// Any with an empty set is None
-		config.PlatformMatcher = over_platforms.Any()
+		config.PlatformMatcher = platforms.Any()
 	} else if clicontext.Bool("all-metadata") {
 		config.AllMetadata = true
 	}
@@ -159,7 +143,7 @@ func NewFetchConfig(ctx context.Context, clicontext *cli.Context) (*FetchConfig,
 }
 
 // Fetch loads all resources into the content store and returns the image
-func Fetch(ctx context.Context, client *containerd.Client, ref string, config *FetchConfig) (over_images.Image, error) {
+func Fetch(ctx context.Context, client *containerd.Client, ref string, config *FetchConfig) (images.Image, error) {
 	ongoing := NewJobs(ref)
 
 	if config.TraceHTTP {
@@ -177,8 +161,8 @@ func Fetch(ctx context.Context, client *containerd.Client, ref string, config *F
 		close(progress)
 	}()
 
-	h := over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
-		if desc.MediaType != over_images.MediaTypeDockerSchema1Manifest {
+	h := images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		if desc.MediaType != images.MediaTypeDockerSchema1Manifest {
 			ongoing.Add(desc)
 		}
 		return nil, nil
@@ -209,7 +193,7 @@ func Fetch(ctx context.Context, client *containerd.Client, ref string, config *F
 	img, err := client.Fetch(pctx, ref, opts...)
 	stopProgress()
 	if err != nil {
-		return over_images.Image{}, err
+		return images.Image{}, err
 	}
 
 	<-progress
@@ -279,7 +263,7 @@ outer:
 				if !done && (!ok || status.Status == StatusDownloading) {
 					info, err := cs.Info(ctx, j.Digest)
 					if err != nil {
-						if !over_errdefs.IsNotFound(err) {
+						if !errdefs.IsNotFound(err) {
 							log.G(ctx).WithError(err).Error("failed to get content info")
 							continue outer
 						} else {

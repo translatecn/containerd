@@ -1,22 +1,3 @@
-//go:build !windows
-// +build !windows
-
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package runc
 
 import (
@@ -26,34 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"demo/others/console"
+	"demo/over/console"
 	"golang.org/x/sys/unix"
 )
 
 // NewConsoleSocket creates a new unix socket at the provided path to accept a
 // pty master created by runc for use by the container
-func NewConsoleSocket(path string) (*Socket, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
-	addr, err := net.ResolveUnixAddr("unix", abs)
-	if err != nil {
-		return nil, err
-	}
-	l, err := net.ListenUnix("unix", addr)
-	if err != nil {
-		return nil, err
-	}
-	return &Socket{
-		l: l,
-	}, nil
-}
 
 // NewTempConsoleSocket returns a temp console socket for use with a container
 // On Close(), the socket is deleted
 func NewTempConsoleSocket() (*Socket, error) {
-	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+	runtimeDir := os.Getenv("XDG_RUNTIME_DIR") // 用于写入用户特定的非必要(缓存)数据的基本目录
 	dir, err := ioutil.TempDir(runtimeDir, "pty")
 	if err != nil {
 		return nil, err

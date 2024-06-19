@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package cgroup2
 
 import (
@@ -32,8 +16,6 @@ import (
 
 	"demo/others/cgroups/v3/cgroup2/stats"
 
-	"github.com/godbus/dbus/v5"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -150,90 +132,6 @@ func parseCgroupFromReader(r io.Reader) (string, error) {
 		return "", err
 	}
 	return "", fmt.Errorf("cgroup path not found")
-}
-
-// ToResources converts the oci LinuxResources struct into a
-// v2 Resources type for use with this package.
-//
-// converting cgroups configuration from v1 to v2
-// ref: https://github.com/containers/crun/blob/master/crun.1.md#cgroup-v2
-func ToResources(spec *specs.LinuxResources) *Resources {
-	var resources Resources
-	if cpu := spec.CPU; cpu != nil {
-		resources.CPU = &CPU{
-			Cpus: cpu.Cpus,
-			Mems: cpu.Mems,
-		}
-		if shares := cpu.Shares; shares != nil {
-			convertedWeight := 1 + ((*shares-2)*9999)/262142
-			resources.CPU.Weight = &convertedWeight
-		}
-		if period := cpu.Period; period != nil {
-			resources.CPU.Max = NewCPUMax(cpu.Quota, period)
-		}
-	}
-	if mem := spec.Memory; mem != nil {
-		resources.Memory = &Memory{}
-		if swap := mem.Swap; swap != nil {
-			resources.Memory.Swap = swap
-		}
-		if l := mem.Limit; l != nil {
-			resources.Memory.Max = l
-		}
-		if l := mem.Reservation; l != nil {
-			resources.Memory.Low = l
-		}
-	}
-	if hugetlbs := spec.HugepageLimits; hugetlbs != nil {
-		hugeTlbUsage := HugeTlb{}
-		for _, hugetlb := range hugetlbs {
-			hugeTlbUsage = append(hugeTlbUsage, HugeTlbEntry{
-				HugePageSize: hugetlb.Pagesize,
-				Limit:        hugetlb.Limit,
-			})
-		}
-		resources.HugeTlb = &hugeTlbUsage
-	}
-	if pids := spec.Pids; pids != nil {
-		resources.Pids = &Pids{
-			Max: pids.Limit,
-		}
-	}
-	if i := spec.BlockIO; i != nil {
-		resources.IO = &IO{}
-		if i.Weight != nil {
-			resources.IO.BFQ.Weight = 1 + (*i.Weight-10)*9999/990
-		}
-		for t, devices := range map[IOType][]specs.LinuxThrottleDevice{
-			ReadBPS:   i.ThrottleReadBpsDevice,
-			WriteBPS:  i.ThrottleWriteBpsDevice,
-			ReadIOPS:  i.ThrottleReadIOPSDevice,
-			WriteIOPS: i.ThrottleWriteIOPSDevice,
-		} {
-			for _, d := range devices {
-				resources.IO.Max = append(resources.IO.Max, Entry{
-					Type:  t,
-					Major: d.Major,
-					Minor: d.Minor,
-					Rate:  d.Rate,
-				})
-			}
-		}
-	}
-	if i := spec.Rdma; i != nil {
-		resources.RDMA = &RDMA{}
-		for device, value := range spec.Rdma {
-			if device != "" && (value.HcaHandles != nil && value.HcaObjects != nil) {
-				resources.RDMA.Limit = append(resources.RDMA.Limit, RDMAEntry{
-					Device:     device,
-					HcaHandles: *value.HcaHandles,
-					HcaObjects: *value.HcaObjects,
-				})
-			}
-		}
-	}
-
-	return &resources
 }
 
 // Gets uint64 parsed content of single value cgroup stat file
@@ -374,14 +272,6 @@ func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
 }
 
 // isUnitExists returns true if the error is that a systemd unit already exists.
-func isUnitExists(err error) bool {
-	if err != nil {
-		if dbusError, ok := err.(dbus.Error); ok {
-			return strings.Contains(dbusError.Name, "org.freedesktop.systemd1.UnitExists")
-		}
-	}
-	return false
-}
 
 func systemdUnitFromPath(path string) string {
 	_, unit := filepath.Split(path)
@@ -412,7 +302,7 @@ var (
 // to doing the work to find the files present once, and then re-using this. This
 // saves a os.Readdirnames(0) call to search for hugeltb files on every `manager.Stat`
 // call.
-// https://github.com/opencontainers/runc/blob/3a2c0c2565644d8a7e0f1dd594a060b21fa96cf1/libcontainer/cgroups/utils.go#L301
+// https://demo/3rd_party/runc/blob/3a2c0c2565644d8a7e0f1dd594a060b21fa96cf1/libcontainer/cgroups/utils.go#L301
 func hugePageSizes() []string {
 	initHPSOnce.Do(func() {
 		dir, err := os.OpenFile("/sys/kernel/mm/hugepages", unix.O_DIRECTORY|unix.O_RDONLY, 0)

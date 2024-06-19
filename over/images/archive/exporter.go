@@ -1,24 +1,10 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package archive
 
 import (
 	"archive/tar"
 	"context"
+	"demo/over/labels"
+	"demo/over/log"
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
@@ -28,12 +14,10 @@ import (
 	"sort"
 	"strings"
 
-	"demo/content"
-	"demo/others/log"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/platforms"
-	"demo/pkg/labels"
 	digest "github.com/opencontainers/go-digest"
 	ocispecs "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -41,7 +25,7 @@ import (
 
 type exportOptions struct {
 	manifests          []ocispec.Descriptor
-	platform           over_platforms.MatchComparer
+	platform           platforms.MatchComparer
 	allPlatforms       bool
 	skipDockerManifest bool
 	blobRecordOptions  blobRecordOptions
@@ -54,7 +38,7 @@ type ExportOpt func(context.Context, *exportOptions) error
 // not exporting all platforms.
 // Additionally, platform is used to resolve image configs for
 // Docker v1.1, v1.2 format compatibility.
-func WithPlatform(p over_platforms.MatchComparer) ExportOpt {
+func WithPlatform(p platforms.MatchComparer) ExportOpt {
 	return func(ctx context.Context, o *exportOptions) error {
 		o.platform = p
 		return nil
@@ -80,7 +64,7 @@ func WithSkipDockerManifest() ExportOpt {
 }
 
 // WithImage adds the provided images to the exported archive.
-func WithImage(is over_images.Store, name string) ExportOpt {
+func WithImage(is images.Store, name string) ExportOpt {
 	return func(ctx context.Context, o *exportOptions) error {
 		img, err := is.Get(ctx, name)
 		if err != nil {
@@ -95,7 +79,7 @@ func WithImage(is over_images.Store, name string) ExportOpt {
 }
 
 // WithImages adds multiples images to the exported archive.
-func WithImages(imgs []over_images.Image) ExportOpt {
+func WithImages(imgs []images.Image) ExportOpt {
 	return func(ctx context.Context, o *exportOptions) error {
 		for _, img := range imgs {
 			img.Target.Annotations = addNameAnnotation(img.Name, img.Target.Annotations)
@@ -111,20 +95,6 @@ func WithImages(imgs []over_images.Image) ExportOpt {
 // exported archive, creating an index record for each name.
 // When no names are provided, it is up to caller to put name annotation to
 // on the manifest descriptor if needed.
-func WithManifest(manifest ocispec.Descriptor, names ...string) ExportOpt {
-	return func(ctx context.Context, o *exportOptions) error {
-		if len(names) == 0 {
-			o.manifests = append(o.manifests, manifest)
-		}
-		for _, name := range names {
-			mc := manifest
-			mc.Annotations = addNameAnnotation(name, manifest.Annotations)
-			o.manifests = append(o.manifests, mc)
-		}
-
-		return nil
-	}
-}
 
 // BlobFilter returns false if the blob should not be included in the archive.
 type BlobFilter func(ocispec.Descriptor) bool
@@ -140,7 +110,7 @@ func WithBlobFilter(f BlobFilter) ExportOpt {
 // WithSkipNonDistributableBlobs excludes non-distributable blobs such as Windows base layers.
 func WithSkipNonDistributableBlobs() ExportOpt {
 	f := func(desc ocispec.Descriptor) bool {
-		return !over_images.IsNonDistributable(desc.MediaType)
+		return !images.IsNonDistributable(desc.MediaType)
 	}
 	return WithBlobFilter(f)
 }
@@ -150,39 +120,6 @@ func WithSkipNonDistributableBlobs() ExportOpt {
 // The manifest itself is excluded only if it's not present locally.
 // This allows to export multi-platform images if not all platforms are present
 // while still persisting the multi-platform index.
-func WithSkipMissing(store content.InfoReaderProvider) ExportOpt {
-	return func(ctx context.Context, o *exportOptions) error {
-		o.blobRecordOptions.childrenHandler = over_images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) (subdescs []ocispec.Descriptor, err error) {
-			children, err := over_images.Children(ctx, store, desc)
-			if !over_images.IsManifestType(desc.MediaType) {
-				return children, err
-			}
-
-			if err != nil {
-				// If manifest itself is missing, skip it from export.
-				if over_errdefs.IsNotFound(err) {
-					return nil, over_images.ErrSkipDesc
-				}
-				return nil, err
-			}
-
-			// Don't export manifest descendants if any of them doesn't exist.
-			for _, child := range children {
-				exists, err := content.Exists(ctx, store, child)
-				if err != nil {
-					return nil, err
-				}
-
-				// If any child is missing, only export the manifest, but don't export its descendants.
-				if !exists {
-					return nil, nil
-				}
-			}
-			return children, nil
-		})
-		return nil
-	}
-}
 
 func addNameAnnotation(name string, base map[string]string) map[string]string {
 	annotations := map[string]string{}
@@ -190,7 +127,7 @@ func addNameAnnotation(name string, base map[string]string) map[string]string {
 		annotations[k] = v
 	}
 
-	annotations[over_images.AnnotationImageName] = name
+	annotations[images.AnnotationImageName] = name
 	annotations[ocispec.AnnotationRefName] = ociReferenceName(name)
 
 	return annotations
@@ -244,7 +181,7 @@ func Export(ctx context.Context, store content.Provider, writer io.Writer, opts 
 	dManifests := map[digest.Digest]*exportManifest{}
 	resolvedIndex := map[digest.Digest]digest.Digest{}
 	for _, desc := range manifests {
-		if over_images.IsManifestType(desc.MediaType) {
+		if images.IsManifestType(desc.MediaType) {
 			mt, ok := dManifests[desc.Digest]
 			if !ok {
 				// TODO(containerd): Skip if already added
@@ -260,11 +197,11 @@ func Export(ctx context.Context, store content.Provider, writer io.Writer, opts 
 				dManifests[desc.Digest] = mt
 			}
 
-			name := desc.Annotations[over_images.AnnotationImageName]
+			name := desc.Annotations[images.AnnotationImageName]
 			if name != "" {
 				mt.names = append(mt.names, name)
 			}
-		} else if over_images.IsIndexType(desc.MediaType) {
+		} else if images.IsIndexType(desc.MediaType) {
 			d, ok := resolvedIndex[desc.Digest]
 			if !ok {
 				if err := desc.Digest.Validate(); err != nil {
@@ -317,19 +254,19 @@ func Export(ctx context.Context, store content.Provider, writer io.Writer, opts 
 						manifest: manifests[0],
 					}
 				} else if eo.platform != nil {
-					return fmt.Errorf("no manifest found for platform: %w", over_errdefs.ErrNotFound)
+					return fmt.Errorf("no manifest found for platform: %w", errdefs.ErrNotFound)
 				}
 				resolvedIndex[desc.Digest] = d
 			}
 			if d != "" {
-				if name := desc.Annotations[over_images.AnnotationImageName]; name != "" {
+				if name := desc.Annotations[images.AnnotationImageName]; name != "" {
 					mt := dManifests[d]
 					mt.names = append(mt.names, name)
 				}
 
 			}
 		} else {
-			return fmt.Errorf("only manifests may be exported: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("only manifests may be exported: %w", errdefs.ErrInvalidArgument)
 		}
 	}
 
@@ -369,17 +306,17 @@ func getRecords(ctx context.Context, store content.Provider, desc ocispec.Descri
 
 	childrenHandler := brOpts.childrenHandler
 	if childrenHandler == nil {
-		childrenHandler = over_images.ChildrenHandler(store)
+		childrenHandler = images.ChildrenHandler(store)
 	}
 
-	handlers := over_images.Handlers(
+	handlers := images.Handlers(
 		childrenHandler,
-		over_images.HandlerFunc(exportHandler),
+		images.HandlerFunc(exportHandler),
 	)
 
 	// Walk sequentially since the number of fetches is likely one and doing in
 	// parallel requires locking the export handler
-	if err := over_images.Walk(ctx, handlers, desc); err != nil {
+	if err := images.Walk(ctx, handlers, desc); err != nil {
 		return nil, err
 	}
 
@@ -393,7 +330,7 @@ type tarRecord struct {
 
 type blobRecordOptions struct {
 	blobFilter      BlobFilter
-	childrenHandler over_images.HandlerFunc
+	childrenHandler images.HandlerFunc
 }
 
 func blobRecord(cs content.Provider, desc ocispec.Descriptor, opts *blobRecordOptions) tarRecord {
@@ -575,10 +512,11 @@ func writeTar(ctx context.Context, tw *tar.Writer, recordsWithEmpty []tarRecord)
 		return records[i].Header.Name < records[j].Header.Name
 	})
 	for _, record := range records {
-		color.New(color.FgGreen).SetWriter(os.Stderr).Printf("export: name:%s size:%d mode:%v\n", record.Header.Name,
-			record.Header.Size, record.Header.Mode,
-		)
-
+		if os.Getenv("DEBUG") != "" {
+			color.New(color.FgGreen).SetWriter(os.Stderr).Printf("export: name:%s size:%d mode:%v\n", record.Header.Name,
+				record.Header.Size, record.Header.Mode,
+			)
+		}
 	}
 	var last string
 	for _, record := range records {

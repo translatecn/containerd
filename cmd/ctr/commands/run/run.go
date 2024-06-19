@@ -1,24 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package run
 
 import (
 	gocontext "context"
-	clabels "demo/pkg/labels"
+	clabels "demo/over/labels"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -27,18 +11,18 @@ import (
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/tasks"
 	"demo/containerd"
-	"demo/containers"
-	"demo/others/console"
 	gocni "demo/others/go-cni"
-	"demo/over/oci"
-	"demo/pkg/cio"
+	"demo/over/cio"
+	"demo/over/console"
+	"demo/over/containers"
+	"demo/pkg/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
-func withMounts(context *cli.Context) over_oci.SpecOpts {
-	return func(ctx gocontext.Context, client over_oci.Client, container *containers.Container, s *specs.Spec) error {
+func withMounts(context *cli.Context) oci.SpecOpts {
+	return func(ctx gocontext.Context, client oci.Client, container *containers.Container, s *specs.Spec) error {
 		mounts := make([]specs.Mount, 0)
 		for _, mount := range context.StringSlice("mount") {
 			m, err := parseMountFlag(mount)
@@ -47,7 +31,7 @@ func withMounts(context *cli.Context) over_oci.SpecOpts {
 			}
 			mounts = append(mounts, m)
 		}
-		return over_oci.WithMounts(mounts)(ctx, client, container, s)
+		return oci.WithMounts(mounts)(ctx, client, container, s)
 	}
 }
 

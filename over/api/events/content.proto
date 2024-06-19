@@ -1,0 +1,14 @@
+
+
+syntax = "proto3";
+
+package containerd.events;
+
+import "demo/containerd/protobuf/plugin/fieldpath.proto";
+
+option go_package = "demo/containerd/api/events;events";
+option (containerd.plugin.fieldpath_all) = true;
+
+message ContentDelete {
+	string digest = 1;
+}

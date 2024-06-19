@@ -1,51 +1,34 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	criconfig "demo/config/cri"
+	"demo/over/log"
+	"demo/over/snapshots"
+	"demo/over/typeurl/v2"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
+	"os"
 	"path/filepath"
-	goruntime "runtime"
 	"strings"
 	"time"
 
-	cni "demo/others/go-cni"
-	"github.com/davecgh/go-spew/spew"
-	selinux "github.com/opencontainers/selinux/go-selinux"
-	"github.com/sirupsen/logrus"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"demo/containerd"
+	cni "demo/others/go-cni"
+	runtime "demo/over/api/cri/v1"
+	containerdio "demo/over/cio"
 	"demo/over/errdefs"
-	containerdio "demo/pkg/cio"
-	"demo/pkg/cri/annotations"
-	criconfig "demo/pkg/cri/config"
 	customopts "demo/pkg/cri/opts"
+	"demo/pkg/cri/over/annotations"
 	"demo/pkg/cri/server/bandwidth"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	"demo/pkg/cri/util"
 	"demo/pkg/netns"
-	"demo/snapshots"
+	"github.com/davecgh/go-spew/spew"
+	selinux "github.com/opencontainers/selinux/go-selinux"
 )
 
 func init() {
@@ -124,28 +107,26 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// it safely.
 	// NOTE: the network namespace path will be created later and update through updateNetNamespacePath function
 	spec, err := c.sandboxContainerSpec(id, config, &image.ImageSpec.Config, "", ociRuntime.PodAnnotations)
+	indent, _ := json.MarshalIndent(spec, "  ", "  ")
+	ioutil.WriteFile(fmt.Sprintf("%s-oci-spec.json", id), indent, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate sandbox container spec: %w", err)
 	}
 	log.G(ctx).WithField("podsandboxid", id).Debugf("sandbox container spec: %#+v", spew.NewFormatter(spec))
-	sandbox.ProcessLabel = spec.Process.SelinuxLabel
+	sandbox.ProcessSelinuxLabel = spec.Process.SelinuxLabel
 	defer func() {
 		if retErr != nil {
-			selinux.ReleaseLabel(sandbox.ProcessLabel)
+			selinux.ReleaseLabel(sandbox.ProcessSelinuxLabel)
 		}
 	}()
-
-	// handle any KVM based runtime
-	if err := modifyProcessLabel(ociRuntime.Type, spec); err != nil {
-		return nil, err
-	}
 
 	if config.GetLinux().GetSecurityContext().GetPrivileged() {
 		// If privileged don't set selinux label, but we still record the MCS label so that
 		// the unused label can be freed later.
 		spec.Process.SelinuxLabel = ""
 	}
-
+	marshalIndent, _ := json.MarshalIndent(spec, "  ", "  ")
+	ioutil.WriteFile(fmt.Sprintf("%s-runtime-spec.json", id), marshalIndent, os.ModePerm)
 	// Generate spec options that will be applied to the spec later.
 	specOpts, err := c.sandboxContainerSpecOpts(config, &image.ImageSpec.Config)
 	if err != nil {
@@ -153,11 +134,6 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}
 
 	sandboxLabels := buildLabels(config.Labels, image.ImageSpec.Config.Labels, containerKindSandbox)
-
-	runtimeOpts, err := generateRuntimeOptions(ociRuntime, c.config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate runtime options: %w", err)
-	}
 
 	sOpts := []snapshots.Opt{snapshots.WithLabels(snapshots.FilterInheritedLabels(config.Annotations))}
 	extraSOpts, err := sandboxSnapshotterOpts(config)
@@ -172,7 +148,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		containerd.WithSpec(spec, specOpts...),
 		containerd.WithContainerLabels(sandboxLabels),
 		containerd.WithContainerExtension(sandboxMetadataExtension, &sandbox.Metadata),
-		containerd.WithRuntime(ociRuntime.Type, runtimeOpts)}
+		containerd.WithRuntime(ociRuntime.Type, nil)}
 
 	container, err := c.client.NewContainer(ctx, id, opts...)
 	if err != nil {
@@ -204,7 +180,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}()
 
 	// Create sandbox container root directories.
-	sandboxRootDir := c.getSandboxRootDir(id)
+	sandboxRootDir := c.getSandboxRootDir(id) // /var/lib/containerd/io.containerd.grpc.v1.cri/sandboxes/2b7c350b765acfa9807033219db54a2915b51164976a55a8cefadfc9b5abc018
 	if err := c.os.MkdirAll(sandboxRootDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create sandbox root directory %q: %w",
 			sandboxRootDir, err)
@@ -218,7 +194,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 			}
 		}
 	}()
-	volatileSandboxRootDir := c.getVolatileSandboxRootDir(id)
+	volatileSandboxRootDir := c.getVolatileSandboxRootDir(id) // /run/containerd/io.containerd.grpc.v1.cri/sandboxes/2b7c350b765acfa9807033219db54a2915b51164976a55a8cefadfc9b5abc018
 	if err := c.os.MkdirAll(volatileSandboxRootDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create volatile sandbox root directory %q: %w",
 			volatileSandboxRootDir, err)
@@ -253,11 +229,10 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}
 
 	userNsEnabled := false
-	if goruntime.GOOS != "windows" {
-		usernsOpts := config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetUsernsOptions()
-		if usernsOpts != nil && usernsOpts.GetMode() == runtime.NamespaceMode_POD {
-			userNsEnabled = true
-		}
+
+	usernsOpts := config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetUsernsOptions()
+	if usernsOpts != nil && usernsOpts.GetMode() == runtime.NamespaceMode_POD {
+		userNsEnabled = true
 	}
 
 	// Setup the network namespace if host networking wasn't requested.
@@ -301,7 +276,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		}()
 
 		// Update network namespace in the container's spec
-		c.updateNetNamespacePath(spec, sandbox.NetNSPath)
+		c.updateNetNamespacePath(spec, sandbox.NetNSPath) // /var/run/netns/cni-8ce75e45-3563-0808-d609-308f810adf40
 
 		if err := container.Update(ctx,
 			// Update spec of the container
@@ -350,8 +325,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}
 
 	// Create sandbox task in containerd.
-	log.G(ctx).Tracef("Create sandbox container (id=%q, name=%q).",
-		id, name)
+	log.G(ctx).Tracef("Create sandbox container (id=%q, name=%q).", id, name)
 
 	taskOpts := c.taskOpts(ociRuntime.Type)
 	if ociRuntime.Path != "" {
@@ -367,7 +341,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 			deferCtx, deferCancel := util.DeferContext()
 			defer deferCancel()
 			// Cleanup the sandbox container if an error is returned.
-			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+			if _, err := task.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 				log.G(ctx).WithError(err).Errorf("Failed to delete sandbox container %q", id)
 				cleanupErr = err
 			}
@@ -509,211 +483,14 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	c.generateAndSendContainerEvent(ctx, id, id, runtime.ContainerEventType_CONTAINER_STARTED_EVENT)
 
 	sandboxRuntimeCreateTimer.WithValues(ociRuntime.Type).UpdateSince(runtimeStart)
+	marshalIndent, _ = json.MarshalIndent(sandbox, "  ", "  ")
+	ioutil.WriteFile(fmt.Sprintf("%s-sanbox.json", id), marshalIndent, os.ModePerm)
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
 }
 
-// getNetworkPlugin returns the network plugin to be used by the runtime class
-// defaults to the global CNI options in the CRI config
-func (c *criService) getNetworkPlugin(runtimeClass string) cni.CNI {
-	if c.netPlugin == nil {
-		return nil
-	}
-	i, ok := c.netPlugin[runtimeClass]
-	if !ok {
-		if i, ok = c.netPlugin[defaultNetworkPlugin]; !ok {
-			return nil
-		}
-	}
-	return i
-}
-
-// setupPodNetwork setups up the network for a pod
-func (c *criService) setupPodNetwork(ctx context.Context, sandbox *sandboxstore.Sandbox) error {
-	var (
-		id        = sandbox.ID
-		config    = sandbox.Config
-		path      = sandbox.NetNSPath
-		netPlugin = c.getNetworkPlugin(sandbox.RuntimeHandler)
-		err       error
-		result    *cni.Result
-	)
-	if netPlugin == nil {
-		return errors.New("cni config not initialized")
-	}
-
-	opts, err := cniNamespaceOpts(id, config)
-	if err != nil {
-		return fmt.Errorf("get cni namespace options: %w", err)
-	}
-	log.G(ctx).WithField("podsandboxid", id).Debugf("begin cni setup")
-	netStart := time.Now()
-	if c.config.CniConfig.NetworkPluginSetupSerially {
-		result, err = netPlugin.SetupSerially(ctx, id, path, opts...)
-	} else {
-		result, err = netPlugin.Setup(ctx, id, path, opts...)
-	}
-	networkPluginOperations.WithValues(networkSetUpOp).Inc()
-	networkPluginOperationsLatency.WithValues(networkSetUpOp).UpdateSince(netStart)
-	if err != nil {
-		networkPluginOperationsErrors.WithValues(networkSetUpOp).Inc()
-		return err
-	}
-	logDebugCNIResult(ctx, id, result)
-	// Check if the default interface has IP config
-	if configs, ok := result.Interfaces[defaultIfName]; ok && len(configs.IPConfigs) > 0 {
-		sandbox.IP, sandbox.AdditionalIPs = selectPodIPs(ctx, configs.IPConfigs, c.config.IPPreference)
-		sandbox.CNIResult = result
-		return nil
-	}
-	return fmt.Errorf("failed to find network info for sandbox %q", id)
-}
-
-// cniNamespaceOpts get CNI namespace options from sandbox config.
-func cniNamespaceOpts(id string, config *runtime.PodSandboxConfig) ([]cni.NamespaceOpts, error) {
-	opts := []cni.NamespaceOpts{
-		cni.WithLabels(toCNILabels(id, config)),
-		cni.WithCapability(annotations.PodAnnotations, config.Annotations),
-	}
-
-	portMappings := toCNIPortMappings(config.GetPortMappings())
-	if len(portMappings) > 0 {
-		opts = append(opts, cni.WithCapabilityPortMap(portMappings))
-	}
-
-	// Will return an error if the bandwidth limitation has the wrong unit
-	// or an unreasonable value see validateBandwidthIsReasonable()
-	bandWidth, err := toCNIBandWidth(config.Annotations)
-	if err != nil {
-		return nil, err
-	}
-	if bandWidth != nil {
-		opts = append(opts, cni.WithCapabilityBandWidth(*bandWidth))
-	}
-
-	dns := toCNIDNS(config.GetDnsConfig())
-	if dns != nil {
-		opts = append(opts, cni.WithCapabilityDNS(*dns))
-	}
-
-	if cgroup := config.GetLinux().GetCgroupParent(); cgroup != "" {
-		opts = append(opts, cni.WithCapabilityCgroupPath(cgroup))
-	}
-
-	return opts, nil
-}
-
-// toCNILabels adds pod metadata into CNI labels.
-func toCNILabels(id string, config *runtime.PodSandboxConfig) map[string]string {
-	return map[string]string{
-		"K8S_POD_NAMESPACE":          config.GetMetadata().GetNamespace(),
-		"K8S_POD_NAME":               config.GetMetadata().GetName(),
-		"K8S_POD_INFRA_CONTAINER_ID": id,
-		"K8S_POD_UID":                config.GetMetadata().GetUid(),
-		"IgnoreUnknown":              "1",
-	}
-}
-
-// toCNIBandWidth converts CRI annotations to CNI bandwidth.
-func toCNIBandWidth(annotations map[string]string) (*cni.BandWidth, error) {
-	ingress, egress, err := bandwidth.ExtractPodBandwidthResources(annotations)
-	if err != nil {
-		return nil, fmt.Errorf("reading pod bandwidth annotations: %w", err)
-	}
-
-	if ingress == nil && egress == nil {
-		return nil, nil
-	}
-
-	bandWidth := &cni.BandWidth{}
-
-	if ingress != nil {
-		bandWidth.IngressRate = uint64(ingress.Value())
-		bandWidth.IngressBurst = math.MaxUint32
-	}
-
-	if egress != nil {
-		bandWidth.EgressRate = uint64(egress.Value())
-		bandWidth.EgressBurst = math.MaxUint32
-	}
-
-	return bandWidth, nil
-}
-
-// toCNIPortMappings converts CRI port mappings to CNI.
-func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []cni.PortMapping {
-	var portMappings []cni.PortMapping
-	for _, mapping := range criPortMappings {
-		if mapping.HostPort <= 0 {
-			continue
-		}
-		portMappings = append(portMappings, cni.PortMapping{
-			HostPort:      mapping.HostPort,
-			ContainerPort: mapping.ContainerPort,
-			Protocol:      strings.ToLower(mapping.Protocol.String()),
-			HostIP:        mapping.HostIp,
-		})
-	}
-	return portMappings
-}
-
-// toCNIDNS converts CRI DNSConfig to CNI.
-func toCNIDNS(dns *runtime.DNSConfig) *cni.DNS {
-	if dns == nil {
-		return nil
-	}
-	return &cni.DNS{
-		Servers:  dns.GetServers(),
-		Searches: dns.GetSearches(),
-		Options:  dns.GetOptions(),
-	}
-}
-
-// selectPodIPs select an ip from the ip list.
-func selectPodIPs(ctx context.Context, configs []*cni.IPConfig, preference string) (string, []string) {
-	if len(configs) == 1 {
-		return ipString(configs[0]), nil
-	}
-	toStrings := func(ips []*cni.IPConfig) (o []string) {
-		for _, i := range ips {
-			o = append(o, ipString(i))
-		}
-		return o
-	}
-	var extra []string
-	switch preference {
-	default:
-		if preference != "ipv4" && preference != "" {
-			log.G(ctx).WithField("ip_pref", preference).Warn("invalid ip_pref, falling back to ipv4")
-		}
-		for i, ip := range configs {
-			if ip.IP.To4() != nil {
-				return ipString(ip), append(extra, toStrings(configs[i+1:])...)
-			}
-			extra = append(extra, ipString(ip))
-		}
-	case "ipv6":
-		for i, ip := range configs {
-			if ip.IP.To16() != nil {
-				return ipString(ip), append(extra, toStrings(configs[i+1:])...)
-			}
-			extra = append(extra, ipString(ip))
-		}
-	case "cni":
-		// use func default return
-	}
-
-	all := toStrings(configs)
-	return all[0], all[1:]
-}
-
 func ipString(ip *cni.IPConfig) string {
 	return ip.IP.String()
-}
-
-// untrustedWorkload returns true if the sandbox contains untrusted workload.
-func untrustedWorkload(config *runtime.PodSandboxConfig) bool {
-	return config.GetAnnotations()[annotations.UntrustedWorkload] == "true"
 }
 
 // hostAccessingSandbox returns true if the sandbox configuration
@@ -765,14 +542,196 @@ func (c *criService) getSandboxRuntime(config *runtime.PodSandboxConfig, runtime
 	return handler, nil
 }
 
-func logDebugCNIResult(ctx context.Context, sandboxID string, result *cni.Result) {
-	if logrus.GetLevel() < logrus.DebugLevel {
-		return
+// untrustedWorkload returns true if the sandbox contains untrusted workload.
+func untrustedWorkload(config *runtime.PodSandboxConfig) bool {
+	return config.GetAnnotations()[annotations.UntrustedWorkload] == "true"
+}
+
+// toCNIPortMappings converts CRI port mappings to CNI.
+func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []cni.PortMapping {
+	var portMappings []cni.PortMapping
+	for _, mapping := range criPortMappings {
+		if mapping.HostPort <= 0 {
+			continue
+		}
+		portMappings = append(portMappings, cni.PortMapping{
+			HostPort:      mapping.HostPort,
+			ContainerPort: mapping.ContainerPort,
+			Protocol:      strings.ToLower(mapping.Protocol.String()),
+			HostIP:        mapping.HostIp,
+		})
 	}
-	cniResult, err := json.Marshal(result)
+	return portMappings
+}
+
+func toCNIBandWidth(annotations map[string]string) (*cni.BandWidth, error) {
+	ingress, egress, err := bandwidth.ExtractPodBandwidthResources(annotations) // kubernetes.io/ingress-bandwidth kubernetes.io/egress-bandwidth
 	if err != nil {
-		log.G(ctx).WithField("podsandboxid", sandboxID).WithError(err).Errorf("Failed to marshal CNI result: %v", err)
-		return
+		return nil, fmt.Errorf("reading pod bandwidth annotations: %w", err)
 	}
-	log.G(ctx).WithField("podsandboxid", sandboxID).Debugf("cni result: %s", string(cniResult))
+
+	if ingress == nil && egress == nil {
+		return nil, nil
+	}
+
+	bandWidth := &cni.BandWidth{}
+
+	if ingress != nil {
+		bandWidth.IngressRate = uint64(ingress.Value())
+		bandWidth.IngressBurst = math.MaxUint32
+	}
+
+	if egress != nil {
+		bandWidth.EgressRate = uint64(egress.Value())
+		bandWidth.EgressBurst = math.MaxUint32
+	}
+
+	return bandWidth, nil
+}
+
+// toCNILabels adds pod metadata into CNI labels.
+func toCNILabels(id string, config *runtime.PodSandboxConfig) map[string]string {
+	return map[string]string{
+		"K8S_POD_NAMESPACE":          config.GetMetadata().GetNamespace(),
+		"K8S_POD_NAME":               config.GetMetadata().GetName(),
+		"K8S_POD_INFRA_CONTAINER_ID": id,
+		"K8S_POD_UID":                config.GetMetadata().GetUid(),
+		"IgnoreUnknown":              "1",
+	}
+}
+
+// toCNIDNS converts CRI DNSConfig to CNI.
+func toCNIDNS(dns *runtime.DNSConfig) *cni.DNS {
+	if dns == nil {
+		return nil
+	}
+	return &cni.DNS{
+		Servers:  dns.GetServers(),
+		Searches: dns.GetSearches(),
+		Options:  dns.GetOptions(),
+	}
+}
+func (c *criService) getNetworkPlugin(runtimeClass string) cni.CNI {
+	if c.netPlugin == nil {
+		return nil
+	}
+	i, ok := c.netPlugin[runtimeClass]
+	if !ok {
+		if i, ok = c.netPlugin[defaultNetworkPlugin]; !ok {
+			return nil
+		}
+	}
+	return i
+}
+
+// cniNamespaceOpts get CNI namespace options from sandbox config.
+func cniNamespaceOpts(id string, config *runtime.PodSandboxConfig) ([]cni.NamespaceOpts, error) {
+	opts := []cni.NamespaceOpts{
+		cni.WithLabels(toCNILabels(id, config)),
+		cni.WithCapability(annotations.PodAnnotations, config.Annotations),
+	}
+
+	portMappings := toCNIPortMappings(config.GetPortMappings())
+	if len(portMappings) > 0 {
+		opts = append(opts, cni.WithCapabilityPortMap(portMappings))
+	}
+
+	// Will return an error if the bandwidth limitation has the wrong unit
+	// or an unreasonable value see validateBandwidthIsReasonable()
+	bandWidth, err := toCNIBandWidth(config.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	if bandWidth != nil {
+		opts = append(opts, cni.WithCapabilityBandWidth(*bandWidth))
+	}
+
+	dns := toCNIDNS(config.GetDnsConfig())
+	if dns != nil {
+		opts = append(opts, cni.WithCapabilityDNS(*dns))
+	}
+
+	if cgroup := config.GetLinux().GetCgroupParent(); cgroup != "" {
+		opts = append(opts, cni.WithCapabilityCgroupPath(cgroup))
+	}
+
+	return opts, nil
+}
+
+// setupPodNetwork setups up the network for a pod
+func (c *criService) setupPodNetwork(ctx context.Context, sandbox *sandboxstore.Sandbox) error {
+	var (
+		id        = sandbox.ID
+		config    = sandbox.Config
+		path      = sandbox.NetNSPath
+		netPlugin = c.getNetworkPlugin(sandbox.RuntimeHandler)
+		err       error
+		result    *cni.Result
+	)
+	if netPlugin == nil {
+		return errors.New("cni config not initialized")
+	}
+
+	opts, err := cniNamespaceOpts(id, config)
+	if err != nil {
+		return fmt.Errorf("get cni namespace options: %w", err)
+	}
+	log.G(ctx).WithField("podsandboxid", id).Debugf("begin cni setup")
+	netStart := time.Now()
+	if c.config.CniConfig.NetworkPluginSetupSerially {
+		result, err = netPlugin.SetupSerially(ctx, id, path, opts...)
+	} else {
+		result, err = netPlugin.Setup(ctx, id, path, opts...)
+	}
+	networkPluginOperations.WithValues(networkSetUpOp).Inc()
+	networkPluginOperationsLatency.WithValues(networkSetUpOp).UpdateSince(netStart)
+	if err != nil {
+		networkPluginOperationsErrors.WithValues(networkSetUpOp).Inc()
+		return err
+	}
+	// Check if the default interface has IP config
+	if configs, ok := result.Interfaces[defaultIfName]; ok && len(configs.IPConfigs) > 0 {
+		sandbox.IP, sandbox.AdditionalIPs = selectPodIPs(ctx, configs.IPConfigs, c.config.IPPreference)
+		sandbox.CNIResult = result
+		return nil
+	}
+	return fmt.Errorf("failed to find network info for sandbox %q", id)
+}
+
+// selectPodIPs select an ip from the ip list.
+func selectPodIPs(ctx context.Context, configs []*cni.IPConfig, preference string) (string, []string) {
+	if len(configs) == 1 {
+		return ipString(configs[0]), nil
+	}
+	toStrings := func(ips []*cni.IPConfig) (o []string) {
+		for _, i := range ips {
+			o = append(o, ipString(i))
+		}
+		return o
+	}
+	var extra []string
+	switch preference {
+	default:
+		if preference != "ipv4" && preference != "" {
+			log.G(ctx).WithField("ip_pref", preference).Warn("invalid ip_pref, falling back to ipv4")
+		}
+		for i, ip := range configs {
+			if ip.IP.To4() != nil {
+				return ipString(ip), append(extra, toStrings(configs[i+1:])...)
+			}
+			extra = append(extra, ipString(ip))
+		}
+	case "ipv6":
+		for i, ip := range configs {
+			if ip.IP.To16() != nil {
+				return ipString(ip), append(extra, toStrings(configs[i+1:])...)
+			}
+			extra = append(extra, ipString(ip))
+		}
+	case "cni":
+		// use func default return
+	}
+
+	all := toStrings(configs)
+	return all[0], all[1:]
 }

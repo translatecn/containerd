@@ -1,38 +1,22 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
-	"demo/pkg/rootfs"
+	"demo/over/kmutex"
+	"demo/over/labels"
+	"demo/over/rootfs"
+	"demo/over/snapshots"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
 
-	"demo/content"
-	"demo/diff"
+	"demo/over/content"
+	"demo/over/diff"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/platforms"
-	"demo/pkg/kmutex"
-	"demo/pkg/labels"
-	"demo/snapshots"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -62,9 +46,9 @@ type Image interface {
 	// ContentStore provides a content store which contains image blob data
 	ContentStore() content.Store
 	// Metadata returns the underlying image metadata
-	Metadata() over_images.Image
+	Metadata() images.Image
 	// Platform returns the platform match comparer. Can be nil.
-	Platform() over_platforms.MatchComparer
+	Platform() platforms.MatchComparer
 	// Spec returns the OCI image spec for a given image.
 	Spec(ctx context.Context) (ocispec.Image, error)
 }
@@ -94,12 +78,6 @@ func WithUsageManifestLimit(i int) UsageOpt {
 
 // WithSnapshotUsage will check for referenced snapshots from the image objects
 // and include the snapshot size in the total usage.
-func WithSnapshotUsage() UsageOpt {
-	return func(o *usageOptions) error {
-		o.snapshots = true
-		return nil
-	}
-}
 
 // WithManifestUsage is used to get the usage for an image based on what is
 // reported by the manifests rather than what exists in the content store.
@@ -115,7 +93,7 @@ func WithManifestUsage() UsageOpt {
 var _ = (Image)(&image{})
 
 // NewImage returns a client image object from the metadata image
-func NewImage(client *Client, i over_images.Image) Image {
+func NewImage(client *Client, i images.Image) Image {
 	return &image{
 		client:   client,
 		i:        i,
@@ -124,7 +102,7 @@ func NewImage(client *Client, i over_images.Image) Image {
 }
 
 // NewImageWithPlatform returns a client image object from the metadata image
-func NewImageWithPlatform(client *Client, i over_images.Image, platform over_platforms.MatchComparer) Image {
+func NewImageWithPlatform(client *Client, i images.Image, platform platforms.MatchComparer) Image {
 	return &image{
 		client:   client,
 		i:        i,
@@ -135,11 +113,11 @@ func NewImageWithPlatform(client *Client, i over_images.Image, platform over_pla
 type image struct {
 	client *Client
 
-	i        over_images.Image
-	platform over_platforms.MatchComparer
+	i        images.Image
+	platform platforms.MatchComparer
 }
 
-func (i *image) Metadata() over_images.Image {
+func (i *image) Metadata() images.Image {
 	return i.i
 }
 
@@ -174,21 +152,21 @@ func (i *image) Usage(ctx context.Context, opts ...UsageOpt) (int64, error) {
 
 	var (
 		provider  = i.client.ContentStore()
-		handler   = over_images.ChildrenHandler(provider)
+		handler   = images.ChildrenHandler(provider)
 		size      int64
 		mustExist bool
 	)
 
 	if config.manifestLimit != nil {
-		handler = over_images.LimitManifests(handler, i.platform, *config.manifestLimit)
+		handler = images.LimitManifests(handler, i.platform, *config.manifestLimit)
 		mustExist = true
 	}
 
-	var wh over_images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+	var wh images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		var usage int64
 		children, err := handler(ctx, desc)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) || mustExist {
+			if !errdefs.IsNotFound(err) || mustExist {
 				return nil, err
 			}
 			if !config.manifestOnly {
@@ -198,7 +176,7 @@ func (i *image) Usage(ctx context.Context, opts ...UsageOpt) (int64, error) {
 		} else if config.snapshots || !config.manifestOnly {
 			info, err := provider.Info(ctx, desc.Digest)
 			if err != nil {
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return nil, err
 				}
 				if !config.manifestOnly {
@@ -224,7 +202,7 @@ func (i *image) Usage(ctx context.Context, opts ...UsageOpt) (int64, error) {
 
 					u, err := sn.Usage(ctx, v)
 					if err != nil {
-						if !over_errdefs.IsNotFound(err) && !over_errdefs.IsInvalidArgument(err) {
+						if !errdefs.IsNotFound(err) && !errdefs.IsInvalidArgument(err) {
 							return nil, err
 						}
 					} else {
@@ -247,16 +225,11 @@ func (i *image) Usage(ctx context.Context, opts ...UsageOpt) (int64, error) {
 	}
 
 	l := semaphore.NewWeighted(3)
-	if err := over_images.Dispatch(ctx, wh, l, i.i.Target); err != nil {
+	if err := images.Dispatch(ctx, wh, l, i.i.Target); err != nil {
 		return 0, err
 	}
 
 	return size, nil
-}
-
-func (i *image) Config(ctx context.Context) (ocispec.Descriptor, error) {
-	provider := i.client.ContentStore()
-	return i.i.Config(ctx, provider, i.platform)
 }
 
 func (i *image) IsUnpacked(ctx context.Context, snapshotterName string) (bool, error) {
@@ -275,7 +248,7 @@ func (i *image) IsUnpacked(ctx context.Context, snapshotterName string) (bool, e
 	_, err = sn.Stat(ctx, chainID.String())
 	if err == nil {
 		return true, nil
-	} else if !over_errdefs.IsNotFound(err) {
+	} else if !errdefs.IsNotFound(err) {
 		return false, err
 	}
 
@@ -321,12 +294,6 @@ type UnpackConfig struct {
 type UnpackOpt func(context.Context, *UnpackConfig) error
 
 // WithSnapshotterPlatformCheck sets `CheckPlatformSupported` on the UnpackConfig
-func WithSnapshotterPlatformCheck() UnpackOpt {
-	return func(ctx context.Context, uc *UnpackConfig) error {
-		uc.CheckPlatformSupported = true
-		return nil
-	}
-}
 
 // WithUnpackDuplicationSuppressor sets `DuplicationSuppressor` on the UnpackConfig.
 func WithUnpackDuplicationSuppressor(suppressor kmutex.KeyedLocker) UnpackOpt {
@@ -430,16 +397,16 @@ func (i *image) Unpack(ctx context.Context, snapshotterName string, opts ...Unpa
 	return err
 }
 
-func (i *image) getManifest(ctx context.Context, platform over_platforms.MatchComparer) (ocispec.Manifest, error) {
+func (i *image) getManifest(ctx context.Context, platform platforms.MatchComparer) (ocispec.Manifest, error) {
 	cs := i.ContentStore()
-	manifest, err := over_images.Manifest(ctx, cs, i.i.Target, platform)
+	manifest, err := images.Manifest(ctx, cs, i.i.Target, platform)
 	if err != nil {
 		return ocispec.Manifest{}, err
 	}
 	return manifest, nil
 }
 
-func (i *image) getLayers(ctx context.Context, platform over_platforms.MatchComparer, manifest ocispec.Manifest) ([]rootfs.Layer, error) {
+func (i *image) getLayers(ctx context.Context, platform platforms.MatchComparer, manifest ocispec.Manifest) ([]rootfs.Layer, error) {
 	cs := i.ContentStore()
 	diffIDs, err := i.i.RootFS(ctx, cs, platform)
 	if err != nil {
@@ -449,7 +416,7 @@ func (i *image) getLayers(ctx context.Context, platform over_platforms.MatchComp
 	// parse out the image layers from oci artifact layers
 	imageLayers := []ocispec.Descriptor{}
 	for _, ociLayer := range manifest.Layers {
-		if over_images.IsLayerType(ociLayer.MediaType) {
+		if images.IsLayerType(ociLayer.MediaType) {
 			imageLayers = append(imageLayers, ociLayer)
 		}
 	}
@@ -479,7 +446,7 @@ func (i *image) getManifestPlatform(ctx context.Context, manifest ocispec.Manife
 	if err := json.Unmarshal(p, &image); err != nil {
 		return ocispec.Platform{}, err
 	}
-	return over_platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture}), nil
+	return platforms.Normalize(ocispec.Platform{OS: image.OS, Architecture: image.Architecture}), nil
 }
 
 func (i *image) checkSnapshotterSupport(ctx context.Context, snapshotterName string, manifest ocispec.Manifest) error {
@@ -503,6 +470,11 @@ func (i *image) ContentStore() content.Store {
 	return i.client.ContentStore()
 }
 
-func (i *image) Platform() over_platforms.MatchComparer {
+func (i *image) Platform() platforms.MatchComparer {
 	return i.platform
+}
+
+func (i *image) Config(ctx context.Context) (ocispec.Descriptor, error) {
+	provider := i.client.ContentStore()
+	return i.i.Config(ctx, provider, i.platform)
 }

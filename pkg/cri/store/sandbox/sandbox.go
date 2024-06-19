@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sandbox
 
 import (
@@ -21,11 +5,11 @@ import (
 
 	"demo/containerd"
 	"demo/over/errdefs"
+	"demo/over/truncindex"
 	"demo/pkg/cri/store"
 	"demo/pkg/cri/store/label"
 	"demo/pkg/cri/store/stats"
 	"demo/pkg/netns"
-	"demo/pkg/truncindex"
 )
 
 // Sandbox contains all resources associated with the sandbox. All methods to
@@ -36,7 +20,7 @@ type Sandbox struct {
 	// Status stores the status of the sandbox.
 	Status StatusStorage
 	// Container is the containerd sandbox container client.
-	Container containerd.Container
+	Container containerd.Container // pause container
 	// CNI network namespace client.
 	// For hostnetwork pod, this is always nil;
 	// For non hostnetwork pod, this should never be nil.
@@ -78,42 +62,6 @@ func NewStore(labels *label.Store) *Store {
 	}
 }
 
-// Add a sandbox into the store. Returns over_errdefs.ErrAlreadyExists if the sandbox is
-// already stored.
-func (s *Store) Add(sb Sandbox) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	if _, ok := s.sandboxes[sb.ID]; ok {
-		return over_errdefs.ErrAlreadyExists
-	}
-	if err := s.labels.Reserve(sb.ProcessLabel); err != nil {
-		return err
-	}
-	if err := s.idIndex.Add(sb.ID); err != nil {
-		return err
-	}
-	s.sandboxes[sb.ID] = sb
-	return nil
-}
-
-// Get returns the sandbox with specified id.
-// Returns over_errdefs.ErrNotFound if the sandbox doesn't exist.
-func (s *Store) Get(id string) (Sandbox, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	id, err := s.idIndex.Get(id)
-	if err != nil {
-		if err == truncindex.ErrNotExist {
-			err = over_errdefs.ErrNotFound
-		}
-		return Sandbox{}, err
-	}
-	if sb, ok := s.sandboxes[id]; ok {
-		return sb, nil
-	}
-	return Sandbox{}, over_errdefs.ErrNotFound
-}
-
 // List lists all sandboxes.
 func (s *Store) List() []Sandbox {
 	s.lock.RLock()
@@ -126,7 +74,7 @@ func (s *Store) List() []Sandbox {
 }
 
 // UpdateContainerStats updates the sandbox specified by ID with the
-// stats present in 'newContainerStats'. Returns over_errdefs.ErrNotFound
+// stats present in 'newContainerStats'. Returns errdefs.ErrNotFound
 // if the sandbox does not exist in the store.
 func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.ContainerStats) error {
 	s.lock.Lock()
@@ -134,13 +82,13 @@ func (s *Store) UpdateContainerStats(id string, newContainerStats *stats.Contain
 	id, err := s.idIndex.Get(id)
 	if err != nil {
 		if err == truncindex.ErrNotExist {
-			err = over_errdefs.ErrNotFound
+			err = errdefs.ErrNotFound
 		}
 		return err
 	}
 
 	if _, ok := s.sandboxes[id]; !ok {
-		return over_errdefs.ErrNotFound
+		return errdefs.ErrNotFound
 	}
 
 	c := s.sandboxes[id]
@@ -159,7 +107,43 @@ func (s *Store) Delete(id string) {
 		// So we need to return if there are error.
 		return
 	}
-	s.labels.Release(s.sandboxes[id].ProcessLabel)
+	s.labels.Release(s.sandboxes[id].ProcessSelinuxLabel)
 	s.idIndex.Delete(id)
 	delete(s.sandboxes, id)
+}
+
+// Add a sandbox into the store. Returns errdefs.ErrAlreadyExists if the sandbox is
+// already stored.
+func (s *Store) Add(sb Sandbox) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if _, ok := s.sandboxes[sb.ID]; ok {
+		return errdefs.ErrAlreadyExists
+	}
+	if err := s.labels.Reserve(sb.ProcessSelinuxLabel); err != nil {
+		return err
+	}
+	if err := s.idIndex.Add(sb.ID); err != nil {
+		return err
+	}
+	s.sandboxes[sb.ID] = sb
+	return nil
+}
+
+// Get returns the sandbox with specified id.
+// Returns errdefs.ErrNotFound if the sandbox doesn't exist.
+func (s *Store) Get(id string) (Sandbox, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	id, err := s.idIndex.Get(id)
+	if err != nil {
+		if err == truncindex.ErrNotExist {
+			err = errdefs.ErrNotFound
+		}
+		return Sandbox{}, err
+	}
+	if sb, ok := s.sandboxes[id]; ok {
+		return sb, nil
+	}
+	return Sandbox{}, errdefs.ErrNotFound
 }

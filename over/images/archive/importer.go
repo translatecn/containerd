@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 // Package archive provides a Docker and OCI compatible importer
 package archive
 
@@ -21,19 +5,19 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"demo/others/log"
+	"demo/over/labels"
+	"demo/over/log"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"path"
 
-	"demo/content"
+	"demo/over/archive/compression"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/platforms"
-	"demo/pkg/archive/compression"
-	"demo/pkg/labels"
 	digest "github.com/opencontainers/go-digest"
 	specs "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -164,7 +148,7 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader, opt
 		if !ok {
 			return ocispec.Descriptor{}, fmt.Errorf("image config %q not found", mfst.Config)
 		}
-		config.MediaType = over_images.MediaTypeDockerSchema2Config
+		config.MediaType = images.MediaTypeDockerSchema2Config
 
 		layers, err := resolveLayers(ctx, store, mfst.Layers, blobs, iopts.compress)
 		if err != nil {
@@ -178,7 +162,7 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader, opt
 			Layers        []ocispec.Descriptor `json:"layers"`
 		}{
 			SchemaVersion: 2,
-			MediaType:     over_images.MediaTypeDockerSchema2Manifest,
+			MediaType:     images.MediaTypeDockerSchema2Manifest,
 			Config:        config,
 			Layers:        layers,
 		}
@@ -188,7 +172,7 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader, opt
 			return ocispec.Descriptor{}, fmt.Errorf("write docker manifest: %w", err)
 		}
 
-		imgPlatforms, err := over_images.Platforms(ctx, store, desc)
+		imgPlatforms, err := images.Platforms(ctx, store, desc)
 		if err != nil {
 			return ocispec.Descriptor{}, fmt.Errorf("unable to resolve platform: %w", err)
 		}
@@ -204,7 +188,7 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader, opt
 			// garbage collected, breaking the image.
 			// See: https://github.com/containerd/issues/5690
 			if desc.Platform.OS == "windows" && desc.Platform.OSVersion == "" {
-				platform := over_platforms.DefaultSpec()
+				platform := platforms.DefaultSpec()
 				desc.Platform.OSVersion = platform.OSVersion
 			}
 		}
@@ -222,8 +206,8 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader, opt
 				}
 
 				mfstdesc.Annotations = map[string]string{
-					over_images.AnnotationImageName: normalized,
-					ocispec.AnnotationRefName:       ociReferenceName(normalized),
+					images.AnnotationImageName: normalized,
+					ocispec.AnnotationRefName:  ociReferenceName(normalized),
 				}
 
 				idx.Manifests = append(idx.Manifests, mfstdesc)
@@ -317,12 +301,12 @@ func resolveLayers(ctx context.Context, store content.Store, layerFiles []string
 					ra.Close()
 					return nil, err
 				}
-				layers[i].MediaType = over_images.MediaTypeDockerSchema2LayerGzip
+				layers[i].MediaType = images.MediaTypeDockerSchema2LayerGzip
 			} else {
-				layers[i].MediaType = over_images.MediaTypeDockerSchema2Layer
+				layers[i].MediaType = images.MediaTypeDockerSchema2Layer
 			}
 		} else {
-			layers[i].MediaType = over_images.MediaTypeDockerSchema2LayerGzip
+			layers[i].MediaType = images.MediaTypeDockerSchema2LayerGzip
 		}
 		s.Close()
 		ra.Close()
@@ -367,7 +351,7 @@ func compressBlob(ctx context.Context, cs content.Store, r io.Reader, ref string
 	desc.Size = cst.Offset
 
 	if err := w.Commit(ctx, desc.Size, desc.Digest, opts...); err != nil {
-		if !over_errdefs.IsAlreadyExists(err) {
+		if !errdefs.IsAlreadyExists(err) {
 			return ocispec.Descriptor{}, fmt.Errorf("failed to commit: %w", err)
 		}
 	}
@@ -408,13 +392,13 @@ func detectLayerMediaType(ctx context.Context, store content.Store, desc ocispec
 	}
 	if err == io.EOF {
 		// in the case of an empty layer then the media type should be uncompressed
-		return over_images.MediaTypeDockerSchema2Layer, nil
+		return images.MediaTypeDockerSchema2Layer, nil
 	}
 	switch c := compression.DetectCompression(bytes); c {
 	case compression.Uncompressed:
-		mediaType = over_images.MediaTypeDockerSchema2Layer
+		mediaType = images.MediaTypeDockerSchema2Layer
 	default:
-		mediaType = over_images.MediaTypeDockerSchema2LayerGzip
+		mediaType = images.MediaTypeDockerSchema2LayerGzip
 	}
 	return mediaType, nil
 }

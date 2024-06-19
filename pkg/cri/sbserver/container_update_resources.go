@@ -1,34 +1,16 @@
-//go:build !darwin && !freebsd
-
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
 	gocontext "context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"fmt"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/containerd"
-	"demo/containers"
+	"demo/over/containers"
 	"demo/over/errdefs"
 	containerstore "demo/pkg/cri/store/container"
 	ctrdutil "demo/pkg/cri/util"
@@ -122,7 +104,7 @@ func (c *criService) updateContainerResources(ctx context.Context,
 
 	task, err := cntr.Container.Task(ctx, nil)
 	if err != nil {
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Task exited already.
 			return newStatus, nil
 		}
@@ -130,7 +112,7 @@ func (c *criService) updateContainerResources(ctx context.Context,
 	}
 	// newSpec.Linux / newSpec.Windows won't be nil
 	if err := task.Update(ctx, containerd.WithResources(getResources(newSpec))); err != nil {
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Task exited already.
 			return newStatus, nil
 		}

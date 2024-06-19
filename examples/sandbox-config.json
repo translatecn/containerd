@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "name": "busybox-sandbox",
+    "namespace": "default",
+    "attempt": 1,
+    "uid": "hdishd83djaidwnduwk28bcsb"
+  },
+  "log_directory": "/tmp",
+  "linux": {
+  },
+  "annotations": {
+    "kubernetes.io/ingress-bandwidth": "100M",
+    "kubernetes.io/egress-bandwidth": "100M"
+  }
+}

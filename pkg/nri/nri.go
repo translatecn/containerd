@@ -1,32 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package nri
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
+	"demo/over/version"
 	"fmt"
 	"path"
 	"sync"
 
 	"github.com/sirupsen/logrus"
 
-	nri "demo/others/nri/pkg/adaptation"
-	"demo/version"
+	nri "demo/others/nri_extend/pkg/adaptation"
 )
 
 // API implements a common API for interfacing NRI from containerd. It is
@@ -47,7 +31,6 @@ type API interface {
 	// Stop stops the NRI interface.
 	Stop()
 
-	// RunPodSandbox relays pod creation events to NRI.
 	RunPodSandbox(context.Context, PodSandbox) error
 
 	// StopPodSandbox relays pod shutdown events to NRI.
@@ -164,23 +147,6 @@ func (l *local) Stop() {
 
 	l.nri.Stop()
 	l.nri = nil
-}
-
-func (l *local) RunPodSandbox(ctx context.Context, pod PodSandbox) error {
-	if !l.IsEnabled() {
-		return nil
-	}
-
-	l.Lock()
-	defer l.Unlock()
-
-	request := &nri.RunPodSandboxRequest{
-		Pod: podSandboxToNRI(pod),
-	}
-
-	err := l.nri.RunPodSandbox(ctx, request)
-	l.setState(pod.GetID(), Running)
-	return err
 }
 
 func (l *local) StopPodSandbox(ctx context.Context, pod PodSandbox) error {
@@ -493,15 +459,6 @@ func (l *local) evictContainers(ctx context.Context, evict []*nri.ContainerEvict
 	return failed, err
 }
 
-func (l *local) setState(id string, state State) {
-	if state != Removed {
-		l.state[id] = state
-		return
-	}
-
-	delete(l.state, id)
-}
-
 func (l *local) getState(id string) State {
 	if state, ok := l.state[id]; ok {
 		return state
@@ -524,4 +481,30 @@ func (l *local) needsRemoval(id string) bool {
 		return true
 	}
 	return false
+}
+
+func (l *local) RunPodSandbox(ctx context.Context, pod PodSandbox) error { // 将pod创建事件传递给NRI
+	if !l.IsEnabled() {
+		return nil
+	}
+
+	l.Lock()
+	defer l.Unlock()
+
+	request := &nri.RunPodSandboxRequest{
+		Pod: podSandboxToNRI(pod),
+	}
+
+	err := l.nri.RunPodSandbox(ctx, request)
+	l.setState(pod.GetID(), Running)
+	return err
+}
+
+func (l *local) setState(id string, state State) {
+	if state != Removed {
+		l.state[id] = state
+		return
+	}
+
+	delete(l.state, id)
 }

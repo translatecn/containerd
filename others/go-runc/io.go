@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package runc
 
 import (
@@ -142,35 +126,6 @@ func (i *pipeIO) Set(cmd *exec.Cmd) {
 	if i.err != nil {
 		cmd.Stderr = i.err.w
 	}
-}
-
-func NewSTDIO() (IO, error) {
-	return &stdio{}, nil
-}
-
-type stdio struct {
-}
-
-func (s *stdio) Close() error {
-	return nil
-}
-
-func (s *stdio) Set(cmd *exec.Cmd) {
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-}
-
-func (s *stdio) Stdin() io.WriteCloser {
-	return os.Stdin
-}
-
-func (s *stdio) Stdout() io.ReadCloser {
-	return os.Stdout
-}
-
-func (s *stdio) Stderr() io.ReadCloser {
-	return os.Stderr
 }
 
 // NewNullIO returns IO setup for /dev/null use with runc

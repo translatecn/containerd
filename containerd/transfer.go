@@ -1,34 +1,18 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
 	"demo/over/protobuf"
+	"demo/over/streaming"
+	"demo/over/typeurl/v2"
 	"errors"
 	"io"
 
-	"demo/others/typeurl/v2"
+	streamingapi "demo/over/api/services/streaming/v1"
+	transferapi "demo/over/api/services/transfer/v1"
 	"demo/over/errdefs"
-	streamingapi "demo/pkg/api/services/streaming/v1"
-	transferapi "demo/pkg/api/services/transfer/v1"
-	"demo/pkg/streaming"
-	"demo/pkg/transfer"
-	"demo/pkg/transfer/proxy"
+	"demo/over/transfer"
+	"demo/over/transfer/proxy"
 )
 
 func (c *Client) Transfer(ctx context.Context, src interface{}, dest interface{}, opts ...transfer.Opt) error {
@@ -63,10 +47,10 @@ func (sc *streamCreator) Create(ctx context.Context, id string) (streaming.Strea
 	if err != nil {
 		return nil, err
 	}
-	err = stream.Send(over_protobuf.FromAny(a))
+	err = stream.Send(protobuf.FromAny(a))
 	if err != nil {
 		if !errors.Is(err, io.EOF) {
-			err = over_errdefs.FromGRPC(err)
+			err = errdefs.FromGRPC(err)
 		}
 		return nil, err
 	}
@@ -74,7 +58,7 @@ func (sc *streamCreator) Create(ctx context.Context, id string) (streaming.Strea
 	// Receive an ack that stream is init and ready
 	if _, err = stream.Recv(); err != nil {
 		if !errors.Is(err, io.EOF) {
-			err = over_errdefs.FromGRPC(err)
+			err = errdefs.FromGRPC(err)
 		}
 		return nil, err
 	}
@@ -89,9 +73,9 @@ type clientStream struct {
 }
 
 func (cs *clientStream) Send(a typeurl.Any) (err error) {
-	err = cs.s.Send(over_protobuf.FromAny(a))
+	err = cs.s.Send(protobuf.FromAny(a))
 	if !errors.Is(err, io.EOF) {
-		err = over_errdefs.FromGRPC(err)
+		err = errdefs.FromGRPC(err)
 	}
 	return
 }
@@ -99,7 +83,7 @@ func (cs *clientStream) Send(a typeurl.Any) (err error) {
 func (cs *clientStream) Recv() (a typeurl.Any, err error) {
 	a, err = cs.s.Recv()
 	if !errors.Is(err, io.EOF) {
-		err = over_errdefs.FromGRPC(err)
+		err = errdefs.FromGRPC(err)
 	}
 	return
 }

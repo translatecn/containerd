@@ -1,45 +1,29 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
-	over_plugin2 "demo/over/plugin"
-	"demo/pkg/api/services/diff/v1"
-	"demo/pkg/api/services/tasks/v1"
-	"demo/pkg/namespaces"
-	sandbox2 "demo/pkg/sandbox"
+	"demo/over/api/services/diff/v1"
+	"demo/over/api/services/tasks/v1"
+	"demo/over/leases"
+	"demo/over/namespaces"
+	"demo/over/plugin"
+	"demo/over/snapshots"
+	"demo/pkg/sandbox"
+	srv "demo/plugins"
+	"demo/plugins/containerd/service/introspection"
 	"fmt"
 
-	"demo/containers"
-	"demo/content"
+	containersapi "demo/over/api/services/containers/v1"
+	imagesapi "demo/over/api/services/images/v1"
+	introspectionapi "demo/over/api/services/introspection/v1"
+	namespacesapi "demo/over/api/services/namespaces/v1"
+	"demo/over/containers"
+	"demo/over/content"
 	"demo/over/images"
-	containersapi "demo/pkg/api/services/containers/v1"
-	imagesapi "demo/pkg/api/services/images/v1"
-	introspectionapi "demo/pkg/api/services/introspection/v1"
-	namespacesapi "demo/pkg/api/services/namespaces/v1"
-	"demo/pkg/leases"
-	srv "demo/services"
-	"demo/services/introspection"
-	"demo/snapshots"
 )
 
 type services struct {
 	contentStore         content.Store
-	imageStore           over_images.Store
+	imageStore           images.Store
 	containerStore       containers.Store
 	namespaceStore       namespaces.Store
 	snapshotters         map[string]snapshots.Snapshotter
@@ -48,8 +32,8 @@ type services struct {
 	eventService         EventService
 	leasesService        leases.Manager
 	introspectionService introspection.Service
-	sandboxStore         sandbox2.Store
-	sandboxController    sandbox2.Controller
+	sandboxStore         sandbox.Store
+	sandboxController    sandbox.Controller
 }
 
 // ServicesOpt allows callers to set options on the services
@@ -70,11 +54,6 @@ func WithImageClient(imageService imagesapi.ImagesClient) ServicesOpt {
 }
 
 // WithImageStore sets the image store.
-func WithImageStore(imageStore over_images.Store) ServicesOpt {
-	return func(s *services) {
-		s.imageStore = imageStore
-	}
-}
 
 // WithSnapshotters sets the snapshotters.
 func WithSnapshotters(snapshotters map[string]snapshots.Snapshotter) ServicesOpt {
@@ -94,11 +73,6 @@ func WithContainerClient(containerService containersapi.ContainersClient) Servic
 }
 
 // WithContainerStore sets the container store.
-func WithContainerStore(containerStore containers.Store) ServicesOpt {
-	return func(s *services) {
-		s.containerStore = containerStore
-	}
-}
 
 // WithTaskClient sets the task service to use from a tasks client.
 func WithTaskClient(taskService tasks.TasksClient) ServicesOpt {
@@ -115,11 +89,6 @@ func WithDiffClient(diffService diff.DiffClient) ServicesOpt {
 }
 
 // WithDiffService sets the diff store.
-func WithDiffService(diffService DiffService) ServicesOpt {
-	return func(s *services) {
-		s.diffService = diffService
-	}
-}
 
 // WithEventService sets the event service.
 func WithEventService(eventService EventService) ServicesOpt {
@@ -136,11 +105,6 @@ func WithNamespaceClient(namespaceService namespacesapi.NamespacesClient) Servic
 }
 
 // WithNamespaceService sets the namespace service.
-func WithNamespaceService(namespaceService namespaces.Store) ServicesOpt {
-	return func(s *services) {
-		s.namespaceStore = namespaceService
-	}
-}
 
 // WithLeasesService sets the lease service.
 func WithLeasesService(leasesService leases.Manager) ServicesOpt {
@@ -157,43 +121,37 @@ func WithIntrospectionClient(in introspectionapi.IntrospectionClient) ServicesOp
 }
 
 // WithIntrospectionService sets the introspection service.
-func WithIntrospectionService(in introspection.Service) ServicesOpt {
-	return func(s *services) {
-		s.introspectionService = in
-	}
-}
 
 // WithSandboxStore sets the sandbox store.
-func WithSandboxStore(client sandbox2.Store) ServicesOpt {
+func WithSandboxStore(client sandbox.Store) ServicesOpt {
 	return func(s *services) {
 		s.sandboxStore = client
 	}
 }
 
 // WithSandboxController sets the sandbox controller.
-func WithSandboxController(client sandbox2.Controller) ServicesOpt {
+func WithSandboxController(client sandbox.Controller) ServicesOpt {
 	return func(s *services) {
 		s.sandboxController = client
 	}
 }
 
-// WithInMemoryServices is suitable for cases when there is need to use containerd's client from
-// another (in-memory) containerd plugin (such as CRI).
-func WithInMemoryServices(ic *over_plugin2.InitContext) ClientOpt {
+// WithInMemoryServices 将各种插件的实现塞到ic里
+func WithInMemoryServices(ic *plugin.InitContext) ClientOpt {
 	return func(c *clientOpts) error {
 		var opts []ServicesOpt
-		for t, fn := range map[over_plugin2.Type]func(interface{}) ServicesOpt{
-			over_plugin2.EventPlugin: func(i interface{}) ServicesOpt {
+		for t, fn := range map[plugin.Type]func(interface{}) ServicesOpt{
+			plugin.EventPlugin: func(i interface{}) ServicesOpt {
 				return WithEventService(i.(EventService))
 			},
-			over_plugin2.LeasePlugin: func(i interface{}) ServicesOpt {
+			plugin.LeasePlugin: func(i interface{}) ServicesOpt {
 				return WithLeasesService(i.(leases.Manager))
 			},
-			over_plugin2.SandboxStorePlugin: func(i interface{}) ServicesOpt {
-				return WithSandboxStore(i.(sandbox2.Store))
+			plugin.SandboxStorePlugin: func(i interface{}) ServicesOpt {
+				return WithSandboxStore(i.(sandbox.Store))
 			},
-			over_plugin2.SandboxControllerPlugin: func(i interface{}) ServicesOpt {
-				return WithSandboxController(i.(sandbox2.Controller))
+			plugin.SandboxControllerPlugin: func(i interface{}) ServicesOpt {
+				return WithSandboxController(i.(sandbox.Controller))
 			},
 		} {
 			i, err := ic.Get(t)
@@ -203,7 +161,7 @@ func WithInMemoryServices(ic *over_plugin2.InitContext) ClientOpt {
 			opts = append(opts, fn(i))
 		}
 
-		plugins, err := ic.GetByType(over_plugin2.ServicePlugin)
+		plugins, err := ic.GetByType(plugin.ServicePlugin)
 		if err != nil {
 			return fmt.Errorf("failed to get service plugin: %w", err)
 		}

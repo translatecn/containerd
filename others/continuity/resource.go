@@ -1,30 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package continuity
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"reflect"
-	"sort"
-
-	pb "demo/others/continuity/proto"
 	"github.com/opencontainers/go-digest"
+	"os"
 )
 
 // TODO(stevvooe): A record based model, somewhat sketched out at the bottom
@@ -80,144 +58,6 @@ type RegularFile interface {
 // used to merge regular files as hardlinks. If the files are not identical,
 // other than Paths and Digests, the merge will fail and an error will be
 // returned.
-func Merge(fs ...Resource) (Resource, error) {
-	if len(fs) < 1 {
-		return nil, fmt.Errorf("please provide a resource to merge")
-	}
-
-	if len(fs) == 1 {
-		return fs[0], nil
-	}
-
-	var paths []string
-	var digests []digest.Digest
-	bypath := map[string][]Resource{}
-
-	// The attributes are all compared against the first to make sure they
-	// agree before adding to the above collections. If any of these don't
-	// correctly validate, the merge fails.
-	prototype := fs[0]
-	xattrs := make(map[string][]byte)
-
-	// initialize xattrs for use below. All files must have same xattrs.
-	if prototypeXAttrer, ok := prototype.(XAttrer); ok {
-		for attr, value := range prototypeXAttrer.XAttrs() {
-			xattrs[attr] = value
-		}
-	}
-
-	for _, f := range fs {
-		h, isHardlinkable := f.(Hardlinkable)
-		if !isHardlinkable {
-			return nil, errNotAHardLink
-		}
-
-		if f.Mode() != prototype.Mode() {
-			return nil, fmt.Errorf("modes do not match: %v != %v", f.Mode(), prototype.Mode())
-		}
-
-		if f.UID() != prototype.UID() {
-			return nil, fmt.Errorf("uid does not match: %v != %v", f.UID(), prototype.UID())
-		}
-
-		if f.GID() != prototype.GID() {
-			return nil, fmt.Errorf("gid does not match: %v != %v", f.GID(), prototype.GID())
-		}
-
-		if xattrer, ok := f.(XAttrer); ok {
-			fxattrs := xattrer.XAttrs()
-			if !reflect.DeepEqual(fxattrs, xattrs) {
-				return nil, fmt.Errorf("resource %q xattrs do not match: %v != %v", f, fxattrs, xattrs)
-			}
-		}
-
-		for _, p := range h.Paths() {
-			pfs, ok := bypath[p]
-			if !ok {
-				// ensure paths are unique by only appending on a new path.
-				paths = append(paths, p)
-			}
-
-			bypath[p] = append(pfs, f)
-		}
-
-		if regFile, isRegFile := f.(RegularFile); isRegFile {
-			prototypeRegFile, prototypeIsRegFile := prototype.(RegularFile)
-			if !prototypeIsRegFile {
-				return nil, errors.New("prototype is not a regular file")
-			}
-
-			if regFile.Size() != prototypeRegFile.Size() {
-				return nil, fmt.Errorf("size does not match: %v != %v", regFile.Size(), prototypeRegFile.Size())
-			}
-
-			digests = append(digests, regFile.Digests()...)
-		} else if device, isDevice := f.(Device); isDevice {
-			prototypeDevice, prototypeIsDevice := prototype.(Device)
-			if !prototypeIsDevice {
-				return nil, errors.New("prototype is not a device")
-			}
-
-			if device.Major() != prototypeDevice.Major() {
-				return nil, fmt.Errorf("major number does not match: %v != %v", device.Major(), prototypeDevice.Major())
-			}
-			if device.Minor() != prototypeDevice.Minor() {
-				return nil, fmt.Errorf("minor number does not match: %v != %v", device.Minor(), prototypeDevice.Minor())
-			}
-		} else if _, isNamedPipe := f.(NamedPipe); isNamedPipe {
-			_, prototypeIsNamedPipe := prototype.(NamedPipe)
-			if !prototypeIsNamedPipe {
-				return nil, errors.New("prototype is not a named pipe")
-			}
-		} else {
-			return nil, errNotAHardLink
-		}
-	}
-
-	sort.Stable(sort.StringSlice(paths))
-
-	// Choose a "canonical" file. Really, it is just the first file to sort
-	// against. We also effectively select the very first digest as the
-	// "canonical" one for this file.
-	first := bypath[paths[0]][0]
-
-	resource := resource{
-		paths:  paths,
-		mode:   first.Mode(),
-		uid:    first.UID(),
-		gid:    first.GID(),
-		xattrs: xattrs,
-	}
-
-	switch typedF := first.(type) {
-	case RegularFile:
-		var err error
-		digests, err = uniqifyDigests(digests...)
-		if err != nil {
-			return nil, err
-		}
-
-		return &regularFile{
-			resource: resource,
-			size:     typedF.Size(),
-			digests:  digests,
-		}, nil
-	case Device:
-		return &device{
-			resource: resource,
-			major:    typedF.Major(),
-			minor:    typedF.Minor(),
-		}, nil
-
-	case NamedPipe:
-		return &namedPipe{
-			resource: resource,
-		}, nil
-
-	default:
-		return nil, errNotAHardLink
-	}
-}
 
 type Directory interface {
 	Resource
@@ -292,24 +132,6 @@ var _ RegularFile = &regularFile{}
 
 // newRegularFile returns the RegularFile, using the populated base resource
 // and one or more digests of the content.
-func newRegularFile(base resource, paths []string, size int64, dgsts ...digest.Digest) (RegularFile, error) {
-	if !base.Mode().IsRegular() {
-		return nil, fmt.Errorf("not a regular file")
-	}
-
-	base.paths = make([]string, len(paths))
-	copy(base.paths, paths)
-
-	// make our own copy of digests
-	ds := make([]digest.Digest, len(dgsts))
-	copy(ds, dgsts)
-
-	return &regularFile{
-		resource: base,
-		size:     size,
-		digests:  ds,
-	}, nil
-}
 
 func (rf *regularFile) Paths() []string {
 	paths := make([]string, len(rf.paths))
@@ -343,16 +165,6 @@ type directory struct {
 
 var _ Directory = &directory{}
 
-func newDirectory(base resource) (Directory, error) {
-	if !base.Mode().IsDir() {
-		return nil, fmt.Errorf("not a directory")
-	}
-
-	return &directory{
-		resource: base,
-	}, nil
-}
-
 func (d *directory) Directory() {}
 
 func (d *directory) XAttrs() map[string][]byte {
@@ -372,17 +184,6 @@ type symLink struct {
 
 var _ SymLink = &symLink{}
 
-func newSymLink(base resource, target string) (SymLink, error) {
-	if base.Mode()&os.ModeSymlink == 0 {
-		return nil, fmt.Errorf("not a symlink")
-	}
-
-	return &symLink{
-		resource: base,
-		target:   target,
-	}, nil
-}
-
 func (l *symLink) Target() string {
 	return l.target
 }
@@ -392,19 +193,6 @@ type namedPipe struct {
 }
 
 var _ NamedPipe = &namedPipe{}
-
-func newNamedPipe(base resource, paths []string) (NamedPipe, error) {
-	if base.Mode()&os.ModeNamedPipe == 0 {
-		return nil, fmt.Errorf("not a namedpipe")
-	}
-
-	base.paths = make([]string, len(paths))
-	copy(base.paths, paths)
-
-	return &namedPipe{
-		resource: base,
-	}, nil
-}
 
 func (np *namedPipe) Pipe() {}
 
@@ -430,21 +218,6 @@ type device struct {
 }
 
 var _ Device = &device{}
-
-func newDevice(base resource, paths []string, major, minor uint64) (Device, error) {
-	if base.Mode()&os.ModeDevice == 0 {
-		return nil, fmt.Errorf("not a device")
-	}
-
-	base.paths = make([]string, len(paths))
-	copy(base.paths, paths)
-
-	return &device{
-		resource: base,
-		major:    major,
-		minor:    minor,
-	}, nil
-}
 
 func (d *device) Paths() []string {
 	paths := make([]string, len(d.paths))
@@ -473,88 +246,8 @@ func (d device) Minor() uint64 {
 // toProto converts a resource to a protobuf record. We'd like to push this
 // the individual types but we want to keep this all together during
 // prototyping.
-func toProto(resource Resource) *pb.Resource {
-	b := &pb.Resource{
-		Path: []string{resource.Path()},
-		Mode: uint32(resource.Mode()),
-		Uid:  resource.UID(),
-		Gid:  resource.GID(),
-	}
-
-	if xattrer, ok := resource.(XAttrer); ok {
-		// Sorts the XAttrs by name for consistent ordering.
-		keys := []string{}
-		xattrs := xattrer.XAttrs()
-		for k := range xattrs {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			b.Xattr = append(b.Xattr, &pb.XAttr{Name: k, Data: xattrs[k]})
-		}
-	}
-
-	switch r := resource.(type) {
-	case RegularFile:
-		b.Path = r.Paths()
-		b.Size = uint64(r.Size())
-
-		for _, dgst := range r.Digests() {
-			b.Digest = append(b.Digest, dgst.String())
-		}
-	case SymLink:
-		b.Target = r.Target()
-	case Device:
-		b.Major, b.Minor = r.Major(), r.Minor()
-		b.Path = r.Paths()
-	case NamedPipe:
-		b.Path = r.Paths()
-	}
-
-	// enforce a few stability guarantees that may not be provided by the
-	// resource implementation.
-	sort.Strings(b.Path)
-
-	return b
-}
 
 // fromProto converts from a protobuf Resource to a Resource interface.
-func fromProto(b *pb.Resource) (Resource, error) {
-	base := &resource{
-		paths: b.Path,
-		mode:  os.FileMode(b.Mode),
-		uid:   b.Uid,
-		gid:   b.Gid,
-	}
-
-	base.xattrs = make(map[string][]byte, len(b.Xattr))
-
-	for _, attr := range b.Xattr {
-		base.xattrs[attr.Name] = attr.Data
-	}
-
-	switch {
-	case base.Mode().IsRegular():
-		dgsts := make([]digest.Digest, len(b.Digest))
-		for i, dgst := range b.Digest {
-			// TODO(stevvooe): Should we be validating at this point?
-			dgsts[i] = digest.Digest(dgst)
-		}
-
-		return newRegularFile(*base, b.Path, int64(b.Size), dgsts...)
-	case base.Mode().IsDir():
-		return newDirectory(*base)
-	case base.Mode()&os.ModeSymlink != 0:
-		return newSymLink(*base, b.Target)
-	case base.Mode()&os.ModeNamedPipe != 0:
-		return newNamedPipe(*base, b.Path)
-	case base.Mode()&os.ModeDevice != 0:
-		return newDevice(*base, b.Path, b.Major, b.Minor)
-	}
-
-	return nil, fmt.Errorf("unknown resource record (%#v): %s", b, base.Mode())
-}
 
 // NOTE(stevvooe): An alternative model that supports inline declaration.
 // Convenient for unit testing where inline declarations may be desirable but

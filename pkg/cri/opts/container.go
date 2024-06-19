@@ -1,25 +1,11 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package opts
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/errdefs"
+	"demo/over/log"
 	"demo/over/my_mk"
+	"demo/over/snapshots"
 	"errors"
 	"fmt"
 	"os"
@@ -28,30 +14,9 @@ import (
 	"demo/others/continuity/fs"
 
 	"demo/containerd"
-	"demo/containers"
-	"demo/over/errdefs"
+	"demo/over/containers"
 	"demo/over/mount"
-	"demo/snapshots"
 )
-
-// WithNewSnapshot wraps `containerd.WithNewSnapshot` so that if creating the
-// snapshot fails we make sure the image is actually unpacked and retry.
-func WithNewSnapshot(id string, i containerd.Image, opts ...snapshots.Opt) containerd.NewContainerOpts {
-	f := containerd.WithNewSnapshot(id, i, opts...)
-	return func(ctx context.Context, client *containerd.Client, c *containers.Container) error {
-		if err := f(ctx, client, c); err != nil {
-			if !over_errdefs.IsNotFound(err) {
-				return err
-			}
-
-			if err := i.Unpack(ctx, c.Snapshotter); err != nil {
-				return fmt.Errorf("error unpacking image: %w", err)
-			}
-			return f(ctx, client, c)
-		}
-		return nil
-	}
-}
 
 // WithVolumes copies ownership of volume in rootfs to its corresponding host path.
 // It doesn't update runtime spec.
@@ -130,4 +95,23 @@ func copyExistingContents(source, destination string) error {
 		return fmt.Errorf("volume at %q is not initially empty", destination)
 	}
 	return fs.CopyDir(destination, source, fs.WithXAttrExclude("security.selinux"))
+}
+
+// WithNewSnapshot wraps `containerd.WithNewSnapshot` so that if creating the
+// snapshot fails we make sure the image is actually unpacked and retry.
+func WithNewSnapshot(id string, i containerd.Image, opts ...snapshots.Opt) containerd.NewContainerOpts {
+	f := containerd.WithNewSnapshot(id, i, opts...)
+	return func(ctx context.Context, client *containerd.Client, c *containers.Container) error {
+		if err := f(ctx, client, c); err != nil {
+			if !errdefs.IsNotFound(err) {
+				return err
+			}
+
+			if err := i.Unpack(ctx, c.Snapshotter); err != nil {
+				return fmt.Errorf("error unpacking image: %w", err)
+			}
+			return f(ctx, client, c)
+		}
+		return nil
+	}
 }

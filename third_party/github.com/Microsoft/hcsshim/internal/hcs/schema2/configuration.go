@@ -58,15 +58,6 @@ type Configuration struct {
 	HTTPClient    *http.Client
 }
 
-func NewConfiguration() *Configuration {
-	cfg := &Configuration{
-		BasePath:      "https://localhost",
-		DefaultHeader: make(map[string]string),
-		UserAgent:     "Swagger-Codegen/2.1.0/go",
-	}
-	return cfg
-}
-
 func (c *Configuration) AddDefaultHeader(key string, value string) {
 	c.DefaultHeader[key] = value
 }

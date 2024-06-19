@@ -1,25 +1,15 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
+	criconfig "demo/config/cri"
+	runcoptions "demo/config/runc"
+	"demo/over/api/runctypes"
+	runtimeoptions "demo/over/api/runtimeoptions/v1"
+	clabels "demo/over/labels"
 	"demo/over/plugin"
-	docker2 "demo/pkg/reference/docker"
+	"demo/over/reference/docker"
+	"demo/over/typeurl/v2"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -29,25 +19,18 @@ import (
 	"strings"
 	"time"
 
-	"demo/others/typeurl/v2"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 
 	"demo/containerd"
-	"demo/containers"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/containers"
 	"demo/over/errdefs"
-	criconfig "demo/pkg/cri/config"
 	containerstore "demo/pkg/cri/store/container"
 	imagestore "demo/pkg/cri/store/image"
-	clabels "demo/pkg/labels"
-	runtimeoptions "demo/pkg/runtimeoptions/v1"
-	"demo/runtime/linux/runctypes"
-	runcoptions "demo/runtime/v2/runc/options"
-
 	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
 	"github.com/pelletier/go-toml"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // TODO: Move common helpers for sbserver and podsandbox to a dedicated package once basic services are functinal.
@@ -177,12 +160,12 @@ func criContainerStateToString(state runtime.ContainerState) string {
 }
 
 // getRepoDigestAngTag returns image repoDigest and repoTag of the named image reference.
-func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
+func getRepoDigestAndTag(namedRef docker.Named, digest imagedigest.Digest, schema1 bool) (string, string) {
 	var repoTag, repoDigest string
-	if _, ok := namedRef.(docker2.NamedTagged); ok {
+	if _, ok := namedRef.(docker.NamedTagged); ok {
 		repoTag = namedRef.String()
 	}
-	if _, ok := namedRef.(docker2.Canonical); ok {
+	if _, ok := namedRef.(docker.Canonical); ok {
 		repoDigest = namedRef.String()
 	} else if !schema1 {
 		// digest is not actual repo digest for schema1 image.
@@ -192,7 +175,7 @@ func getRepoDigestAndTag(namedRef docker2.Named, digest imagedigest.Digest, sche
 }
 
 // localResolve resolves image reference locally and returns corresponding image metadata. It
-// returns over_errdefs.ErrNotFound if the reference doesn't exist.
+// returns errdefs.ErrNotFound if the reference doesn't exist.
 func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 	getImageID := func(refOrId string) string {
 		if _, err := imagedigest.Parse(refOrID); err == nil {
@@ -201,7 +184,7 @@ func (c *criService) localResolve(refOrID string) (imagestore.Image, error) {
 		return func(ref string) string {
 			// ref is not image id, try to resolve it locally.
 			// TODO(random-liu): Handle this error better for debugging.
-			normalized, err := docker2.ParseDockerRef(ref)
+			normalized, err := docker.ParseDockerRef(ref)
 			if err != nil {
 				return ""
 			}
@@ -253,7 +236,7 @@ func getUserFromImage(user string) (*int64, string) {
 // pulled yet, the function will pull the image.
 func (c *criService) EnsureImageExists(ctx context.Context, ref string, config *runtime.PodSandboxConfig) (*imagestore.Image, error) {
 	image, err := c.localResolve(ref)
-	if err != nil && !over_errdefs.IsNotFound(err) {
+	if err != nil && !errdefs.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get image %q: %w", ref, err)
 	}
 	if err == nil {
@@ -349,13 +332,13 @@ func toRuntimeAuthConfig(a criconfig.AuthConfig) *runtime.AuthConfig {
 func parseImageReferences(refs []string) ([]string, []string) {
 	var tags, digests []string
 	for _, ref := range refs {
-		parsed, err := docker2.ParseAnyReference(ref)
+		parsed, err := docker.ParseAnyReference(ref)
 		if err != nil {
 			continue
 		}
-		if _, ok := parsed.(docker2.Canonical); ok {
+		if _, ok := parsed.(docker.Canonical); ok {
 			digests = append(digests, parsed.String())
-		} else if _, ok := parsed.(docker2.Tagged); ok {
+		} else if _, ok := parsed.(docker.Tagged); ok {
 			tags = append(tags, parsed.String())
 		}
 	}
@@ -365,7 +348,7 @@ func parseImageReferences(refs []string) ([]string, []string) {
 // generateRuntimeOptions generates runtime options from cri plugin config.
 func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{}, error) {
 	if r.Options == nil {
-		if r.Type != over_plugin.RuntimeLinuxV1 {
+		if r.Type != plugin.RuntimeLinuxV1 {
 			return nil, nil
 		}
 		// This is a legacy config, generate runctypes.RuncOptions.
@@ -399,11 +382,11 @@ func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{
 // getRuntimeOptionsType gets empty runtime options by the runtime type name.
 func getRuntimeOptionsType(t string) interface{} {
 	switch t {
-	case over_plugin.RuntimeRuncV1:
+	case plugin.RuntimeRuncV1:
 		fallthrough
-	case over_plugin.RuntimeRuncV2:
+	case plugin.RuntimeRuncV2:
 		return &runcoptions.Options{}
-	case over_plugin.RuntimeLinuxV1:
+	case plugin.RuntimeLinuxV1:
 		return &runctypes.RuncOptions{}
 	case runtimeRunhcsV1:
 		return &runhcsoptions.Options{}
@@ -599,7 +582,7 @@ func (c *criService) getContainerStatuses(ctx context.Context, podSandboxID stri
 			Verbose:     false,
 		})
 		if err != nil {
-			if over_errdefs.IsNotFound(err) {
+			if errdefs.IsNotFound(err) {
 				continue
 			}
 			return nil, err

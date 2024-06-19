@@ -1,27 +1,11 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sandbox
 
 import (
 	"context"
+	"demo/over/typeurl/v2"
 	"fmt"
 	"time"
 
-	"demo/others/typeurl/v2"
 	"demo/over/errdefs"
 )
 
@@ -95,7 +79,7 @@ func (s *Sandbox) AddLabel(name string, value string) {
 func (s *Sandbox) GetExtension(name string, obj interface{}) error {
 	out, ok := s.Extensions[name]
 	if !ok {
-		return over_errdefs.ErrNotFound
+		return errdefs.ErrNotFound
 	}
 
 	if err := typeurl.UnmarshalTo(out, obj); err != nil {
@@ -109,7 +93,7 @@ func (s *Sandbox) GetExtension(name string, obj interface{}) error {
 func (s *Sandbox) GetLabel(name string) (string, error) {
 	out, ok := s.Labels[name]
 	if !ok {
-		return "", fmt.Errorf("unable to find label %q in sandbox metadata: %w", name, over_errdefs.ErrNotFound)
+		return "", fmt.Errorf("unable to find label %q in sandbox metadata: %w", name, errdefs.ErrNotFound)
 	}
 
 	return out, nil

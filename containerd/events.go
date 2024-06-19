@@ -1,29 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
-	over_protobuf2 "demo/over/protobuf"
+	"demo/over/protobuf"
+	"demo/over/typeurl/v2"
 
-	"demo/others/typeurl/v2"
+	eventsapi "demo/over/api/services/events/v1"
 	"demo/over/errdefs"
-	eventsapi "demo/pkg/api/services/events/v1"
-	"demo/pkg/events"
+	"demo/over/events"
 )
 
 // EventService handles the publish, forward and subscribe of events.
@@ -52,10 +36,10 @@ func (e *eventRemote) Publish(ctx context.Context, topic string, event events.Ev
 	}
 	req := &eventsapi.PublishRequest{
 		Topic: topic,
-		Event: over_protobuf2.FromAny(any),
+		Event: protobuf.FromAny(any),
 	}
 	if _, err := e.client.Publish(ctx, req); err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 	return nil
 }
@@ -63,14 +47,14 @@ func (e *eventRemote) Publish(ctx context.Context, topic string, event events.Ev
 func (e *eventRemote) Forward(ctx context.Context, envelope *events.Envelope) error {
 	req := &eventsapi.ForwardRequest{
 		Envelope: &eventsapi.Envelope{
-			Timestamp: over_protobuf2.ToTimestamp(envelope.Timestamp),
+			Timestamp: protobuf.ToTimestamp(envelope.Timestamp),
 			Namespace: envelope.Namespace,
 			Topic:     envelope.Topic,
-			Event:     over_protobuf2.FromAny(envelope.Event),
+			Event:     protobuf.FromAny(envelope.Event),
 		},
 	}
 	if _, err := e.client.Forward(ctx, req); err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 	return nil
 }
@@ -105,7 +89,7 @@ func (e *eventRemote) Subscribe(ctx context.Context, filters ...string) (ch <-ch
 
 			select {
 			case evq <- &events.Envelope{
-				Timestamp: over_protobuf2.FromTimestamp(ev.Timestamp),
+				Timestamp: protobuf.FromTimestamp(ev.Timestamp),
 				Namespace: ev.Namespace,
 				Topic:     ev.Topic,
 				Event:     ev.Event,

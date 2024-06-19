@@ -1,29 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
-	"demo/others/log"
+	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
+	"demo/over/log"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // ListPodSandboxStats returns stats of all ready sandboxes.
@@ -38,7 +22,7 @@ func (c *criService) ListPodSandboxStats(
 	for _, sandbox := range sandboxes {
 		sandboxStats, err := c.podSandboxStats(ctx, sandbox)
 		switch {
-		case over_errdefs.IsUnavailable(err):
+		case errdefs.IsUnavailable(err):
 			log.G(ctx).WithField("podsandboxid", sandbox.ID).Debugf("failed to get pod sandbox stats, this is likely a transient error: %v", err)
 		case err != nil:
 			errs = multierror.Append(errs, fmt.Errorf("failed to decode sandbox container metrics for sandbox %q: %w", sandbox.ID, err))

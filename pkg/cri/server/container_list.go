@@ -1,46 +1,12 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
+	runtime "demo/over/api/cri/v1"
 	"time"
-
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	containerstore "demo/pkg/cri/store/container"
 )
-
-// ListContainers lists all containers matching the filter.
-func (c *criService) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (*runtime.ListContainersResponse, error) {
-	start := time.Now()
-	// List all containers from store.
-	containersInStore := c.containerStore.List()
-
-	var containers []*runtime.Container
-	for _, container := range containersInStore {
-		containers = append(containers, toCRIContainer(container))
-	}
-
-	containers = c.filterCRIContainers(containers, r.GetFilter())
-
-	containerListTimer.UpdateSince(start)
-	return &runtime.ListContainersResponse{Containers: containers}, nil
-}
 
 // toCRIContainer converts internal container object into CRI container.
 func toCRIContainer(container containerstore.Container) *runtime.Container {
@@ -113,4 +79,21 @@ func (c *criService) filterCRIContainers(containers []*runtime.Container, filter
 	}
 
 	return filtered
+}
+
+// ListContainers lists all containers matching the filter.
+func (c *criService) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (*runtime.ListContainersResponse, error) {
+	start := time.Now()
+	// List all containers from store.
+	containersInStore := c.containerStore.List()
+
+	var containers []*runtime.Container
+	for _, container := range containersInStore {
+		containers = append(containers, toCRIContainer(container))
+	}
+
+	containers = c.filterCRIContainers(containers, r.GetFilter())
+
+	containerListTimer.UpdateSince(start)
+	return &runtime.ListContainersResponse{Containers: containers}, nil
 }

@@ -1,20 +1,4 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-package over_images
+package images
 
 import (
 	"context"
@@ -62,7 +46,7 @@ const (
 // DiffCompression returns the compression as defined by the layer diff media
 // type. For Docker media types without compression, "unknown" is returned to
 // indicate that the media type may be compressed. If the media type is not
-// recognized as a layer diff, then it returns over_errdefs.ErrNotImplemented
+// recognized as a layer diff, then it returns errdefs.ErrNotImplemented
 func DiffCompression(ctx context.Context, mediaType string) (string, error) {
 	base, ext := parseMediaTypes(mediaType)
 	switch base {
@@ -92,7 +76,7 @@ func DiffCompression(ctx context.Context, mediaType string) (string, error) {
 		}
 		return "", nil
 	default:
-		return "", fmt.Errorf("unrecognised mediatype %s: %w", mediaType, over_errdefs.ErrNotImplemented)
+		return "", fmt.Errorf("unrecognised mediatype %s: %w", mediaType, errdefs.ErrNotImplemented)
 	}
 }
 

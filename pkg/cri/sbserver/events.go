@@ -1,42 +1,26 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
 	"demo/over/protobuf"
+	"demo/over/typeurl/v2"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"demo/containerd"
-	"demo/others/typeurl/v2"
+	runtime "demo/over/api/cri/v1"
+	eventtypes "demo/over/api/events"
+	apitasks "demo/over/api/services/tasks/v1"
+	containerdio "demo/over/cio"
 	"demo/over/errdefs"
-	eventtypes "demo/pkg/api/events"
-	apitasks "demo/pkg/api/services/tasks/v1"
-	containerdio "demo/pkg/cio"
+	"demo/over/events"
 	"demo/pkg/cri/constants"
 	containerstore "demo/pkg/cri/store/container"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	ctrdutil "demo/pkg/cri/util"
-	"demo/pkg/events"
 	"github.com/sirupsen/logrus"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/utils/clock"
 )
 
@@ -124,7 +108,7 @@ func (em *eventMonitor) startSandboxExitMonitor(ctx context.Context, id string, 
 			e := &eventtypes.SandboxExit{
 				SandboxID:  id,
 				ExitStatus: exitStatus,
-				ExitedAt:   over_protobuf.ToTimestamp(exitedAt),
+				ExitedAt:   protobuf.ToTimestamp(exitedAt),
 			}
 
 			logrus.Debugf("received exit event %+v", e)
@@ -140,7 +124,7 @@ func (em *eventMonitor) startSandboxExitMonitor(ctx context.Context, id string, 
 						return err
 					}
 					return nil
-				} else if !over_errdefs.IsNotFound(err) {
+				} else if !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get sandbox %s: %w", e.SandboxID, err)
 				}
 				return nil
@@ -175,7 +159,7 @@ func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string
 				ID:          id,
 				Pid:         pid,
 				ExitStatus:  exitStatus,
-				ExitedAt:    over_protobuf.ToTimestamp(exitedAt),
+				ExitedAt:    protobuf.ToTimestamp(exitedAt),
 			}
 
 			logrus.Debugf("received exit event %+v", e)
@@ -191,7 +175,7 @@ func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string
 						return err
 					}
 					return nil
-				} else if !over_errdefs.IsNotFound(err) {
+				} else if !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get container %s: %w", e.ID, err)
 				}
 				return nil
@@ -319,7 +303,7 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 				return fmt.Errorf("failed to handle container TaskExit event: %w", err)
 			}
 			return nil
-		} else if !over_errdefs.IsNotFound(err) {
+		} else if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("can't find container for TaskExit event: %w", err)
 		}
 		sb, err := em.c.sandboxStore.Get(e.ID)
@@ -328,7 +312,7 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 				return fmt.Errorf("failed to handle sandbox TaskExit event: %w", err)
 			}
 			return nil
-		} else if !over_errdefs.IsNotFound(err) {
+		} else if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("can't find sandbox for TaskExit event: %w", err)
 		}
 		return nil
@@ -340,7 +324,7 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 				return fmt.Errorf("failed to handle sandbox TaskExit event: %w", err)
 			}
 			return nil
-		} else if !over_errdefs.IsNotFound(err) {
+		} else if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("can't find sandbox for TaskExit event: %w", err)
 		}
 		return nil
@@ -349,7 +333,7 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 		// For TaskOOM, we only care which container it belongs to.
 		cntr, err := em.c.containerStore.Get(e.ContainerID)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("can't find container for TaskOOM event: %w", err)
 			}
 			return nil
@@ -393,13 +377,13 @@ func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr conta
 		},
 	)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) && !over_errdefs.IsUnavailable(err) {
+		if !errdefs.IsNotFound(err) && !errdefs.IsUnavailable(err) {
 			return fmt.Errorf("failed to load task for container: %w", err)
 		}
 	} else {
 		// TODO(random-liu): [P1] This may block the loop, we may want to spawn a worker
 		if _, err = task.Delete(ctx, c.nri.WithContainerExit(&cntr), containerd.WithProcessKill); err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to stop container: %w", err)
 			}
 			// Move on to make sure container status is updated.
@@ -439,11 +423,11 @@ func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr conta
 	// REF:
 	// 1. https://github.com/containerd/issues/7496#issuecomment-1671100968
 	// 2. https://github.com/containerd/issues/8931
-	if over_errdefs.IsNotFound(err) {
+	if errdefs.IsNotFound(err) {
 		_, err = c.client.TaskService().Delete(ctx, &apitasks.DeleteTaskRequest{ContainerID: cntr.Container.ID()})
 		if err != nil {
-			err = over_errdefs.FromGRPC(err)
-			if !over_errdefs.IsNotFound(err) {
+			err = errdefs.FromGRPC(err)
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to cleanup container %s in task-service: %w", cntr.Container.ID(), err)
 			}
 		}
@@ -453,7 +437,7 @@ func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr conta
 	err = cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
 		if status.FinishedAt == 0 {
 			status.Pid = 0
-			status.FinishedAt = over_protobuf.FromTimestamp(e.ExitedAt).UnixNano()
+			status.FinishedAt = protobuf.FromTimestamp(e.ExitedAt).UnixNano()
 			status.ExitCode = int32(e.ExitStatus)
 		}
 

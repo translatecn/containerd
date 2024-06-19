@@ -1103,17 +1103,6 @@ func (w *Writer) writeInodeTable(tableSize uint32) error {
 
 // NewWriter returns a Writer that writes an ext4 file system to the provided
 // WriteSeeker.
-func NewWriter(f io.ReadWriteSeeker, opts ...Option) *Writer {
-	w := &Writer{
-		f:           f,
-		bw:          bufio.NewWriterSize(f, 65536*8),
-		maxDiskSize: defaultMaxDiskSize,
-	}
-	for _, opt := range opts {
-		opt(w)
-	}
-	return w
-}
 
 // An Option provides extra options to NewWriter.
 type Option func(*Writer)
@@ -1121,23 +1110,9 @@ type Option func(*Writer)
 // InlineData instructs the Writer to write small files into the inode
 // structures directly. This creates smaller images but currently is not
 // compatible with DAX.
-func InlineData(w *Writer) {
-	w.supportInlineData = true
-}
 
 // MaximumDiskSize instructs the writer to reserve enough metadata space for the
 // specified disk size. If not provided, then 16GB is the default.
-func MaximumDiskSize(size int64) Option {
-	return func(w *Writer) {
-		if size < 0 || size > maxMaxDiskSize {
-			w.maxDiskSize = maxMaxDiskSize
-		} else if size == 0 {
-			w.maxDiskSize = defaultMaxDiskSize
-		} else {
-			w.maxDiskSize = (size + BlockSize - 1) &^ (BlockSize - 1)
-		}
-	}
-}
 
 func (w *Writer) init() error {
 	// Skip the defective block inode.

@@ -1,4 +1,4 @@
-set -ex
+[]set -ex
 
 #docker run -it centos:7 bash
 #curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-8.repo
@@ -19,6 +19,44 @@ set -ex
 #yum autoremove containerd.io -y
 
 #ctr i pull registry.cn-hangzhou.aliyuncs.com/acejilam/x:v1
+
+
+
+pkill -9 dlv
+pkill -9 containerd_bin
+pkill -9 ctr_bin
+
+
+rm -rf /var/lib/containers/*
+rm -rf /var/lib/containerd/*
+rm -rf /run/containerd/*
+rm -rf /etc/containers/*
+rm -rf /etc/cni/net.d/*
+
+cat > /etc/cni/net.d/10-flannel.conflist << EOF
+{
+  "name": "cbr0",
+  "cniVersion": "0.3.1",
+  "plugins": [
+    {
+      "type": "flannel",
+      "delegate": {
+        "hairpinMode": true,
+        "isDefaultGateway": true
+      }
+    },
+    {
+      "type": "portmap",
+      "capabilities": {
+        "portMappings": true
+      }
+    }
+  ]
+}
+EOF
+
+mkdir -p /opt/cni/bin/
+cp
 
 cat > /usr/lib/systemd/system/containerd.service <<EOF
 [Unit]

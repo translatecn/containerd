@@ -1,45 +1,29 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	criconfig "demo/config/cri"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"errors"
 	"fmt"
 	"path/filepath"
 	goruntime "runtime"
 	"time"
 
+	runtime "demo/over/api/cri/v1"
 	"github.com/davecgh/go-spew/spew"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	selinux "github.com/opencontainers/selinux/go-selinux"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/containerd"
-	"demo/containers"
-	"demo/over/oci"
-	criconfig "demo/pkg/cri/config"
+	"demo/over/containers"
 	cio "demo/pkg/cri/io"
 	customopts "demo/pkg/cri/opts"
 	containerstore "demo/pkg/cri/store/container"
 	"demo/pkg/cri/util"
+	"demo/pkg/oci"
 )
 
 func init() {
@@ -164,11 +148,6 @@ func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}
 
 	meta.ProcessLabel = spec.Process.SelinuxLabel
-
-	// handle any KVM based runtime
-	if err := modifyProcessLabel(ociRuntime.Type, spec); err != nil {
-		return nil, err
-	}
 
 	if config.GetLinux().GetSecurityContext().GetPrivileged() {
 		// If privileged don't set the SELinux label but still record it on the container so
@@ -341,8 +320,10 @@ func (c *criService) volumeMounts(containerRootDir string, criMounts []*runtime.
 	return mounts
 }
 
+// ----------------------------------------------------------------------------------------------------------------
+
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...over_oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := util.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -353,34 +334,35 @@ func (c *criService) runtimeSpec(id string, baseSpecFile string, opts ...over_oc
 			return nil, fmt.Errorf("can't find base OCI spec %q", baseSpecFile)
 		}
 
-		spec := over_oci.Spec{}
+		spec := oci.Spec{}
 		if err := util.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
 		// Fix up cgroups path
-		applyOpts := append([]over_oci.SpecOpts{over_oci.WithNamespacedCgroup()}, opts...)
+		applyOpts := append([]oci.SpecOpts{oci.WithNamespacedCgroup()}, opts...)
 
-		if err := over_oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
+		if err := oci.ApplyOpts(ctx, nil, container, &spec, applyOpts...); err != nil {
 			return nil, fmt.Errorf("failed to apply OCI options: %w", err)
 		}
 
 		return &spec, nil
 	}
 
-	spec, err := over_oci.GenerateSpec(ctx, nil, container, opts...)
+	spec, err := oci.GenerateSpec(ctx, nil, container, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate spec: %w", err)
 	}
-
 	return spec, nil
 }
+
+// ---------------------------------------------------------------------------------------------------------
 
 // Overrides the default snapshotter if Snapshotter is set for this runtime.
 // See https://github.com/containerd/issues/6657
 func (c *criService) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
 	if ociRuntime.Snapshotter == "" {
-		return c.config.ContainerdConfig.Snapshotter
+		return c.config.ContainerdConfig.Snapshotter // overlayfs
 	}
 
 	log.G(ctx).Debugf("Set snapshotter for runtime %s to %s", ociRuntime.Type, ociRuntime.Snapshotter)

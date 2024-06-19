@@ -1,0 +1,19 @@
+
+
+syntax = "proto3";
+
+package containerd.services.version.v1;
+
+import "google/protobuf/empty.proto";
+
+// TODO(stevvooe): Should version service actually be versioned?
+option go_package = "demo/containerd/api/services/version/v1;version";
+
+service Version {
+	rpc Version(google.protobuf.Empty) returns (VersionResponse);
+}
+
+message VersionResponse {
+	string version = 1;
+	string revision = 2;
+}

@@ -1,33 +1,17 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
 	"demo/over/protobuf"
 	"errors"
 	"fmt"
 	"syscall"
 	"time"
 
+	runtime "demo/over/api/cri/v1"
+	eventtypes "demo/over/api/events"
 	"demo/over/errdefs"
-	eventtypes "demo/pkg/api/events"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	ctrdutil "demo/pkg/cri/util"
@@ -91,7 +75,7 @@ func (c *criService) stopPodSandbox(ctx context.Context, sandbox sandboxstore.Sa
 	if sandbox.NetNS != nil {
 		netStop := time.Now()
 		// Use empty netns path if netns is not available. This is defined in:
-		// https://github.com/containernetworking/cni/blob/v0.7.0-alpha1/SPEC.md
+		// https://demo/others/cni/blob/v0.7.0-alpha1/SPEC.md
 		if closed, err := sandbox.NetNS.Closed(); err != nil {
 			return fmt.Errorf("failed to check network namespace closed: %w", err)
 		} else if closed {
@@ -120,7 +104,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	state := sandbox.Status.Get().State
 	task, err := container.Task(ctx, nil)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get sandbox container: %w", err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -138,7 +122,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task: %w", err)
 			}
 			return c.cleanupUnknownSandbox(ctx, id, sandbox)
@@ -156,7 +140,7 @@ func (c *criService) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	}
 
 	// Kill the sandbox container.
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill sandbox container: %w", err)
 	}
 
@@ -210,6 +194,6 @@ func (c *criService) cleanupUnknownSandbox(ctx context.Context, id string, sandb
 		ID:          id,
 		Pid:         0,
 		ExitStatus:  unknownExitCode,
-		ExitedAt:    over_protobuf.ToTimestamp(time.Now()),
+		ExitedAt:    protobuf.ToTimestamp(time.Now()),
 	}, sandbox, c)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
-	"go.opencensus.io/trace"
 )
 
 type entryContextKeyType int
@@ -100,17 +99,6 @@ func WithContext(ctx context.Context, entry *logrus.Entry) (context.Context, *lo
 // cancellation. For example, if the src Context has been cancelled but cleanup
 // operations triggered by the cancellation require a non-cancelled context to
 // execute.
-func Copy(dst context.Context, src context.Context) context.Context {
-	if s := trace.FromContext(src); s != nil {
-		dst = trace.NewContext(dst, s)
-	}
-
-	if e := fromContext(src); e != nil {
-		dst, _ = WithContext(dst, e)
-	}
-
-	return dst
-}
 
 func fromContext(ctx context.Context) *logrus.Entry {
 	e, _ := ctx.Value(_entryContextKey).(*logrus.Entry)

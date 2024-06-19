@@ -1,49 +1,33 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/ctr_tracing"
 	"demo/over/errdefs"
-	"demo/over/tracing"
+	"demo/over/log"
 	imagestore "demo/pkg/cri/store/image"
 	"encoding/json"
 	"fmt"
 
+	runtime "demo/over/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
 // TODO(random-liu): We should change CRI to distinguish image id and image spec. (See
 // kubernetes/kubernetes#46255)
 func (c *criService) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
-	span := over_tracing.SpanFromContext(ctx)
+	span := tracing.SpanFromContext(ctx)
 	image, err := c.localResolve(r.GetImage().GetImage())
 	if err != nil {
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			span.AddEvent(err.Error())
 			// return empty without error when image not found.
 			return &runtime.ImageStatusResponse{}, nil
 		}
 		return nil, fmt.Errorf("can not resolve %q locally: %w", r.GetImage().GetImage(), err)
 	}
-	span.SetAttributes(over_tracing.Attribute("image.id", image.ID))
+	span.SetAttributes(tracing.Attribute("image.id", image.ID))
 	// TODO(random-liu): [P0] Make sure corresponding snapshot exists. What if snapshot
 	// doesn't exist?
 

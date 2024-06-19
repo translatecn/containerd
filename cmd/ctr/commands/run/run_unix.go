@@ -1,33 +1,17 @@
-//go:build !windows
-
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package run
 
 import (
 	gocontext "context"
 	"demo/cmd/ctr/commands"
-	"demo/containers"
-	over_oci "demo/over/oci"
-	over_platforms "demo/over/platforms"
+	"demo/config/runc"
+	runtimeoptions "demo/over/api/runtimeoptions/v1"
+	"demo/over/containers"
+	"demo/over/platforms"
+	"demo/over/snapshots"
 	"demo/pkg/contrib/apparmor"
 	"demo/pkg/contrib/nvidia"
 	"demo/pkg/contrib/seccomp"
-	"demo/snapshots"
+	oci "demo/pkg/oci"
 	"errors"
 	"fmt"
 	"github.com/intel/goresctrl/pkg/blockio"
@@ -37,8 +21,6 @@ import (
 	"strings"
 
 	"demo/containerd"
-	runtimeoptions "demo/pkg/runtimeoptions/v1"
-	"demo/runtime/v2/runc/options"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )
@@ -84,25 +66,6 @@ var platformRunFlags = []cli.Flag{
 	},
 }
 
-func getRuncOptions(context *cli.Context) (*options.Options, error) {
-	runtimeOpts := &options.Options{}
-	if runcBinary := context.String("runc-binary"); runcBinary != "" {
-		runtimeOpts.BinaryName = runcBinary
-	}
-	if context.Bool("runc-systemd-cgroup") {
-		if context.String("cgroup") == "" {
-			// runc maps "machine.slice:foo:deadbeef" to "/machine.slice/foo-deadbeef.scope"
-			return nil, errors.New("option --runc-systemd-cgroup requires --cgroup to be set, e.g. \"machine.slice:foo:deadbeef\"")
-		}
-		runtimeOpts.SystemdCgroup = true
-	}
-	if root := context.String("runc-root"); root != "" {
-		runtimeOpts.Root = root
-	}
-
-	return runtimeOpts, nil
-}
-
 func getRuntimeOptions(context *cli.Context) (interface{}, error) {
 	// validate first
 	if (context.String("runc-binary") != "" || context.Bool("runc-systemd-cgroup")) &&
@@ -122,7 +85,24 @@ func getRuntimeOptions(context *cli.Context) (interface{}, error) {
 
 	return nil, nil
 }
+func getRuncOptions(context *cli.Context) (*runc.Options, error) {
+	runtimeOpts := &runc.Options{}
+	if runcBinary := context.String("runc-binary"); runcBinary != "" {
+		runtimeOpts.BinaryName = runcBinary
+	}
+	if context.Bool("runc-systemd-cgroup") {
+		if context.String("cgroup") == "" {
+			// runc maps "machine.slice:foo:deadbeef" to "/machine.slice/foo-deadbeef.scope"
+			return nil, errors.New("option --runc-systemd-cgroup requires --cgroup to be set, e.g. \"machine.slice:foo:deadbeef\"")
+		}
+		runtimeOpts.SystemdCgroup = true
+	}
+	if root := context.String("runc-root"); root != "" {
+		runtimeOpts.Root = root
+	}
 
+	return runtimeOpts, nil
+}
 func parseIDMapping(mapping string) (specs.LinuxIDMapping, error) {
 	// We expect 3 parts, but limit to 4 to allow detection of invalid values.
 	parts := strings.SplitN(mapping, ":", 4)
@@ -181,7 +161,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 	}
 
 	var (
-		opts  []over_oci.SpecOpts
+		opts  []oci.SpecOpts
 		cOpts []containerd.NewContainerOpts
 		spec  containerd.NewContainerOpts
 	)
@@ -192,18 +172,18 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 
 	if config {
 		cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
-		opts = append(opts, over_oci.WithSpecFromFile(context.String("config")))
+		opts = append(opts, oci.WithSpecFromFile(context.String("config")))
 	} else {
 		var (
 			ref = context.Args().First()
 			// for container's id is Args[1]
 			args = context.Args()[2:]
 		)
-		opts = append(opts, over_oci.WithDefaultSpec(), over_oci.WithDefaultUnixDevices)
+		opts = append(opts, oci.WithDefaultSpec(), oci.WithDefaultUnixDevices)
 		if ef := context.String("env-file"); ef != "" {
-			opts = append(opts, over_oci.WithEnvFile(ef))
+			opts = append(opts, oci.WithEnvFile(ef))
 		}
-		opts = append(opts, over_oci.WithEnv(context.StringSlice("env")))
+		opts = append(opts, oci.WithEnv(context.StringSlice("env")))
 		opts = append(opts, withMounts(context))
 
 		if context.Bool("rootfs") {
@@ -211,7 +191,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if err != nil {
 				return nil, err
 			}
-			opts = append(opts, over_oci.WithRootFSPath(rootfs))
+			opts = append(opts, oci.WithRootFSPath(rootfs))
 			cOpts = append(cOpts, containerd.WithContainerLabels(commands.LabelArgs(context.StringSlice("label"))))
 		} else {
 			snapshotter := context.String("snapshotter")
@@ -221,11 +201,11 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 				return nil, err
 			}
 			if ps := context.String("platform"); ps != "" {
-				platform, err := over_platforms.Parse(ps)
+				platform, err := platforms.Parse(ps)
 				if err != nil {
 					return nil, err
 				}
-				image = containerd.NewImageWithPlatform(client, i, over_platforms.Only(platform))
+				image = containerd.NewImageWithPlatform(client, i, platforms.Only(platform))
 			} else {
 				image = containerd.NewImage(client, i)
 			}
@@ -240,7 +220,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 				}
 			}
 			labels := buildLabels(commands.LabelArgs(context.StringSlice("label")), image.Labels())
-			opts = append(opts, over_oci.WithImageConfig(image))
+			opts = append(opts, oci.WithImageConfig(image))
 			cOpts = append(cOpts,
 				containerd.WithImage(image),
 				containerd.WithImageConfigLabels(image),
@@ -256,7 +236,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 					return nil, err
 				}
 				opts = append(opts,
-					over_oci.WithUserNamespace([]specs.LinuxIDMapping{uidMap}, []specs.LinuxIDMapping{gidMap}))
+					oci.WithUserNamespace([]specs.LinuxIDMapping{uidMap}, []specs.LinuxIDMapping{gidMap}))
 				// use snapshotter opts or the remapped snapshot support to shift the filesystem
 				// currently the only snapshotter known to support the labels is fuse-overlayfs:
 				// https://github.com/AkihiroSuda/containerd-fuse-overlayfs
@@ -278,19 +258,19 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			cOpts = append(cOpts, containerd.WithImageStopSignal(image, "SIGTERM"))
 		}
 		if context.Bool("read-only") {
-			opts = append(opts, over_oci.WithRootFSReadonly())
+			opts = append(opts, oci.WithRootFSReadonly())
 		}
 		if len(args) > 0 {
-			opts = append(opts, over_oci.WithProcessArgs(args...))
+			opts = append(opts, oci.WithProcessArgs(args...))
 		}
 		if cwd := context.String("cwd"); cwd != "" {
-			opts = append(opts, over_oci.WithProcessCwd(cwd))
+			opts = append(opts, oci.WithProcessCwd(cwd))
 		}
 		if user := context.String("user"); user != "" {
-			opts = append(opts, over_oci.WithUser(user), over_oci.WithAdditionalGIDs(user))
+			opts = append(opts, oci.WithUser(user), oci.WithAdditionalGIDs(user))
 		}
 		if context.Bool("tty") {
-			opts = append(opts, over_oci.WithTTY)
+			opts = append(opts, oci.WithTTY)
 		}
 
 		privileged := context.Bool("privileged")
@@ -300,9 +280,9 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 		}
 		if privileged {
 			if privilegedWithoutHostDevices {
-				opts = append(opts, over_oci.WithPrivileged)
+				opts = append(opts, oci.WithPrivileged)
 			} else {
-				opts = append(opts, over_oci.WithPrivileged, over_oci.WithAllDevicesAllowed, over_oci.WithHostDevices)
+				opts = append(opts, oci.WithPrivileged, oci.WithAllDevicesAllowed, oci.WithHostDevices)
 			}
 		}
 
@@ -312,10 +292,10 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 				return nil, fmt.Errorf("get hostname: %w", err)
 			}
 			opts = append(opts,
-				over_oci.WithHostNamespace(specs.NetworkNamespace),
-				over_oci.WithHostHostsFile,
-				over_oci.WithHostResolvconf,
-				over_oci.WithEnv([]string{fmt.Sprintf("HOSTNAME=%s", hostname)}),
+				oci.WithHostNamespace(specs.NetworkNamespace),
+				oci.WithHostHostsFile,
+				oci.WithHostResolvconf,
+				oci.WithEnv([]string{fmt.Sprintf("HOSTNAME=%s", hostname)}),
 			)
 		}
 		if annoStrings := context.StringSlice("annotation"); len(annoStrings) > 0 {
@@ -323,7 +303,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if err != nil {
 				return nil, err
 			}
-			opts = append(opts, over_oci.WithAnnotations(annos))
+			opts = append(opts, oci.WithAnnotations(annos))
 		}
 
 		if context.Bool("cni") {
@@ -336,7 +316,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
 				}
 			}
-			opts = append(opts, over_oci.WithAddedCapabilities(caps))
+			opts = append(opts, oci.WithAddedCapabilities(caps))
 		}
 
 		if caps := context.StringSlice("cap-drop"); len(caps) > 0 {
@@ -345,7 +325,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 					return nil, fmt.Errorf("capabilities must be specified with 'CAP_' prefix")
 				}
 			}
-			opts = append(opts, over_oci.WithDroppedCapabilities(caps))
+			opts = append(opts, oci.WithDroppedCapabilities(caps))
 		}
 
 		seccompProfile := context.String("seccomp-profile")
@@ -378,11 +358,11 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 				period = uint64(100000)
 				quota  = int64(cpus * 100000.0)
 			)
-			opts = append(opts, over_oci.WithCPUCFS(quota, period))
+			opts = append(opts, oci.WithCPUCFS(quota, period))
 		}
 
 		if shares := context.Int("cpu-shares"); shares > 0 {
-			opts = append(opts, over_oci.WithCPUShares(uint64(shares)))
+			opts = append(opts, oci.WithCPUShares(uint64(shares)))
 		}
 
 		quota := context.Int64("cpu-quota")
@@ -391,7 +371,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if cpus := context.Float64("cpus"); cpus > 0.0 {
 				return nil, errors.New("cpus and quota/period should be used separately")
 			}
-			opts = append(opts, over_oci.WithCPUCFS(quota, period))
+			opts = append(opts, oci.WithCPUCFS(quota, period))
 		}
 
 		joinNs := context.StringSlice("with-ns")
@@ -403,7 +383,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			if !validNamespace(nsType) {
 				return nil, errors.New("the Linux namespace type specified in --with-ns is not valid: " + nsType)
 			}
-			opts = append(opts, over_oci.WithLinuxNamespace(specs.LinuxNamespace{
+			opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{
 				Type: specs.LinuxNamespaceType(nsType),
 				Path: nsPath,
 			}))
@@ -412,23 +392,23 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 			opts = append(opts, nvidia.WithGPUs(nvidia.WithDevices(context.IntSlice("gpus")...), nvidia.WithAllCapabilities))
 		}
 		if context.IsSet("allow-new-privs") {
-			opts = append(opts, over_oci.WithNewPrivileges)
+			opts = append(opts, oci.WithNewPrivileges)
 		}
 		if context.IsSet("cgroup") {
 			// NOTE: can be set to "" explicitly for disabling cgroup.
-			opts = append(opts, over_oci.WithCgroup(context.String("cgroup")))
+			opts = append(opts, oci.WithCgroup(context.String("cgroup")))
 		}
 		limit := context.Uint64("memory-limit")
 		if limit != 0 {
-			opts = append(opts, over_oci.WithMemoryLimit(limit))
+			opts = append(opts, oci.WithMemoryLimit(limit))
 		}
 		for _, dev := range context.StringSlice("device") {
-			opts = append(opts, over_oci.WithDevices(dev, "", "rwm"))
+			opts = append(opts, oci.WithDevices(dev, "", "rwm"))
 		}
 
 		rootfsPropagation := context.String("rootfs-propagation")
 		if rootfsPropagation != "" {
-			opts = append(opts, func(_ gocontext.Context, _ over_oci.Client, _ *containers.Container, s *over_oci.Spec) error {
+			opts = append(opts, func(_ gocontext.Context, _ oci.Client, _ *containers.Container, s *oci.Spec) error {
 				if s.Linux != nil {
 					s.Linux.RootfsPropagation = rootfsPropagation
 				} else {
@@ -449,16 +429,16 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 
 		if c := context.String("blockio-class"); c != "" {
 			if linuxBlockIO, err := blockio.OciLinuxBlockIO(c); err == nil {
-				opts = append(opts, over_oci.WithBlockIO(linuxBlockIO))
+				opts = append(opts, oci.WithBlockIO(linuxBlockIO))
 			} else {
 				return nil, fmt.Errorf("blockio-class error: %w", err)
 			}
 		}
 		if c := context.String("rdt-class"); c != "" {
-			opts = append(opts, over_oci.WithRdt(c, "", ""))
+			opts = append(opts, oci.WithRdt(c, "", ""))
 		}
 		if hostname := context.String("hostname"); hostname != "" {
-			opts = append(opts, over_oci.WithHostname(hostname))
+			opts = append(opts, oci.WithHostname(hostname))
 		}
 	}
 
@@ -468,7 +448,7 @@ func NewContainer(ctx gocontext.Context, client *containerd.Client, context *cli
 	}
 	cOpts = append(cOpts, containerd.WithRuntime(context.String("runtime"), runtimeOpts))
 
-	opts = append(opts, over_oci.WithAnnotations(commands.LabelArgs(context.StringSlice("label"))))
+	opts = append(opts, oci.WithAnnotations(commands.LabelArgs(context.StringSlice("label"))))
 	var s specs.Spec
 	spec = containerd.WithSpec(&s, opts...)
 

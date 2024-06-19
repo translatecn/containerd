@@ -1,24 +1,9 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
-	"demo/others/log"
+	"demo/over/log"
+	"demo/over/seccomp"
 	"fmt"
 	"os"
 	"path"
@@ -29,14 +14,11 @@ import (
 	"syscall"
 	"time"
 
+	runtime "demo/over/api/cri/v1"
 	"demo/over/mount"
-	"demo/pkg/seccomp"
-	"demo/pkg/seutil"
 	"github.com/moby/sys/mountinfo"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"golang.org/x/sys/unix"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 const (
@@ -227,29 +209,4 @@ func ensureRemoveAll(ctx context.Context, dir string) error {
 		exitOnErr[pe.Path]++
 		time.Sleep(100 * time.Millisecond)
 	}
-}
-
-var vmbasedRuntimes = []string{
-	"io.containerd.kata",
-}
-
-func isVMBasedRuntime(runtimeType string) bool {
-	for _, rt := range vmbasedRuntimes {
-		if strings.Contains(runtimeType, rt) {
-			return true
-		}
-	}
-	return false
-}
-
-func modifyProcessLabel(runtimeType string, spec *specs.Spec) error {
-	if !isVMBasedRuntime(runtimeType) {
-		return nil
-	}
-	l, err := seutil.ChangeToKVM(spec.Process.SelinuxLabel)
-	if err != nil {
-		return fmt.Errorf("failed to get selinux kvm label: %w", err)
-	}
-	spec.Process.SelinuxLabel = l
-	return nil
 }

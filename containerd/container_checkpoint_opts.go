@@ -1,37 +1,21 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"bytes"
 	"context"
+	"demo/config/runc"
 	"demo/over/protobuf"
 	"demo/over/protobuf/proto"
-	"demo/pkg/rootfs"
+	"demo/over/rootfs"
 	"errors"
 	"fmt"
 	"runtime"
 
-	"demo/containers"
-	"demo/diff"
+	tasks "demo/over/api/services/tasks/v1"
+	"demo/over/containers"
+	"demo/over/diff"
 	"demo/over/images"
 	"demo/over/platforms"
-	tasks "demo/pkg/api/services/tasks/v1"
-	"demo/runtime/v2/runc/options"
 	"github.com/opencontainers/go-digest"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -44,10 +28,10 @@ var (
 )
 
 // CheckpointOpts are options to manage the checkpoint operation
-type CheckpointOpts func(context.Context, *Client, *containers.Container, *imagespec.Index, *options.CheckpointOptions) error
+type CheckpointOpts func(context.Context, *Client, *containers.Container, *imagespec.Index, *runc.CheckpointOptions) error
 
 // WithCheckpointImage includes the container image in the checkpoint
-func WithCheckpointImage(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *options.CheckpointOptions) error {
+func WithCheckpointImage(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *runc.CheckpointOptions) error {
 	ir, err := client.ImageService().Get(ctx, c.Image)
 	if err != nil {
 		return err
@@ -57,8 +41,8 @@ func WithCheckpointImage(ctx context.Context, client *Client, c *containers.Cont
 }
 
 // WithCheckpointTask includes the running task
-func WithCheckpointTask(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *options.CheckpointOptions) error {
-	any, err := over_protobuf.MarshalAnyToProto(copts)
+func WithCheckpointTask(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *runc.CheckpointOptions) error {
+	any, err := protobuf.MarshalAnyToProto(copts)
 	if err != nil {
 		return nil
 	}
@@ -70,7 +54,7 @@ func WithCheckpointTask(ctx context.Context, client *Client, c *containers.Conta
 		return err
 	}
 	for _, d := range task.Descriptors {
-		platformSpec := over_platforms.DefaultSpec()
+		platformSpec := platforms.DefaultSpec()
 		index.Manifests = append(index.Manifests, imagespec.Descriptor{
 			MediaType:   d.MediaType,
 			Size:        d.Size,
@@ -85,7 +69,7 @@ func WithCheckpointTask(ctx context.Context, client *Client, c *containers.Conta
 		return err
 	}
 	r := bytes.NewReader(data)
-	desc, err := writeContent(ctx, client.ContentStore(), over_images.MediaTypeContainerd1CheckpointOptions, c.ID+"-checkpoint-options", r)
+	desc, err := writeContent(ctx, client.ContentStore(), images.MediaTypeContainerd1CheckpointOptions, c.ID+"-checkpoint-options", r)
 	if err != nil {
 		return err
 	}
@@ -98,15 +82,15 @@ func WithCheckpointTask(ctx context.Context, client *Client, c *containers.Conta
 }
 
 // WithCheckpointRuntime includes the container runtime info
-func WithCheckpointRuntime(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *options.CheckpointOptions) error {
+func WithCheckpointRuntime(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *runc.CheckpointOptions) error {
 	if c.Runtime.Options != nil && c.Runtime.Options.GetValue() != nil {
-		any := over_protobuf.FromAny(c.Runtime.Options)
+		any := protobuf.FromAny(c.Runtime.Options)
 		data, err := proto.Marshal(any)
 		if err != nil {
 			return err
 		}
 		r := bytes.NewReader(data)
-		desc, err := writeContent(ctx, client.ContentStore(), over_images.MediaTypeContainerd1CheckpointRuntimeOptions, c.ID+"-runtime-options", r)
+		desc, err := writeContent(ctx, client.ContentStore(), images.MediaTypeContainerd1CheckpointRuntimeOptions, c.ID+"-runtime-options", r)
 		if err != nil {
 			return err
 		}
@@ -120,7 +104,7 @@ func WithCheckpointRuntime(ctx context.Context, client *Client, c *containers.Co
 }
 
 // WithCheckpointRW includes the rw in the checkpoint
-func WithCheckpointRW(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *options.CheckpointOptions) error {
+func WithCheckpointRW(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *runc.CheckpointOptions) error {
 	diffOpts := []diff.Opt{
 		diff.WithReference(fmt.Sprintf("checkpoint-rw-%s", c.SnapshotKey)),
 	}
@@ -143,10 +127,6 @@ func WithCheckpointRW(ctx context.Context, client *Client, c *containers.Contain
 }
 
 // WithCheckpointTaskExit causes the task to exit after checkpoint
-func WithCheckpointTaskExit(ctx context.Context, client *Client, c *containers.Container, index *imagespec.Index, copts *options.CheckpointOptions) error {
-	copts.Exit = true
-	return nil
-}
 
 // GetIndexByMediaType returns the index in a manifest for the specified media type
 func GetIndexByMediaType(index *imagespec.Index, mt string) (*imagespec.Descriptor, error) {

@@ -1,32 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
-	over_protobuf2 "demo/over/protobuf"
+	"demo/over/protobuf"
 	ptypes "demo/over/protobuf/types"
+	"demo/over/typeurl/v2"
 	"errors"
 	"io"
 
-	"demo/containers"
-	"demo/others/typeurl/v2"
+	containersapi "demo/over/api/services/containers/v1"
+	"demo/over/containers"
 	"demo/over/errdefs"
-	containersapi "demo/pkg/api/services/containers/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -49,7 +33,7 @@ func (r *remoteContainers) Get(ctx context.Context, id string) (containers.Conta
 		ID: id,
 	})
 	if err != nil {
-		return containers.Container{}, over_errdefs.FromGRPC(err)
+		return containers.Container{}, errdefs.FromGRPC(err)
 	}
 
 	return containerFromProto(resp.Container), nil
@@ -71,7 +55,7 @@ func (r *remoteContainers) list(ctx context.Context, filters ...string) ([]conta
 		Filters: filters,
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	return containersFromProto(resp.Containers), nil
 }
@@ -83,7 +67,7 @@ func (r *remoteContainers) stream(ctx context.Context, filters ...string) ([]con
 		Filters: filters,
 	})
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	var containers []containers.Container
 	for {
@@ -97,7 +81,7 @@ func (r *remoteContainers) stream(ctx context.Context, filters ...string) ([]con
 					return nil, errStreamNotAvailable
 				}
 			}
-			return nil, over_errdefs.FromGRPC(err)
+			return nil, errdefs.FromGRPC(err)
 		}
 		select {
 		case <-ctx.Done():
@@ -113,7 +97,7 @@ func (r *remoteContainers) Create(ctx context.Context, container containers.Cont
 		Container: containerToProto(&container),
 	})
 	if err != nil {
-		return containers.Container{}, over_errdefs.FromGRPC(err)
+		return containers.Container{}, errdefs.FromGRPC(err)
 	}
 
 	return containerFromProto(created.Container), nil
@@ -133,7 +117,7 @@ func (r *remoteContainers) Update(ctx context.Context, container containers.Cont
 		UpdateMask: updateMask,
 	})
 	if err != nil {
-		return containers.Container{}, over_errdefs.FromGRPC(err)
+		return containers.Container{}, errdefs.FromGRPC(err)
 	}
 
 	return containerFromProto(updated.Container), nil
@@ -145,14 +129,14 @@ func (r *remoteContainers) Delete(ctx context.Context, id string) error {
 		ID: id,
 	})
 
-	return over_errdefs.FromGRPC(err)
+	return errdefs.FromGRPC(err)
 
 }
 
 func containerToProto(container *containers.Container) *containersapi.Container {
 	extensions := make(map[string]*ptypes.Any)
 	for k, v := range container.Extensions {
-		extensions[k] = over_protobuf2.FromAny(v)
+		extensions[k] = protobuf.FromAny(v)
 	}
 	return &containersapi.Container{
 		ID:     container.ID,
@@ -160,9 +144,9 @@ func containerToProto(container *containers.Container) *containersapi.Container 
 		Image:  container.Image,
 		Runtime: &containersapi.Container_Runtime{
 			Name:    container.Runtime.Name,
-			Options: over_protobuf2.FromAny(container.Runtime.Options),
+			Options: protobuf.FromAny(container.Runtime.Options),
 		},
-		Spec:        over_protobuf2.FromAny(container.Spec),
+		Spec:        protobuf.FromAny(container.Spec),
 		Snapshotter: container.Snapshotter,
 		SnapshotKey: container.SnapshotKey,
 		Extensions:  extensions,
@@ -191,8 +175,8 @@ func containerFromProto(containerpb *containersapi.Container) containers.Contain
 		Spec:        containerpb.Spec,
 		Snapshotter: containerpb.Snapshotter,
 		SnapshotKey: containerpb.SnapshotKey,
-		CreatedAt:   over_protobuf2.FromTimestamp(containerpb.CreatedAt),
-		UpdatedAt:   over_protobuf2.FromTimestamp(containerpb.UpdatedAt),
+		CreatedAt:   protobuf.FromTimestamp(containerpb.CreatedAt),
+		UpdatedAt:   protobuf.FromTimestamp(containerpb.UpdatedAt),
 		Extensions:  extensions,
 		SandboxID:   containerpb.Sandbox,
 	}

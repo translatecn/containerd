@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 // Package cap provides Linux capability utility
 package cap
 
@@ -73,6 +57,16 @@ const (
 	// Ambient is CapAmb
 	Ambient
 )
+
+//Permitted：进程所能使用的capabilities的上限集合，在该集合中有的权限，并不代表线程可以使用。必须要保证在Effective集合中有该权限。
+//Effective：有效的capabilities，这里的权限是Linux内核检查线程是否具有特权操作时检查的集合。
+//Inheritable：即继承。通过exec系统调用启动新进程时可以继承给新进程权限集合。注意，该权限集合继承给新进程后，也就是新进程的Permitted集合。
+//Bounding: Bounding限制了进程可以获得的集合，只有在Bounding集合中存在的权限，才能出现在Permitted和Inheritable集合中。
+//Ambient: Ambient集合中的权限会被应用到所有非特权进程上（特权进程，指当用户执行某一程序时，临时获得该程序所有者的身份）。
+//	然而，并不是所有在Ambient集合中的权限都会被保留，只有在Permitted和Effective集合中的权限，才会在被exec调用时保留。
+
+//在创建新的User namespace时不需要任何权限；而在创建其他类型的namespace（如UTS、PID、Mount、IPC、Network、Cgroupnamespace）时，
+//需要进程在对应User namespace中有CAP_SYS_ADMIN权限。
 
 // ParseProcPIDStatus returns uint64 bitmap value from /proc/<PID>/status file
 func ParseProcPIDStatus(r io.Reader) (map[Type]uint64, error) {

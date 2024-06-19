@@ -1,40 +1,24 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"bytes"
 	"context"
-	"demo/others/log"
+	cioutil "demo/over/ioutil"
+	"demo/over/log"
 	"fmt"
 	"io"
 	"syscall"
 	"time"
 
 	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
+	containerdio "demo/over/cio"
 	"demo/over/errdefs"
-	"demo/over/oci"
-	containerdio "demo/pkg/cio"
+	"demo/pkg/oci"
 	"k8s.io/client-go/tools/remotecommand"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	cio "demo/pkg/cri/io"
 	"demo/pkg/cri/util"
-	cioutil "demo/pkg/ioutil"
 )
 
 type cappedWriter struct {
@@ -140,7 +124,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 
 	pspec.Terminal = opts.tty
 	if opts.tty {
-		if err := over_oci.WithEnv([]string{"TERM=xterm"})(ctx, nil, nil, spec); err != nil {
+		if err := oci.WithEnv([]string{"TERM=xterm"})(ctx, nil, nil, spec); err != nil {
 			return nil, fmt.Errorf("add TERM env var to spec: %w", err)
 		}
 	}
@@ -172,7 +156,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 	defer func() {
 		deferCtx, deferCancel := util.DeferContext()
 		defer deferCancel()
-		if _, err := process.Delete(deferCtx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+		if _, err := process.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 			log.G(ctx).WithError(err).Errorf("Failed to delete exec process %q for container %q", execID, id)
 		}
 	}()
@@ -212,7 +196,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 	select {
 	case <-execCtx.Done():
 		// Ignore the not found error because the process may exit itself before killing.
-		if err := process.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
+		if err := process.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to kill exec %q: %w", execID, err)
 		}
 		// Wait for the process to be killed.
@@ -300,7 +284,7 @@ func drainExecSyncIO(ctx context.Context, execProcess containerd.Process, drainE
 	log.G(ctx).Debugf("Exec process %q exits but the io is still held by other processes. Trying to delete exec process to release io", execProcess.ID())
 	_, err := execProcess.Delete(ctx, containerd.WithProcessKill)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to release exec io by deleting exec process %q: %w",
 				execProcess.ID(), err)
 		}

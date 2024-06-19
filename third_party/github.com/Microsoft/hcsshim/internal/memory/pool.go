@@ -95,18 +95,6 @@ func newEmptyMemoryPool() *memoryPool {
 	}
 }
 
-func NewPoolMemoryAllocator() PoolAllocator {
-	pa := PoolAllocator{}
-	p := newEmptyMemoryPool()
-	// by default we allocate a single region with maximum possible size (class type)
-	p.free[0] = &region{
-		class:  memoryClassNumber - 1,
-		offset: 0,
-	}
-	pa.pools[memoryClassNumber-1] = p
-	return pa
-}
-
 // Allocate checks memory region pool for the given `size` and returns a free region with
 // minimal offset, if none available tries expanding matched memory pool.
 //

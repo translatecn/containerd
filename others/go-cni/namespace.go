@@ -1,26 +1,10 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package cni
 
 import (
 	"context"
 
-	cnilibrary "github.com/containernetworking/cni/libcni"
-	types100 "github.com/containernetworking/cni/pkg/types/100"
+	cnilibrary "demo/others/cni/libcni"
+	types100 "demo/others/cni/pkg/types/100"
 )
 
 type Network struct {
@@ -46,10 +30,23 @@ func (n *Network) Check(ctx context.Context, ns *Namespace) error {
 }
 
 type Namespace struct {
-	id             string
+	id             string // sanbox id
 	path           string
 	capabilityArgs map[string]interface{}
 	args           map[string]string
+}
+
+func (ns *Namespace) config(ifName string) *cnilibrary.RuntimeConf {
+	c := &cnilibrary.RuntimeConf{
+		ContainerID: ns.id, //
+		NetNS:       ns.path,
+		IfName:      ifName,
+	}
+	for k, v := range ns.args {
+		c.Args = append(c.Args, [2]string{k, v})
+	}
+	c.CapabilityArgs = ns.capabilityArgs
+	return c
 }
 
 func newNamespace(id, path string, opts ...NamespaceOpts) (*Namespace, error) {
@@ -65,17 +62,4 @@ func newNamespace(id, path string, opts ...NamespaceOpts) (*Namespace, error) {
 		}
 	}
 	return ns, nil
-}
-
-func (ns *Namespace) config(ifName string) *cnilibrary.RuntimeConf {
-	c := &cnilibrary.RuntimeConf{
-		ContainerID: ns.id,
-		NetNS:       ns.path,
-		IfName:      ifName,
-	}
-	for k, v := range ns.args {
-		c.Args = append(c.Args, [2]string{k, v})
-	}
-	c.CapabilityArgs = ns.capabilityArgs
-	return c
 }

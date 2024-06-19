@@ -1,44 +1,27 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
+	"demo/config/runc"
+	"demo/over/api/services/tasks/v1"
+	"demo/over/api/types"
+	tasktypes "demo/over/api/types/task"
+	"demo/over/cio"
+	"demo/over/containers"
+	"demo/over/errdefs"
+	"demo/over/fifo"
+	"demo/over/images"
 	"demo/over/protobuf"
+	"demo/over/typeurl/v2"
+	"demo/pkg/oci"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"demo/containers"
-	"demo/others/fifo"
-	"demo/others/typeurl/v2"
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/oci"
-	"demo/pkg/api/services/tasks/v1"
-	"demo/pkg/api/types"
-	tasktypes "demo/pkg/api/types/task"
-	"demo/pkg/cio"
-	"demo/runtime/v2/runc/options"
 	ver "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/selinux/go-selinux/label"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -55,17 +38,12 @@ type Container interface {
 	Info(context.Context, ...InfoOpts) (containers.Container, error)
 	// Delete removes the container
 	Delete(context.Context, ...DeleteOpts) error
-	// NewTask creates a new task based on the container metadata
 	NewTask(context.Context, cio.Creator, ...NewTaskOpts) (Task, error)
 	// Spec returns the OCI runtime specification
-	Spec(context.Context) (*over_oci.Spec, error)
-	// Task returns the current task for the container
-	//
-	// If cio.Attach options are passed the client will reattach to the IO for the running
-	// task. If no task exists for the container a NotFound error is returned
-	//
-	// Clients must make sure that only one reader is attached to the task and consuming
-	// the output from the task's fifos
+	Spec(context.Context) (*oci.Spec, error)
+	// Task 返回容器的当前任务
+	// 如果。通过附加选项，客户端将重新连接到正在运行的任务的IO。如果容器不存在任务，则返回NotFound错误
+	// 客户端必须确保只有一个读取器连接到任务，并从任务的fifo消费输出
 	Task(context.Context, cio.Attach) (Task, error)
 	// Image returns the image that the container is based on
 	Image(context.Context) (Image, error)
@@ -73,7 +51,6 @@ type Container interface {
 	Labels(context.Context) (map[string]string, error)
 	// SetLabels sets the provided labels for the container and returns the final label set
 	SetLabels(context.Context, map[string]string) (map[string]string, error)
-	// Extensions returns the extensions set on the container
 	Extensions(context.Context) (map[string]typeurl.Any, error)
 	// Update a container
 	Update(context.Context, ...UpdateContainerOpts) error
@@ -157,12 +134,12 @@ func (c *container) SetLabels(ctx context.Context, labels map[string]string) (ma
 }
 
 // Spec returns the current OCI specification for the container
-func (c *container) Spec(ctx context.Context) (*over_oci.Spec, error) {
+func (c *container) Spec(ctx context.Context) (*oci.Spec, error) {
 	r, err := c.get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var s over_oci.Spec
+	var s oci.Spec
 	if err := json.Unmarshal(r.Spec.GetValue(), &s); err != nil {
 		return nil, err
 	}
@@ -173,7 +150,7 @@ func (c *container) Spec(ctx context.Context) (*over_oci.Spec, error) {
 // an error is returned if the container has running tasks
 func (c *container) Delete(ctx context.Context, opts ...DeleteOpts) error {
 	if _, err := c.loadTask(ctx, nil); err == nil {
-		return fmt.Errorf("cannot delete running task %v: %w", c.id, over_errdefs.ErrFailedPrecondition)
+		return fmt.Errorf("cannot delete running task %v: %w", c.id, errdefs.ErrFailedPrecondition)
 	}
 	r, err := c.get(ctx)
 	if err != nil {
@@ -198,7 +175,7 @@ func (c *container) Image(ctx context.Context) (Image, error) {
 		return nil, err
 	}
 	if r.Image == "" {
-		return nil, fmt.Errorf("container not created from an image: %w", over_errdefs.ErrNotFound)
+		return nil, fmt.Errorf("container not created from an image: %w", errdefs.ErrNotFound)
 	}
 	i, err := c.client.ImageService().Get(ctx, r.Image)
 	if err != nil {
@@ -222,9 +199,9 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	request := &tasks.CreateTaskRequest{
 		ContainerID: c.id,
 		Terminal:    cfg.Terminal,
-		Stdin:       cfg.Stdin,
-		Stdout:      cfg.Stdout,
-		Stderr:      cfg.Stderr,
+		Stdin:       cfg.Stdin,  // 进程间通信的特殊文件类型
+		Stdout:      cfg.Stdout, // 进程间通信的特殊文件类型
+		Stderr:      cfg.Stderr, // 进程间通信的特殊文件类型
 	}
 	r, err := c.get(ctx)
 	if err != nil {
@@ -232,7 +209,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	}
 	if r.SnapshotKey != "" {
 		if r.Snapshotter == "" {
-			return nil, fmt.Errorf("unable to resolve rootfs mounts without snapshotter on container: %w", over_errdefs.ErrInvalidArgument)
+			return nil, fmt.Errorf("unable to resolve rootfs mounts without snapshotter on container: %w", errdefs.ErrInvalidArgument)
 		}
 
 		// get the rootfs from the snapshotter and add it to the request
@@ -287,7 +264,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 		if err != nil {
 			return nil, err
 		}
-		request.Options = over_protobuf.FromAny(any)
+		request.Options = protobuf.FromAny(any)
 	}
 	t := &task{
 		client: c.client,
@@ -300,27 +277,10 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	}
 	response, err := c.client.TaskService().Create(ctx, request)
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 	t.pid = response.Pid
 	return t, nil
-}
-
-func (c *container) Update(ctx context.Context, opts ...UpdateContainerOpts) error {
-	// fetch the current container config before updating it
-	r, err := c.get(ctx)
-	if err != nil {
-		return err
-	}
-	for _, o := range opts {
-		if err := o(ctx, c.client, &r); err != nil {
-			return err
-		}
-	}
-	if _, err := c.client.ContainerService().Update(ctx, r); err != nil {
-		return over_errdefs.FromGRPC(err)
-	}
-	return nil
 }
 
 func (c *container) Checkpoint(ctx context.Context, ref string, opts ...CheckpointOpts) (Image, error) {
@@ -330,7 +290,7 @@ func (c *container) Checkpoint(ctx context.Context, ref string, opts ...Checkpoi
 		},
 		Annotations: make(map[string]string),
 	}
-	copts := &options.CheckpointOptions{
+	copts := &runc.CheckpointOptions{
 		Exit:                false,
 		OpenTcp:             false,
 		ExternalUnixSockets: false,
@@ -364,8 +324,8 @@ func (c *container) Checkpoint(ctx context.Context, ref string, opts ...Checkpoi
 	// process remaining opts
 	for _, o := range opts {
 		if err := o(ctx, c.client, &info, index, copts); err != nil {
-			err = over_errdefs.FromGRPC(err)
-			if !over_errdefs.IsAlreadyExists(err) {
+			err = errdefs.FromGRPC(err)
+			if !errdefs.IsAlreadyExists(err) {
 				return nil, err
 			}
 		}
@@ -375,7 +335,7 @@ func (c *container) Checkpoint(ctx context.Context, ref string, opts ...Checkpoi
 	if err != nil {
 		return nil, err
 	}
-	i := over_images.Image{
+	i := images.Image{
 		Name:   ref,
 		Target: desc,
 	}
@@ -392,16 +352,15 @@ func (c *container) loadTask(ctx context.Context, ioAttach cio.Attach) (Task, er
 		ContainerID: c.id,
 	})
 	if err != nil {
-		err = over_errdefs.FromGRPC(err)
-		if over_errdefs.IsNotFound(err) {
+		err = errdefs.FromGRPC(err)
+		if errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("no running task found: %w", err)
 		}
 		return nil, err
 	}
 	var i cio.IO
 	if ioAttach != nil && response.Process.Status != tasktypes.Status_UNKNOWN {
-		// Do not attach IO for task in unknown state, because there
-		// are no fifo paths anyway.
+		// 不要为未知状态的任务附加IO，因为无论如何也没有fifo路径。
 		if i, err = attachExistingIO(response, ioAttach); err != nil {
 			return nil, err
 		}
@@ -461,4 +420,21 @@ func loadFifos(response *tasks.GetResponse) *cio.FIFOSet {
 		Stderr:   response.Process.Stderr,
 		Terminal: response.Process.Terminal,
 	}, closer)
+}
+
+func (c *container) Update(ctx context.Context, opts ...UpdateContainerOpts) error {
+	// fetch the current container config before updating it
+	r, err := c.get(ctx)
+	if err != nil {
+		return err
+	}
+	for _, o := range opts {
+		if err := o(ctx, c.client, &r); err != nil {
+			return err
+		}
+	}
+	if _, err := c.client.ContainerService().Update(ctx, r); err != nil {
+		return errdefs.FromGRPC(err)
+	}
+	return nil
 }

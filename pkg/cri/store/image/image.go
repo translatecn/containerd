@@ -1,30 +1,14 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package image
 
 import (
 	"context"
-	"demo/pkg/reference/docker"
+	"demo/over/reference/docker"
 	"fmt"
 	"sync"
 
 	"demo/containerd"
 	"demo/over/errdefs"
-	"demo/pkg/cri/labels"
+	"demo/pkg/cri/over/labels"
 	"demo/pkg/cri/util"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -75,55 +59,6 @@ func NewStore(client *containerd.Client) *Store {
 	}
 }
 
-// Update updates cache for a reference.
-func (s *Store) Update(ctx context.Context, ref string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	i, err := s.client.GetImage(ctx, ref)
-	if err != nil && !over_errdefs.IsNotFound(err) {
-		return fmt.Errorf("get image from containerd: %w", err)
-	}
-	var img *Image
-	if err == nil {
-		img, err = getImage(ctx, i)
-		if err != nil {
-			return fmt.Errorf("get image info from containerd: %w", err)
-		}
-	}
-	return s.update(ref, img)
-}
-
-// update updates the internal cache. img == nil means that
-// the image does not exist in containerd.
-func (s *Store) update(ref string, img *Image) error {
-	oldID, oldExist := s.refCache[ref]
-	if img == nil {
-		// The image reference doesn't exist in containerd.
-		if oldExist {
-			// Remove the reference from the store.
-			s.store.delete(oldID, ref)
-			delete(s.refCache, ref)
-		}
-		return nil
-	}
-	if oldExist {
-		if oldID == img.ID {
-			if s.store.isPinned(img.ID, ref) == img.Pinned {
-				return nil
-			}
-			if img.Pinned {
-				return s.store.pin(img.ID, ref)
-			}
-			return s.store.unpin(img.ID, ref)
-		}
-		// Updated. Remove tag from old image.
-		s.store.delete(oldID, ref)
-	}
-	// New image. Add new image.
-	s.refCache[ref] = img.ID
-	return s.store.add(*img)
-}
-
 // getImage gets image information from containerd.
 func getImage(ctx context.Context, i containerd.Image) (*Image, error) {
 	// Get image information.
@@ -162,24 +97,6 @@ func getImage(ctx context.Context, i containerd.Image) (*Image, error) {
 
 }
 
-// Resolve resolves a image reference to image id.
-func (s *Store) Resolve(ref string) (string, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	id, ok := s.refCache[ref]
-	if !ok {
-		return "", over_errdefs.ErrNotFound
-	}
-	return id, nil
-}
-
-// Get gets image metadata by image id. The id can be truncated.
-// Returns various validation errors if the image id is invalid.
-// Returns over_errdefs.ErrNotFound if the image doesn't exist.
-func (s *Store) Get(id string) (Image, error) {
-	return s.store.get(id)
-}
-
 // List lists all images.
 func (s *Store) List() []Image {
 	return s.store.list()
@@ -202,39 +119,6 @@ func (s *store) list() []Image {
 	return images
 }
 
-func (s *store) add(img Image) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	if _, err := s.digestSet.Lookup(img.ID); err != nil {
-		if err != digestset.ErrDigestNotFound {
-			return err
-		}
-		if err := s.digestSet.Add(imagedigest.Digest(img.ID)); err != nil {
-			return err
-		}
-	}
-
-	if img.Pinned {
-		if refs := s.pinnedRefs[img.ID]; refs == nil {
-			s.pinnedRefs[img.ID] = sets.New(img.References...)
-		} else {
-			refs.Insert(img.References...)
-		}
-	}
-
-	i, ok := s.images[img.ID]
-	if !ok {
-		// If the image doesn't exist, add it.
-		s.images[img.ID] = img
-		return nil
-	}
-	// Or else, merge and sort the references.
-	i.References = docker.Sort(util.MergeStringSlices(i.References, img.References))
-	i.Pinned = i.Pinned || img.Pinned
-	s.images[img.ID] = i
-	return nil
-}
-
 func (s *store) isPinned(id, ref string) bool {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -252,13 +136,13 @@ func (s *store) pin(id, ref string) error {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = over_errdefs.ErrNotFound
+			err = errdefs.ErrNotFound
 		}
 		return err
 	}
 	i, ok := s.images[digest.String()]
 	if !ok {
-		return over_errdefs.ErrNotFound
+		return errdefs.ErrNotFound
 	}
 
 	if refs := s.pinnedRefs[digest.String()]; refs == nil {
@@ -277,13 +161,13 @@ func (s *store) unpin(id, ref string) error {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = over_errdefs.ErrNotFound
+			err = errdefs.ErrNotFound
 		}
 		return err
 	}
 	i, ok := s.images[digest.String()]
 	if !ok {
-		return over_errdefs.ErrNotFound
+		return errdefs.ErrNotFound
 	}
 
 	refs := s.pinnedRefs[digest.String()]
@@ -308,14 +192,14 @@ func (s *store) get(id string) (Image, error) {
 	digest, err := s.digestSet.Lookup(id)
 	if err != nil {
 		if err == digestset.ErrDigestNotFound {
-			err = over_errdefs.ErrNotFound
+			err = errdefs.ErrNotFound
 		}
 		return Image{}, err
 	}
 	if i, ok := s.images[digest.String()]; ok {
 		return i, nil
 	}
-	return Image{}, over_errdefs.ErrNotFound
+	return Image{}, errdefs.ErrNotFound
 }
 
 func (s *store) delete(id, ref string) {
@@ -349,4 +233,103 @@ func (s *store) delete(id, ref string) {
 	s.digestSet.Remove(digest)
 	delete(s.images, digest.String())
 	delete(s.pinnedRefs, digest.String())
+}
+
+// Resolve resolves a image reference to image id.
+func (s *Store) Resolve(ref string) (string, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	id, ok := s.refCache[ref]
+	if !ok {
+		return "", errdefs.ErrNotFound
+	}
+	return id, nil
+}
+
+// Get gets image metadata by image id. The id can be truncated.
+// Returns various validation errors if the image id is invalid.
+// Returns errdefs.ErrNotFound if the image doesn't exist.
+func (s *Store) Get(id string) (Image, error) {
+	return s.store.get(id)
+}
+
+// Update updates cache for a reference.
+func (s *Store) Update(ctx context.Context, ref string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	i, err := s.client.GetImage(ctx, ref)
+	if err != nil && !errdefs.IsNotFound(err) {
+		return fmt.Errorf("get image from containerd: %w", err)
+	}
+	var img *Image
+	if err == nil {
+		img, err = getImage(ctx, i)
+		if err != nil {
+			return fmt.Errorf("get image info from containerd: %w", err)
+		}
+	}
+	return s.update(ref, img)
+}
+func (s *store) add(img Image) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if _, err := s.digestSet.Lookup(img.ID); err != nil {
+		if err != digestset.ErrDigestNotFound {
+			return err
+		}
+		if err := s.digestSet.Add(imagedigest.Digest(img.ID)); err != nil {
+			return err
+		}
+	}
+
+	if img.Pinned {
+		if refs := s.pinnedRefs[img.ID]; refs == nil {
+			s.pinnedRefs[img.ID] = sets.New(img.References...)
+		} else {
+			refs.Insert(img.References...)
+		}
+	}
+
+	i, ok := s.images[img.ID]
+	if !ok {
+		// If the image doesn't exist, add it.
+		s.images[img.ID] = img
+		return nil
+	}
+	// Or else, merge and sort the references.
+	i.References = docker.Sort(util.MergeStringSlices(i.References, img.References))
+	i.Pinned = i.Pinned || img.Pinned
+	s.images[img.ID] = i
+	return nil
+}
+
+// update updates the internal cache. img == nil means that
+// the image does not exist in containerd.
+func (s *Store) update(ref string, img *Image) error {
+	oldID, oldExist := s.refCache[ref]
+	if img == nil {
+		// The image reference doesn't exist in containerd.
+		if oldExist {
+			// Remove the reference from the store.
+			s.store.delete(oldID, ref)
+			delete(s.refCache, ref)
+		}
+		return nil
+	}
+	if oldExist {
+		if oldID == img.ID {
+			if s.store.isPinned(img.ID, ref) == img.Pinned {
+				return nil
+			}
+			if img.Pinned {
+				return s.store.pin(img.ID, ref)
+			}
+			return s.store.unpin(img.ID, ref)
+		}
+		// Updated. Remove tag from old image.
+		s.store.delete(oldID, ref)
+	}
+	// New image. Add new image.
+	s.refCache[ref] = img.ID
+	return s.store.add(*img)
 }

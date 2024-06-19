@@ -1,23 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
+	"demo/over/errdefs"
 	"demo/over/protobuf"
 	"demo/pkg/sandbox"
 	"fmt"
@@ -26,8 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"demo/over/errdefs"
-	eventtypes "demo/pkg/api/events"
+	eventtypes "demo/over/api/events"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	ctrdutil "demo/pkg/cri/util"
 )
@@ -63,7 +47,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	state := sandbox.Status.Get().State
 	task, err := container.Task(ctx, nil)
 	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
+		if !errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to get sandbox container: %w", err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
@@ -81,7 +65,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 		defer waitCancel()
 		exitCh, err := task.Wait(waitCtx)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return fmt.Errorf("failed to wait for task: %w", err)
 			}
 			return cleanupUnknownSandbox(ctx, id, sandbox)
@@ -96,7 +80,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 				e := &eventtypes.SandboxExit{
 					SandboxID:  id,
 					ExitStatus: exitStatus,
-					ExitedAt:   over_protobuf.ToTimestamp(exitedAt),
+					ExitedAt:   protobuf.ToTimestamp(exitedAt),
 				}
 				logrus.WithError(err).Errorf("Failed to wait sandbox exit %+v", e)
 				// TODO: how to backoff
@@ -113,7 +97,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 	}
 
 	// Kill the sandbox container.
-	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !over_errdefs.IsNotFound(err) {
+	if err = task.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
 		return fmt.Errorf("failed to kill sandbox container: %w", err)
 	}
 
@@ -134,5 +118,5 @@ func (c *Controller) waitSandboxStop(ctx context.Context, sandbox sandboxstore.S
 // cleanupUnknownSandbox cleanup stopped sandbox in unknown state.
 func cleanupUnknownSandbox(ctx context.Context, id string, sandbox sandboxstore.Sandbox) error {
 	// Reuse handleSandboxExit to do the cleanup.
-	return handleSandboxExit(ctx, sandbox, &eventtypes.TaskExit{ExitStatus: unknownExitCode, ExitedAt: over_protobuf.ToTimestamp(time.Now())})
+	return handleSandboxExit(ctx, sandbox, &eventtypes.TaskExit{ExitStatus: unknownExitCode, ExitedAt: protobuf.ToTimestamp(time.Now())})
 }

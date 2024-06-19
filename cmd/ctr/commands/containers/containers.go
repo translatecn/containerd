@@ -1,25 +1,9 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containers
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"fmt"
 	"os"
 	"strings"
@@ -28,9 +12,9 @@ import (
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/run"
 	"demo/containerd"
-	"demo/containers"
+	"demo/over/cio"
+	"demo/over/containers"
 	"demo/over/errdefs"
-	"demo/pkg/cio"
 	"github.com/urfave/cli"
 )
 
@@ -40,13 +24,13 @@ var Command = cli.Command{
 	Usage:   "Manage containers",
 	Aliases: []string{"c", "container"},
 	Subcommands: []cli.Command{
-		createCommand,
-		deleteCommand,
-		infoCommand,
-		listCommand,
-		setLabelsCommand,
 		checkpointCommand,
 		restoreCommand,
+		deleteCommand,
+		setLabelsCommand,
+		listCommand,
+		infoCommand,
+		createCommand,
 	},
 }
 
@@ -66,17 +50,17 @@ var createCommand = cli.Command{
 		if config {
 			id = context.Args().First()
 			if context.NArg() > 1 {
-				return fmt.Errorf("with spec config file, only container id should be provided: %w", over_errdefs.ErrInvalidArgument)
+				return fmt.Errorf("with spec config file, only container id should be provided: %w", errdefs.ErrInvalidArgument)
 			}
 		} else {
 			id = context.Args().Get(1)
 			ref = context.Args().First()
 			if ref == "" {
-				return fmt.Errorf("image ref must be provided: %w", over_errdefs.ErrInvalidArgument)
+				return fmt.Errorf("image ref must be provided: %w", errdefs.ErrInvalidArgument)
 			}
 		}
 		if id == "" {
-			return fmt.Errorf("container id must be provided: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("container id must be provided: %w", errdefs.ErrInvalidArgument)
 		}
 		client, ctx, cancel, err := commands.NewClient(context)
 		if err != nil {
@@ -169,7 +153,7 @@ var deleteCommand = cli.Command{
 		}
 
 		if context.NArg() == 0 {
-			return fmt.Errorf("must specify at least one container to delete: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("must specify at least one container to delete: %w", errdefs.ErrInvalidArgument)
 		}
 		for _, arg := range context.Args() {
 			if err := deleteContainer(ctx, client, arg, deleteOpts...); err != nil {
@@ -215,7 +199,7 @@ var setLabelsCommand = cli.Command{
 	Action: func(context *cli.Context) error {
 		containerID, labels := commands.ObjectWithLabelArgs(context)
 		if containerID == "" {
-			return fmt.Errorf("container id must be provided: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("container id must be provided: %w", errdefs.ErrInvalidArgument)
 		}
 		client, ctx, cancel, err := commands.NewClient(context)
 		if err != nil {
@@ -257,7 +241,7 @@ var infoCommand = cli.Command{
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
-			return fmt.Errorf("container id must be provided: %w", over_errdefs.ErrInvalidArgument)
+			return fmt.Errorf("container id must be provided: %w", errdefs.ErrInvalidArgument)
 		}
 		client, ctx, cancel, err := commands.NewClient(context)
 		if err != nil {

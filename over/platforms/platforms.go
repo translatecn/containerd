@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 // Package platforms provides a toolkit for normalizing, matching and
 // specifying container platforms.
 //
@@ -104,19 +88,17 @@
 //
 // While these normalizations are provided, their support on arm platforms has
 // not yet been fully implemented and tested.
-package over_platforms
+package platforms
 
 import (
+	"demo/over/errdefs"
 	"fmt"
 	"path"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
-
-	"demo/over/errdefs"
 )
 
 var (
@@ -169,14 +151,14 @@ func (m *matcher) String() string {
 func Parse(specifier string) (specs.Platform, error) {
 	if strings.Contains(specifier, "*") {
 		// TODO(stevvooe): need to work out exact wildcard handling
-		return specs.Platform{}, fmt.Errorf("%q: wildcards not yet supported: %w", specifier, over_errdefs.ErrInvalidArgument)
+		return specs.Platform{}, fmt.Errorf("%q: wildcards not yet supported: %w", specifier, errdefs.ErrInvalidArgument)
 	}
 
 	parts := strings.Split(specifier, "/")
 
 	for _, part := range parts {
 		if !specifierRe.MatchString(part) {
-			return specs.Platform{}, fmt.Errorf("%q is an invalid component of %q: platform specifier component must match %q: %w", part, specifier, specifierRe.String(), over_errdefs.ErrInvalidArgument)
+			return specs.Platform{}, fmt.Errorf("%q is an invalid component of %q: platform specifier component must match %q: %w", part, specifier, specifierRe.String(), errdefs.ErrInvalidArgument)
 		}
 	}
 
@@ -212,7 +194,7 @@ func Parse(specifier string) (specs.Platform, error) {
 			return p, nil
 		}
 
-		return specs.Platform{}, fmt.Errorf("%q: unknown operating system or architecture: %w", specifier, over_errdefs.ErrInvalidArgument)
+		return specs.Platform{}, fmt.Errorf("%q: unknown operating system or architecture: %w", specifier, errdefs.ErrInvalidArgument)
 	case 2:
 		// In this case, we treat as a regular os/arch pair. We don't care
 		// about whether or not we know of the platform.
@@ -242,17 +224,7 @@ func Parse(specifier string) (specs.Platform, error) {
 		return p, nil
 	}
 
-	return specs.Platform{}, fmt.Errorf("%q: cannot parse platform specifier: %w", specifier, over_errdefs.ErrInvalidArgument)
-}
-
-// MustParse is like Parses but panics if the specifier cannot be parsed.
-// Simplifies initialization of global variables.
-func MustParse(specifier string) specs.Platform {
-	p, err := Parse(specifier)
-	if err != nil {
-		panic("platform: Parse(" + strconv.Quote(specifier) + "): " + err.Error())
-	}
-	return p
+	return specs.Platform{}, fmt.Errorf("%q: cannot parse platform specifier: %w", specifier, errdefs.ErrInvalidArgument)
 }
 
 // Format returns a string specifier from the provided platform specification.

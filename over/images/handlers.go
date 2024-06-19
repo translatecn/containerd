@@ -1,20 +1,4 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-package over_images
+package images
 
 import (
 	"context"
@@ -22,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"demo/content"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/platforms"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -258,7 +242,7 @@ func SetChildrenMappedLabels(manager content.Manager, f HandlerFunc, labelMap fu
 
 // FilterPlatforms is a handler wrapper which limits the descriptors returned
 // based on matching the specified platform matcher.
-func FilterPlatforms(f HandlerFunc, m over_platforms.Matcher) HandlerFunc {
+func FilterPlatforms(f HandlerFunc, m platforms.Matcher) HandlerFunc {
 	return func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		children, err := f(ctx, desc)
 		if err != nil {
@@ -287,7 +271,7 @@ func FilterPlatforms(f HandlerFunc, m over_platforms.Matcher) HandlerFunc {
 // use the ordering in the manifests for equal matches.
 // A limit of 0 or less is considered no limit.
 // A not found error is returned if no manifest is matched.
-func LimitManifests(f HandlerFunc, m over_platforms.MatchComparer, n int) HandlerFunc {
+func LimitManifests(f HandlerFunc, m platforms.MatchComparer, n int) HandlerFunc {
 	return func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		children, err := f(ctx, desc)
 		if err != nil {
@@ -308,7 +292,7 @@ func LimitManifests(f HandlerFunc, m over_platforms.MatchComparer, n int) Handle
 
 			if n > 0 {
 				if len(children) == 0 {
-					return children, fmt.Errorf("no match for platform in manifest: %w", over_errdefs.ErrNotFound)
+					return children, fmt.Errorf("no match for platform in manifest: %w", errdefs.ErrNotFound)
 				}
 				if len(children) > n {
 					children = children[:n]

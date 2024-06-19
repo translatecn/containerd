@@ -1,32 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
 	"demo/over/protobuf/types"
+	"demo/over/typeurl/v2"
 	api "demo/pkg/sandbox"
 	"errors"
 	"fmt"
 	"time"
 
-	"demo/containers"
-	"demo/others/typeurl/v2"
-	"demo/over/oci"
+	"demo/over/containers"
+	"demo/pkg/oci"
 )
 
 // Sandbox is a high level client to containerd's sandboxes.
@@ -203,11 +187,11 @@ func WithSandboxRuntime(name string, options interface{}) NewSandboxOpts {
 }
 
 // WithSandboxSpec will provide the sandbox runtime spec
-func WithSandboxSpec(s *over_oci.Spec, opts ...over_oci.SpecOpts) NewSandboxOpts {
+func WithSandboxSpec(s *oci.Spec, opts ...oci.SpecOpts) NewSandboxOpts {
 	return func(ctx context.Context, client *Client, sandbox *api.Sandbox) error {
 		c := &containers.Container{ID: sandbox.ID}
 
-		if err := over_oci.ApplyOpts(ctx, client, c, s, opts...); err != nil {
+		if err := oci.ApplyOpts(ctx, client, c, s, opts...); err != nil {
 			return err
 		}
 
@@ -222,26 +206,5 @@ func WithSandboxSpec(s *over_oci.Spec, opts ...over_oci.SpecOpts) NewSandboxOpts
 }
 
 // WithSandboxExtension attaches an extension to sandbox
-func WithSandboxExtension(name string, ext interface{}) NewSandboxOpts {
-	return func(ctx context.Context, client *Client, s *api.Sandbox) error {
-		if s.Extensions == nil {
-			s.Extensions = make(map[string]typeurl.Any)
-		}
-
-		any, err := typeurl.MarshalAny(ext)
-		if err != nil {
-			return fmt.Errorf("failed to marshal sandbox extension: %w", err)
-		}
-
-		s.Extensions[name] = any
-		return err
-	}
-}
 
 // WithSandboxLabels attaches map of labels to sandbox
-func WithSandboxLabels(labels map[string]string) NewSandboxOpts {
-	return func(ctx context.Context, client *Client, sandbox *api.Sandbox) error {
-		sandbox.Labels = labels
-		return nil
-	}
-}

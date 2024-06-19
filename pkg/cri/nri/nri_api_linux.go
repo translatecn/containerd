@@ -1,31 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package nri
 
 import (
 	"context"
 	"demo/containerd"
-	"demo/containers"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	cri "demo/over/api/cri/v1"
+	"demo/over/blockio"
+	"demo/over/containers"
 	"demo/over/errdefs"
-	"demo/pkg/blockio"
-	"demo/pkg/cri/annotations"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"demo/pkg/cri/constants"
+	"demo/pkg/cri/over/annotations"
 	cstore "demo/pkg/cri/store/container"
 	sstore "demo/pkg/cri/store/sandbox"
 	ctrdutil "demo/pkg/cri/util"
@@ -34,10 +19,9 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-tools/generate"
-	cri "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"demo/others/nri/pkg/api"
-	nrigen "demo/others/nri/pkg/runtime-tools/generate"
+	"demo/others/nri_extend/pkg/api"
+	nrigen "demo/others/nri_extend/pkg/runtime-tools/generate"
 	"demo/pkg/nri"
 )
 
@@ -67,30 +51,6 @@ func (a *API) Register(cri CRIImplementation) error {
 	nri.RegisterDomain(a)
 
 	return a.nri.Start()
-}
-
-//
-// CRI-NRI lifecycle hook interface
-//
-// These functions are used to hook NRI into the processing of
-// the corresponding CRI lifecycle events using the common NRI
-// interface.
-//
-
-func (a *API) RunPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
-	if a.IsDisabled() {
-		return nil
-	}
-
-	pod := a.nriPodSandbox(criPod)
-	err := a.nri.RunPodSandbox(ctx, pod)
-
-	if err != nil {
-		a.nri.StopPodSandbox(ctx, pod)
-		a.nri.RemovePodSandbox(ctx, pod)
-	}
-
-	return err
 }
 
 func (a *API) StopPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
@@ -466,41 +426,6 @@ type criPodSandbox struct {
 	pid  uint32
 }
 
-func (a *API) nriPodSandbox(pod *sstore.Sandbox) *criPodSandbox {
-	criPod := &criPodSandbox{
-		Sandbox: pod,
-		spec:    &specs.Spec{},
-	}
-
-	if pod == nil || pod.Container == nil {
-		return criPod
-	}
-
-	ctx := ctrdutil.NamespacedContext()
-	task, err := pod.Container.Task(ctx, nil)
-	if err != nil {
-		if !over_errdefs.IsNotFound(err) {
-			log.L.WithError(err).Errorf("failed to get task for sandbox container %s",
-				pod.Container.ID())
-		}
-		return criPod
-	}
-
-	criPod.pid = task.Pid()
-	spec, err := task.Spec(ctx)
-	if err != nil {
-		if err != nil {
-			log.L.WithError(err).Errorf("failed to get spec for sandbox container %s",
-				pod.Container.ID())
-		}
-		return criPod
-	}
-
-	criPod.spec = spec
-
-	return criPod
-}
-
 func (p *criPodSandbox) GetDomain() string {
 	return nriDomain
 }
@@ -665,7 +590,7 @@ func (a *API) nriContainer(ctr interface{}, spec *specs.Spec) *criContainer {
 		}
 		task, err := ctrd.Task(ctx, nil)
 		if err != nil {
-			if !over_errdefs.IsNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				log.L.WithError(err).Errorf("failed to get task for container %s", ctrd.ID())
 			}
 		} else {
@@ -839,4 +764,55 @@ func (c *criContainer) GetCgroupsPath() string {
 
 func (c *criContainer) GetPid() uint32 {
 	return c.pid
+}
+
+func (a *API) nriPodSandbox(pod *sstore.Sandbox) *criPodSandbox {
+	criPod := &criPodSandbox{
+		Sandbox: pod,
+		spec:    &specs.Spec{},
+	}
+
+	if pod == nil || pod.Container == nil {
+		return criPod
+	}
+
+	ctx := ctrdutil.NamespacedContext()
+	task, err := pod.Container.Task(ctx, nil)
+	if err != nil {
+		if !errdefs.IsNotFound(err) {
+			log.L.WithError(err).Errorf("failed to get task for sandbox container %s",
+				pod.Container.ID())
+		}
+		return criPod
+	}
+
+	criPod.pid = task.Pid()
+	spec, err := task.Spec(ctx)
+	if err != nil {
+		if err != nil {
+			log.L.WithError(err).Errorf("failed to get spec for sandbox container %s",
+				pod.Container.ID())
+		}
+		return criPod
+	}
+
+	criPod.spec = spec
+
+	return criPod
+}
+
+func (a *API) RunPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
+	if a.IsDisabled() {
+		return nil
+	}
+
+	pod := a.nriPodSandbox(criPod)
+	err := a.nri.RunPodSandbox(ctx, pod)
+
+	if err != nil {
+		a.nri.StopPodSandbox(ctx, pod)
+		a.nri.RemovePodSandbox(ctx, pod)
+	}
+
+	return err
 }

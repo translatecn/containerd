@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package converter
 
 import (
@@ -24,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"demo/content"
+	"demo/over/content"
 	"demo/over/images"
 	"demo/over/platforms"
 	"github.com/opencontainers/go-digest"
@@ -38,7 +22,7 @@ import (
 type ConvertFunc func(ctx context.Context, cs content.Store, desc ocispec.Descriptor) (*ocispec.Descriptor, error)
 
 // DefaultIndexConvertFunc is the default convert func used by Convert.
-func DefaultIndexConvertFunc(layerConvertFunc ConvertFunc, docker2oci bool, platformMC over_platforms.MatchComparer) ConvertFunc {
+func DefaultIndexConvertFunc(layerConvertFunc ConvertFunc, docker2oci bool, platformMC platforms.MatchComparer) ConvertFunc {
 	c := &defaultConverter{
 		layerConvertFunc: layerConvertFunc,
 		docker2oci:       docker2oci,
@@ -59,21 +43,11 @@ type ConvertHooks struct {
 }
 
 // IndexConvertFuncWithHook is the convert func used by Convert with hook functions support.
-func IndexConvertFuncWithHook(layerConvertFunc ConvertFunc, docker2oci bool, platformMC over_platforms.MatchComparer, hooks ConvertHooks) ConvertFunc {
-	c := &defaultConverter{
-		layerConvertFunc: layerConvertFunc,
-		docker2oci:       docker2oci,
-		platformMC:       platformMC,
-		diffIDMap:        make(map[digest.Digest]digest.Digest),
-		hooks:            hooks,
-	}
-	return c.convert
-}
 
 type defaultConverter struct {
 	layerConvertFunc ConvertFunc
 	docker2oci       bool
-	platformMC       over_platforms.MatchComparer
+	platformMC       platforms.MatchComparer
 	diffIDMap        map[digest.Digest]digest.Digest // key: old diffID, value: new diffID
 	diffIDMapMu      sync.RWMutex
 	hooks            ConvertHooks
@@ -87,13 +61,13 @@ func (c *defaultConverter) convert(ctx context.Context, cs content.Store, desc o
 		newDesc *ocispec.Descriptor
 		err     error
 	)
-	if over_images.IsLayerType(desc.MediaType) {
+	if images.IsLayerType(desc.MediaType) {
 		newDesc, err = c.convertLayer(ctx, cs, desc)
-	} else if over_images.IsManifestType(desc.MediaType) {
+	} else if images.IsManifestType(desc.MediaType) {
 		newDesc, err = c.convertManifest(ctx, cs, desc)
-	} else if over_images.IsIndexType(desc.MediaType) {
+	} else if images.IsIndexType(desc.MediaType) {
 		newDesc, err = c.convertIndex(ctx, cs, desc)
-	} else if over_images.IsConfigType(desc.MediaType) {
+	} else if images.IsConfigType(desc.MediaType) {
 		newDesc, err = c.convertConfig(ctx, cs, desc)
 	}
 	if err != nil {
@@ -108,7 +82,7 @@ func (c *defaultConverter) convert(ctx context.Context, cs content.Store, desc o
 		}
 	}
 
-	if over_images.IsDockerType(desc.MediaType) {
+	if images.IsDockerType(desc.MediaType) {
 		if c.docker2oci {
 			if newDesc == nil {
 				newDesc = copyDesc(desc)
@@ -158,7 +132,7 @@ func (c *defaultConverter) convertManifest(ctx context.Context, cs content.Store
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	if over_images.IsDockerType(manifest.MediaType) && c.docker2oci {
+	if images.IsDockerType(manifest.MediaType) && c.docker2oci {
 		manifest.MediaType = ConvertDockerMediaTypeToOCI(manifest.MediaType)
 		modified = true
 	}
@@ -167,7 +141,7 @@ func (c *defaultConverter) convertManifest(ctx context.Context, cs content.Store
 	for i, l := range manifest.Layers {
 		i := i
 		l := l
-		oldDiffID, err := over_images.GetDiffID(ctx, cs, l)
+		oldDiffID, err := images.GetDiffID(ctx, cs, l)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +163,7 @@ func (c *defaultConverter) convertManifest(ctx context.Context, cs content.Store
 				// diffID changes if the tar entries were modified.
 				// diffID stays same if only the compression type was changed.
 				// When diffID changed, add a map entry so that we can update image config.
-				newDiffID, err := over_images.GetDiffID(ctx, cs, *newL)
+				newDiffID, err := images.GetDiffID(ctx, cs, *newL)
 				if err != nil {
 					return err
 				}
@@ -239,7 +213,7 @@ func (c *defaultConverter) convertIndex(ctx context.Context, cs content.Store, d
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	if over_images.IsDockerType(index.MediaType) && c.docker2oci {
+	if images.IsDockerType(index.MediaType) && c.docker2oci {
 		index.MediaType = ConvertDockerMediaTypeToOCI(index.MediaType)
 		modified = true
 	}
@@ -425,19 +399,19 @@ func writeJSON(ctx context.Context, cs content.Store, x interface{}, oldDesc oci
 // ConvertDockerMediaTypeToOCI converts a media type string
 func ConvertDockerMediaTypeToOCI(mt string) string {
 	switch mt {
-	case over_images.MediaTypeDockerSchema2ManifestList:
+	case images.MediaTypeDockerSchema2ManifestList:
 		return ocispec.MediaTypeImageIndex
-	case over_images.MediaTypeDockerSchema2Manifest:
+	case images.MediaTypeDockerSchema2Manifest:
 		return ocispec.MediaTypeImageManifest
-	case over_images.MediaTypeDockerSchema2LayerGzip:
+	case images.MediaTypeDockerSchema2LayerGzip:
 		return ocispec.MediaTypeImageLayerGzip
-	case over_images.MediaTypeDockerSchema2LayerForeignGzip:
+	case images.MediaTypeDockerSchema2LayerForeignGzip:
 		return ocispec.MediaTypeImageLayerNonDistributableGzip //nolint:staticcheck // deprecated
-	case over_images.MediaTypeDockerSchema2Layer:
+	case images.MediaTypeDockerSchema2Layer:
 		return ocispec.MediaTypeImageLayer
-	case over_images.MediaTypeDockerSchema2LayerForeign:
+	case images.MediaTypeDockerSchema2LayerForeign:
 		return ocispec.MediaTypeImageLayerNonDistributable //nolint:staticcheck // deprecated
-	case over_images.MediaTypeDockerSchema2Config:
+	case images.MediaTypeDockerSchema2Config:
 		return ocispec.MediaTypeImageConfig
 	default:
 		return mt

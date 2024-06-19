@@ -1,30 +1,14 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package content
 
 import (
-	"demo/others/log"
+	leases2 "demo/over/leases"
+	"demo/over/log"
 	"strings"
 	"time"
 	"unicode"
 
 	"demo/cmd/ctr/commands"
-	"demo/content"
-	"demo/pkg/leases"
+	"demo/over/content"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -70,9 +54,9 @@ var pruneReferencesCommand = cli.Command{
 			log.G(ctx).Debug("dry run, no changes will be applied")
 		}
 
-		var deleteOpts []leases.DeleteOpt
+		var deleteOpts []leases2.DeleteOpt
 		if !clicontext.Bool("async") {
-			deleteOpts = append(deleteOpts, leases.SynchronousDelete)
+			deleteOpts = append(deleteOpts, leases2.SynchronousDelete)
 		}
 
 		cs := client.ContentStore()
@@ -104,7 +88,7 @@ var pruneReferencesCommand = cli.Command{
 		}
 
 		ls := client.LeasesService()
-		l, err := ls.Create(ctx, leases.WithRandomID(), leases.WithExpiration(time.Hour))
+		l, err := ls.Create(ctx, leases2.WithRandomID(), leases2.WithExpiration(time.Hour))
 		if err != nil {
 			return err
 		}

@@ -1,29 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
 	"context"
+	"demo/over/namespaces"
 	"demo/over/protobuf/types"
-	"demo/pkg/namespaces"
 	"strings"
 
+	api "demo/over/api/services/namespaces/v1"
 	"demo/over/errdefs"
-	api "demo/pkg/api/services/namespaces/v1"
 )
 
 // NewNamespaceStoreFromClient returns a new namespace store
@@ -45,7 +29,7 @@ func (r *remoteNamespaces) Create(ctx context.Context, namespace string, labels 
 
 	_, err := r.client.Create(ctx, &req)
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -57,7 +41,7 @@ func (r *remoteNamespaces) Labels(ctx context.Context, namespace string) (map[st
 
 	resp, err := r.client.Get(ctx, &req)
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 
 	return resp.Namespace.Labels, nil
@@ -77,7 +61,7 @@ func (r *remoteNamespaces) SetLabel(ctx context.Context, namespace, key, value s
 
 	_, err := r.client.Update(ctx, &req)
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -88,7 +72,7 @@ func (r *remoteNamespaces) List(ctx context.Context) ([]string, error) {
 
 	resp, err := r.client.List(ctx, &req)
 	if err != nil {
-		return nil, over_errdefs.FromGRPC(err)
+		return nil, errdefs.FromGRPC(err)
 	}
 
 	var namespaces []string
@@ -114,7 +98,7 @@ func (r *remoteNamespaces) Delete(ctx context.Context, namespace string, opts ..
 	}
 	_, err := r.client.Delete(ctx, &req)
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil

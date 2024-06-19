@@ -1,0 +1,15 @@
+
+
+syntax = "proto3";
+
+package containerd.types;
+
+option go_package = "demo/containerd/api/types;types";
+
+// Platform follows the structure of the OCI platform specification, from
+// descriptors.
+message Platform {
+	string os = 1;
+	string architecture = 2;
+	string variant = 3;
+}

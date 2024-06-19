@@ -46,14 +46,6 @@ type Hook struct {
 
 var _ logrus.Hook = &Hook{}
 
-func NewHook() *Hook {
-	return &Hook{
-		TimeFormat:     TimeFormat,
-		DurationFormat: DurationFormatString,
-		AddSpanContext: true,
-	}
-}
-
 func (h *Hook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }

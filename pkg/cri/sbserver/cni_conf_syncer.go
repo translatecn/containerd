@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
@@ -40,7 +24,6 @@ type cniNetConfSyncer struct {
 	loadOpts  []cni.Opt
 }
 
-// newCNINetConfSyncer creates cni network conf syncer.
 func newCNINetConfSyncer(confDir string, netPlugin cni.CNI, loadOpts []cni.Opt) (*cniNetConfSyncer, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -48,7 +31,7 @@ func newCNINetConfSyncer(confDir string, netPlugin cni.CNI, loadOpts []cni.Opt) 
 	}
 
 	// /etc/cni has to be readable for non-root users (0755), because /etc/cni/tuning/allowlist.conf is used for rootless mode too.
-	// This file was introduced in CNI plugins 1.2.0 (https://github.com/containernetworking/plugins/pull/693), and its path is hard-coded.
+	// This file was introduced in CNI plugins 1.2.0 (https://demo/others/plugins/pull/693), and its path is hard-coded.
 	confDirParent := filepath.Dir(confDir)
 	if err := my_mk.MkdirAll(confDirParent, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create the parent of the cni conf dir=%s: %w", confDirParent, err)

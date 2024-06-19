@@ -1,37 +1,18 @@
-//go:build linux
-
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package apparmor
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 
-	"demo/containers"
-	"demo/over/oci"
+	"demo/over/containers"
+	"demo/pkg/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // WithProfile sets the provided apparmor profile to the spec
-func WithProfile(profile string) over_oci.SpecOpts {
-	return func(_ context.Context, _ over_oci.Client, _ *containers.Container, s *specs.Spec) error {
+func WithProfile(profile string) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
 		s.Process.ApparmorProfile = profile
 		return nil
 	}
@@ -44,8 +25,8 @@ func WithProfile(profile string) over_oci.SpecOpts {
 // since Go 1.21.
 //
 //go:noinline
-func WithDefaultProfile(name string) over_oci.SpecOpts {
-	return func(_ context.Context, _ over_oci.Client, _ *containers.Container, s *specs.Spec) error {
+func WithDefaultProfile(name string) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
 		if err := LoadDefaultProfile(name); err != nil {
 			return err
 		}
@@ -83,18 +64,4 @@ func LoadDefaultProfile(name string) error {
 		return fmt.Errorf("load apparmor profile %s: %w", path, err)
 	}
 	return nil
-}
-
-// DumpDefaultProfile dumps the default profile with the given name.
-func DumpDefaultProfile(name string) (string, error) {
-	p, err := loadData(name)
-	if err != nil {
-		return "", err
-	}
-
-	var buf bytes.Buffer
-	if err := generate(p, &buf); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }

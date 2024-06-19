@@ -1,23 +1,8 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"bufio"
+	"demo/over/snapshots"
 	"errors"
 	"fmt"
 	"io"
@@ -25,15 +10,13 @@ import (
 	"strconv"
 	"strings"
 
+	runtime "demo/over/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"demo/over/oci"
 	"demo/pkg/contrib/apparmor"
 	"demo/pkg/contrib/seccomp"
-	"demo/snapshots"
-
 	customopts "demo/pkg/cri/opts"
+	"demo/pkg/oci"
 )
 
 const (
@@ -51,9 +34,9 @@ const (
 	seccompDefaultProfile = dockerDefault
 )
 
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
+func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
 	var (
-		specOpts []over_oci.SpecOpts
+		specOpts []oci.SpecOpts
 		err      error
 	)
 	securityContext := config.GetLinux().GetSecurityContext()
@@ -150,7 +133,7 @@ func generateSecurityProfile(profilePath string) (*runtime.SecurityProfile, erro
 }
 
 // generateSeccompSpecOpts generates containerd SpecOpts for seccomp.
-func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (over_oci.SpecOpts, error) {
+func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
 	if privileged {
 		// Do not set seccomp profile when container is privileged
 		return nil, nil
@@ -187,7 +170,7 @@ func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privil
 }
 
 // generateApparmorSpecOpts generates containerd SpecOpts for apparmor.
-func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (over_oci.SpecOpts, error) {
+func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (oci.SpecOpts, error) {
 	if !apparmorEnabled {
 		// Should fail loudly if user try to specify apparmor profile
 		// but we don't support it.

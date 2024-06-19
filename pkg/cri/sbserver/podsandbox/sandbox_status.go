@@ -1,35 +1,19 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
 	"demo/others/go-cni"
+	"demo/over/typeurl/v2"
 	"demo/pkg/sandbox"
 	"encoding/json"
 	"fmt"
 
 	"demo/containerd"
-	"demo/containers"
-	"demo/others/typeurl/v2"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/containers"
 	"demo/over/errdefs"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // SandboxInfo is extra information for sandbox.
@@ -97,14 +81,14 @@ func toCRISandboxInfo(ctx context.Context, sandbox sandboxstore.Sandbox) (map[st
 
 	if container := sandbox.Container; container != nil {
 		task, err := container.Task(ctx, nil)
-		if err != nil && !over_errdefs.IsNotFound(err) {
+		if err != nil && !errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get sandbox container task: %w", err)
 		}
 
 		var processStatus containerd.ProcessStatus
 		if task != nil {
 			if taskStatus, err := task.Status(ctx); err != nil {
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return nil, fmt.Errorf("failed to get task status: %w", err)
 				}
 				processStatus = containerd.Unknown

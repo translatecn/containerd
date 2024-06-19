@@ -17,14 +17,6 @@ type MessageQueue struct {
 }
 
 // NewMessageQueue returns a new MessageQueue.
-func NewMessageQueue() *MessageQueue {
-	m := &sync.RWMutex{}
-	return &MessageQueue{
-		m:        m,
-		c:        sync.NewCond(m),
-		messages: []interface{}{},
-	}
-}
 
 // Enqueue writes `msg` to the queue.
 func (mq *MessageQueue) Enqueue(msg interface{}) error {

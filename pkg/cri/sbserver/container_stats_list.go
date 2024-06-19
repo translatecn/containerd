@@ -1,26 +1,10 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sbserver
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	"demo/over/log"
 	"demo/over/protobuf"
+	"demo/over/typeurl/v2"
 	"errors"
 	"fmt"
 	"reflect"
@@ -28,12 +12,12 @@ import (
 
 	cg1 "demo/others/cgroups/v3/cgroup1/stats"
 	cg2 "demo/others/cgroups/v3/cgroup2/stats"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/api/services/tasks/v1"
+	"demo/over/api/types"
 	"demo/over/errdefs"
-	"demo/pkg/api/services/tasks/v1"
-	"demo/pkg/api/types"
 	"demo/pkg/cri/store/stats"
 	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	containerstore "demo/pkg/cri/store/container"
 )
@@ -62,7 +46,7 @@ type metricsHandler func(containerstore.Metadata, *types.Metric) (*runtime.Conta
 
 // Returns a function to be used for transforming container metrics into the right format.
 // Uses the platform the given sandbox advertises to implement its logic. If the platform is
-// unsupported for metrics this will return a wrapped [over_errdefs.ErrNotImplemented].
+// unsupported for metrics this will return a wrapped [errdefs.ErrNotImplemented].
 func (c *criService) getMetricsHandler(ctx context.Context, sandboxID string) (metricsHandler, error) {
 	sandbox, err := c.sandboxStore.Get(sandboxID)
 	if err != nil {
@@ -87,7 +71,7 @@ func (c *criService) getMetricsHandler(ctx context.Context, sandboxID string) (m
 	case "linux":
 		return c.linuxContainerMetrics, nil
 	default:
-		return nil, fmt.Errorf("container metrics for platform %+v: %w", p, over_errdefs.ErrNotImplemented)
+		return nil, fmt.Errorf("container metrics for platform %+v: %w", p, errdefs.ErrNotImplemented)
 	}
 }
 
@@ -117,9 +101,9 @@ func (c *criService) toCRIContainerStats(
 			handler, err = c.getMetricsHandler(ctx, cntr.SandboxID)
 			if err != nil {
 				// If the sandbox is not found, it may have been removed. we need to check container whether it is still exist
-				if over_errdefs.IsNotFound(err) {
+				if errdefs.IsNotFound(err) {
 					_, err = c.containerStore.Get(cntr.ID)
-					if err != nil && over_errdefs.IsNotFound(err) {
+					if err != nil && errdefs.IsNotFound(err) {
 						log.G(ctx).Warnf("container %q is not found, skip it", cntr.ID)
 						continue
 					}
@@ -364,13 +348,13 @@ func (c *criService) linuxContainerMetrics(
 			return nil, fmt.Errorf("failed to extract container metrics: %w", err)
 		}
 
-		cpuStats, err := c.cpuContainerStats(meta.ID, false /* isSandbox */, data, over_protobuf.FromTimestamp(stats.Timestamp))
+		cpuStats, err := c.cpuContainerStats(meta.ID, false /* isSandbox */, data, protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain cpu stats: %w", err)
 		}
 		cs.Cpu = cpuStats
 
-		memoryStats, err := c.memoryContainerStats(meta.ID, data, over_protobuf.FromTimestamp(stats.Timestamp))
+		memoryStats, err := c.memoryContainerStats(meta.ID, data, protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain memory stats: %w", err)
 		}

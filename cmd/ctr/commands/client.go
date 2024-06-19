@@ -1,33 +1,17 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package commands
 
 import (
 	gocontext "context"
-	"demo/others/log"
+	epoch2 "demo/over/epoch"
+	"demo/over/log"
+	"demo/over/namespaces"
 	ptypes "demo/over/protobuf/types"
-	"demo/pkg/namespaces"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"strconv"
 
 	"demo/containerd"
-	"demo/pkg/epoch"
 	"github.com/urfave/cli"
 )
 
@@ -49,11 +33,11 @@ func AppContext(context *cli.Context) (gocontext.Context, gocontext.CancelFunc) 
 	} else {
 		ctx, cancel = gocontext.WithCancel(ctx)
 	}
-	if tm, err := epoch.SourceDateEpoch(); err != nil {
+	if tm, err := epoch2.SourceDateEpoch(); err != nil {
 		log.L.WithError(err).Warn("Failed to read SOURCE_DATE_EPOCH")
 	} else if tm != nil {
 		log.L.Debugf("Using SOURCE_DATE_EPOCH: %v", tm)
-		ctx = epoch.WithSourceDateEpoch(ctx, tm)
+		ctx = epoch2.WithSourceDateEpoch(ctx, tm)
 	}
 	return ctx, cancel
 }

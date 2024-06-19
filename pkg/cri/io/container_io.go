@@ -1,32 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package io
 
 import (
+	"demo/over/ioutil"
 	"errors"
 	"io"
 	"strings"
 	"sync"
 
-	"demo/pkg/cio"
+	"demo/over/cio"
 	"github.com/sirupsen/logrus"
 
 	"demo/pkg/cri/util"
-	cioutil "demo/pkg/ioutil"
 )
 
 // streamKey generates a key for the stream.
@@ -41,8 +25,8 @@ type ContainerIO struct {
 	fifos *cio.FIFOSet
 	*stdioPipes
 
-	stdoutGroup *cioutil.WriterGroup
-	stderrGroup *cioutil.WriterGroup
+	stdoutGroup *ioutil.WriterGroup
+	stderrGroup *ioutil.WriterGroup
 
 	closer *wgCloser
 }
@@ -75,8 +59,8 @@ func WithNewFIFOs(root string, tty, stdin bool) ContainerIOOpts {
 func NewContainerIO(id string, opts ...ContainerIOOpts) (_ *ContainerIO, err error) {
 	c := &ContainerIO{
 		id:          id,
-		stdoutGroup: cioutil.NewWriterGroup(),
-		stderrGroup: cioutil.NewWriterGroup(),
+		stdoutGroup: ioutil.NewWriterGroup(),
+		stderrGroup: ioutil.NewWriterGroup(),
 	}
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
@@ -146,7 +130,7 @@ func (c *ContainerIO) Attach(opts AttachOptions) {
 		// Create a wrapper of stdin which could be closed. Note that the
 		// wrapper doesn't close the actual stdin, it only stops io.Copy.
 		// The actual stdin will be closed by stream server.
-		stdinStreamRC = cioutil.NewWrapReadCloser(opts.Stdin)
+		stdinStreamRC = ioutil.NewWrapReadCloser(opts.Stdin)
 		wg.Add(1)
 		go func() {
 			if _, err := io.Copy(c.stdin, stdinStreamRC); err != nil {
@@ -186,13 +170,13 @@ func (c *ContainerIO) Attach(opts AttachOptions) {
 
 	if opts.Stdout != nil {
 		wg.Add(1)
-		wc, close := cioutil.NewWriteCloseInformer(opts.Stdout)
+		wc, close := ioutil.NewWriteCloseInformer(opts.Stdout)
 		c.stdoutGroup.Add(stdoutKey, wc)
 		go attachStream(stdoutKey, close)
 	}
 	if !opts.Tty && opts.Stderr != nil {
 		wg.Add(1)
-		wc, close := cioutil.NewWriteCloseInformer(opts.Stderr)
+		wc, close := ioutil.NewWriteCloseInformer(opts.Stderr)
 		c.stderrGroup.Add(stderrKey, wc)
 		go attachStream(stderrKey, close)
 	}

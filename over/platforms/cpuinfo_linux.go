@@ -1,20 +1,4 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-package over_platforms
+package platforms
 
 import (
 	"bufio"
@@ -70,7 +54,7 @@ func getCPUInfo(pattern string) (info string, err error) {
 		return "", err
 	}
 
-	return "", fmt.Errorf("getCPUInfo for pattern %s: %w", pattern, over_errdefs.ErrNotFound)
+	return "", fmt.Errorf("getCPUInfo for pattern %s: %w", pattern, errdefs.ErrNotFound)
 }
 
 // getCPUVariantFromArch get CPU variant from arch through a system call
@@ -101,7 +85,7 @@ func getCPUVariantFromArch(arch string) (string, error) {
 			variant = "unknown"
 		}
 	} else {
-		return "", fmt.Errorf("getCPUVariantFromArch invalid arch: %s, %w", arch, over_errdefs.ErrInvalidArgument)
+		return "", fmt.Errorf("getCPUVariantFromArch invalid arch: %s, %w", arch, errdefs.ErrInvalidArgument)
 	}
 	return variant, nil
 }
@@ -115,7 +99,7 @@ func getCPUVariant() (string, error) {
 
 	variant, err := getCPUInfo("Cpu architecture")
 	if err != nil {
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			//Let's try getting CPU variant from machine architecture
 			arch, err := getMachineArch()
 			if err != nil {

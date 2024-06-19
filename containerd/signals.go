@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package containerd
 
 import (
@@ -22,7 +6,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"demo/content"
+	"demo/over/content"
 	"demo/over/images"
 	"github.com/moby/sys/signal"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -62,7 +46,7 @@ func GetOCIStopSignal(ctx context.Context, image Image, defaultSignal string) (s
 		config   v1.ImageConfig
 	)
 	switch ic.MediaType {
-	case v1.MediaTypeImageConfig, over_images.MediaTypeDockerSchema2Config:
+	case v1.MediaTypeImageConfig, images.MediaTypeDockerSchema2Config:
 		p, err := content.ReadBlob(ctx, image.ContentStore(), ic)
 		if err != nil {
 			return "", err
@@ -88,6 +72,3 @@ func GetOCIStopSignal(ctx context.Context, image Image, defaultSignal string) (s
 // or a signal number in string format.
 //
 // Deprecated: Use github.com/moby/sys/signal instead.
-func ParseSignal(rawSignal string) (syscall.Signal, error) {
-	return signal.ParseSignal(rawSignal)
-}

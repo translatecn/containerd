@@ -22,6 +22,14 @@ oom_score = 0
   grpc_histogram = false
 
 [plugins]
+#  [plugins."io.containerd.tracing.processor.v1"]
+#    endpoint="http://10.230.205.190:5080/api/default/traces"
+##    protocol="http/protobuf"
+##    insecure="true"
+#  [plugins."io.containerd.internal.v1.tracing"]
+#      sampling_ratio = 1.0
+#      service_name = "containerd"
+
   [plugins."io.containerd.grpc.v1.cri"]
     sandbox_image = "registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.7"
     max_container_log_line_size = -1
@@ -38,9 +46,9 @@ oom_score = 0
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
             SystemdCgroup = true
     [plugins."io.containerd.grpc.v1.cri".registry]
-      config_path = "/etc/containerd/certs.d"
-      [plugins."io.containerd.grpc.v1.cri".registry.configs]
-
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+          endpoint = [ "https://noohub.ru", "https://huecker.io", "https://fojswzvv.mirror.aliyuncs.com"]
 
 [timeouts]
   "io.containerd.timeout.bolt.open" = "0s"
@@ -50,7 +58,7 @@ oom_score = 0
   "io.containerd.timeout.shim.shutdown" = "3s"
   "io.containerd.timeout.task.state" = "2s"
 
-[ttrpc]
-  address = "0.0.0.0:6790"
-  gid = 0
-  uid = 0
+#[ttrpc]
+#  address = "0.0.0.0:6790"
+#  gid = 0
+#  uid = 0

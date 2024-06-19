@@ -1,28 +1,12 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package proxy
 
 import (
 	"context"
 	"demo/pkg/sandbox"
 
+	api "demo/over/api/services/sandbox/v1"
 	"demo/over/errdefs"
 	"demo/over/platforms"
-	api "demo/pkg/api/services/sandbox/v1"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -53,7 +37,7 @@ func (s *remoteSandboxController) Create(ctx context.Context, sandboxID string, 
 		NetnsPath: options.NetNSPath,
 	})
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -62,7 +46,7 @@ func (s *remoteSandboxController) Create(ctx context.Context, sandboxID string, 
 func (s *remoteSandboxController) Start(ctx context.Context, sandboxID string) (sandbox.ControllerInstance, error) {
 	resp, err := s.client.Start(ctx, &api.ControllerStartRequest{SandboxID: sandboxID})
 	if err != nil {
-		return sandbox.ControllerInstance{}, over_errdefs.FromGRPC(err)
+		return sandbox.ControllerInstance{}, errdefs.FromGRPC(err)
 	}
 
 	return sandbox.ControllerInstance{
@@ -73,14 +57,14 @@ func (s *remoteSandboxController) Start(ctx context.Context, sandboxID string) (
 	}, nil
 }
 
-func (s *remoteSandboxController) Platform(ctx context.Context, sandboxID string) (over_platforms.Platform, error) {
+func (s *remoteSandboxController) Platform(ctx context.Context, sandboxID string) (platforms.Platform, error) {
 	resp, err := s.client.Platform(ctx, &api.ControllerPlatformRequest{SandboxID: sandboxID})
 	if err != nil {
-		return over_platforms.Platform{}, over_errdefs.FromGRPC(err)
+		return platforms.Platform{}, errdefs.FromGRPC(err)
 	}
 
 	platform := resp.GetPlatform()
-	return over_platforms.Platform{
+	return platforms.Platform{
 		Architecture: platform.GetArchitecture(),
 		OS:           platform.GetOS(),
 		Variant:      platform.GetVariant(),
@@ -98,7 +82,7 @@ func (s *remoteSandboxController) Stop(ctx context.Context, sandboxID string, op
 	}
 	_, err := s.client.Stop(ctx, req)
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -107,7 +91,7 @@ func (s *remoteSandboxController) Stop(ctx context.Context, sandboxID string, op
 func (s *remoteSandboxController) Shutdown(ctx context.Context, sandboxID string) error {
 	_, err := s.client.Shutdown(ctx, &api.ControllerShutdownRequest{SandboxID: sandboxID})
 	if err != nil {
-		return over_errdefs.FromGRPC(err)
+		return errdefs.FromGRPC(err)
 	}
 
 	return nil
@@ -116,7 +100,7 @@ func (s *remoteSandboxController) Shutdown(ctx context.Context, sandboxID string
 func (s *remoteSandboxController) Wait(ctx context.Context, sandboxID string) (sandbox.ExitStatus, error) {
 	resp, err := s.client.Wait(ctx, &api.ControllerWaitRequest{SandboxID: sandboxID})
 	if err != nil {
-		return sandbox.ExitStatus{}, over_errdefs.FromGRPC(err)
+		return sandbox.ExitStatus{}, errdefs.FromGRPC(err)
 	}
 
 	return sandbox.ExitStatus{
@@ -128,7 +112,7 @@ func (s *remoteSandboxController) Wait(ctx context.Context, sandboxID string) (s
 func (s *remoteSandboxController) Status(ctx context.Context, sandboxID string, verbose bool) (sandbox.ControllerStatus, error) {
 	resp, err := s.client.Status(ctx, &api.ControllerStatusRequest{SandboxID: sandboxID, Verbose: verbose})
 	if err != nil {
-		return sandbox.ControllerStatus{}, over_errdefs.FromGRPC(err)
+		return sandbox.ControllerStatus{}, errdefs.FromGRPC(err)
 	}
 	return sandbox.ControllerStatus{
 		SandboxID: sandboxID,

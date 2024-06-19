@@ -1,5 +1,3 @@
-//go:build linux
-
 /*
    Copyright The docker Authors.
    Copyright The Moby Authors.
@@ -22,6 +20,7 @@ package apparmor
 
 import (
 	"bufio"
+	"demo/over/log"
 	"fmt"
 	"io"
 	"os"
@@ -29,8 +28,6 @@ import (
 	"path"
 	"strings"
 	"text/template"
-
-	"demo/others/log"
 )
 
 // NOTE: This code is copied from <github.com/docker/docker/profiles/apparmor>.
@@ -64,7 +61,6 @@ profile {{.Name}} flags=(attach_disconnected,mediate_deleted) {
   # Container processes may send signals amongst themselves.
   signal (send,receive) peer={{.Name}},
 {{if .RootlessKit}}
-  # https://github.com/containerd/nerdctl/issues/2730
   signal (receive) peer={{.RootlessKit}},
 {{end}}
 

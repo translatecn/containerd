@@ -1,31 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sandboxes
 
 import (
-	"demo/others/log"
-	"demo/pkg/defaults"
+	"demo/over/defaults"
+	"demo/over/log"
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/oci"
+	"demo/pkg/oci"
 	"github.com/urfave/cli"
 )
 
@@ -54,24 +39,23 @@ var runCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		//if context.NArg() != 2 {
-		//	return cli.ShowSubcommandHelp(context)
-		//}
+		if context.NArg() != 2 {
+			return cli.ShowSubcommandHelp(context)
+		}
 		var (
-			//id      = context.Args().Get(1)
-			id      = "69ffb43cae82f2bd4b2d367106d5b8ab33644a12ea1b6605b6e9468f3608107a"
+			id      = context.Args().Get(1)
 			runtime = context.String("runtime")
 		)
 
-		//spec, err := os.ReadFile(context.Args().First())
-		//if err != nil {
-		//	return fmt.Errorf("failed to read sandbox config: %w", err)
-		//}
+		spec, err := os.ReadFile(context.Args().First())
+		if err != nil {
+			return fmt.Errorf("failed to read sandbox config: %w", err)
+		}
 
-		ociSpec := over_oci.Spec{}
-		//if err = json.Unmarshal(spec, &ociSpec); err != nil {
-		//	return fmt.Errorf("failed to parse sandbox config: %w", err)
-		//}
+		ociSpec := oci.Spec{}
+		if err = json.Unmarshal(spec, &ociSpec); err != nil {
+			return fmt.Errorf("failed to parse sandbox config: %w", err)
+		}
 
 		client, ctx, cancel, err := commands.NewClient(context)
 		if err != nil {

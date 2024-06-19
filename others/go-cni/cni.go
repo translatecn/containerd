@@ -1,19 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package cni
 
 import (
@@ -23,11 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	cnilibrary "github.com/containernetworking/cni/libcni"
-	"github.com/containernetworking/cni/pkg/invoke"
-	"github.com/containernetworking/cni/pkg/types"
-	types100 "github.com/containernetworking/cni/pkg/types/100"
-	"github.com/containernetworking/cni/pkg/version"
+	cnilibrary "demo/others/cni/libcni"
+	"demo/others/cni/pkg/invoke"
+	"demo/others/cni/pkg/types"
+	types100 "demo/others/cni/pkg/types/100"
+	"demo/others/cni/pkg/version"
 )
 
 type CNI interface {
@@ -39,7 +23,6 @@ type CNI interface {
 	Remove(ctx context.Context, id string, path string, opts ...NamespaceOpts) error
 	// Check checks if the network is still in desired state
 	Check(ctx context.Context, id string, path string, opts ...NamespaceOpts) error
-	// Load loads the cni network config
 	Load(opts ...Opt) error
 	// Status checks the status of the cni initialization
 	Status() error
@@ -116,7 +99,6 @@ func New(config ...Opt) (CNI, error) {
 	return cni, nil
 }
 
-// Load loads the latest config from cni config files.
 func (c *libcni) Load(opts ...Opt) error {
 	var err error
 	c.Lock()
@@ -133,38 +115,12 @@ func (c *libcni) Load(opts ...Opt) error {
 	return nil
 }
 
-// Status returns the status of CNI initialization.
-func (c *libcni) Status() error {
-	c.RLock()
-	defer c.RUnlock()
-	if len(c.networks) < c.networkCount {
-		return ErrCNINotInitialized
-	}
-	return nil
-}
-
 // Networks returns all the configured networks.
 // NOTE: Caller MUST NOT modify anything in the returned array.
 func (c *libcni) Networks() []*Network {
 	c.RLock()
 	defer c.RUnlock()
 	return append([]*Network{}, c.networks...)
-}
-
-// Setup setups the network in the namespace and returns a Result
-func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error) {
-	if err := c.Status(); err != nil {
-		return nil, err
-	}
-	ns, err := newNamespace(id, path, opts...)
-	if err != nil {
-		return nil, err
-	}
-	result, err := c.attachNetworks(ctx, ns)
-	if err != nil {
-		return nil, err
-	}
-	return c.createResult(result)
 }
 
 // SetupSerially setups the network in the namespace and returns a Result
@@ -201,35 +157,6 @@ type asynchAttachResult struct {
 	err   error
 }
 
-func asynchAttach(ctx context.Context, index int, n *Network, ns *Namespace, wg *sync.WaitGroup, rc chan asynchAttachResult) {
-	defer wg.Done()
-	r, err := n.Attach(ctx, ns)
-	rc <- asynchAttachResult{index: index, res: r, err: err}
-}
-
-func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100.Result, error) {
-	var wg sync.WaitGroup
-	var firstError error
-	results := make([]*types100.Result, len(c.Networks()))
-	rc := make(chan asynchAttachResult)
-
-	for i, network := range c.Networks() {
-		wg.Add(1)
-		go asynchAttach(ctx, i, network, ns, &wg, rc)
-	}
-
-	for range c.Networks() {
-		rs := <-rc
-		if rs.err != nil && firstError == nil {
-			firstError = rs.err
-		}
-		results[rs.index] = rs.res
-	}
-	wg.Wait()
-
-	return results, firstError
-}
-
 // Remove removes the network config from the namespace
 func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...NamespaceOpts) error {
 	if err := c.Status(); err != nil {
@@ -244,7 +171,7 @@ func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...Nam
 			// Based on CNI spec v0.7.0, empty network namespace is allowed to
 			// do best effort cleanup. However, it is not handled consistently
 			// right now:
-			// https://github.com/containernetworking/plugins/issues/210
+			// https://demo/others/plugins/issues/210
 			// TODO(random-liu): Remove the error handling when the issue is
 			// fixed and the CNI spec v0.6.0 support is deprecated.
 			// NOTE(claudiub): Some CNIs could return a "not found" error, which could mean that
@@ -309,4 +236,58 @@ func (c *libcni) GetConfig() *ConfigResult {
 
 func (c *libcni) reset() {
 	c.networks = nil
+}
+
+// Setup setups the network in the namespace and returns a Result
+func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error) {
+	if err := c.Status(); err != nil {
+		return nil, err
+	}
+	ns, err := newNamespace(id, path, opts...)
+	if err != nil {
+		return nil, err
+	}
+	result, err := c.attachNetworks(ctx, ns)
+	if err != nil {
+		return nil, err
+	}
+	return c.createResult(result)
+}
+
+// Status returns the status of CNI initialization.
+func (c *libcni) Status() error {
+	c.RLock()
+	defer c.RUnlock()
+	if len(c.networks) < c.networkCount {
+		return ErrCNINotInitialized
+	}
+	return nil
+}
+func asynchAttach(ctx context.Context, index int, n *Network, ns *Namespace, wg *sync.WaitGroup, rc chan asynchAttachResult) {
+	defer wg.Done()
+	r, err := n.Attach(ctx, ns)
+	rc <- asynchAttachResult{index: index, res: r, err: err}
+}
+
+func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100.Result, error) {
+	var wg sync.WaitGroup
+	var firstError error
+	results := make([]*types100.Result, len(c.Networks()))
+	rc := make(chan asynchAttachResult)
+
+	for i, network := range c.Networks() {
+		wg.Add(1)
+		go asynchAttach(ctx, i, network, ns, &wg, rc)
+	}
+
+	for range c.Networks() {
+		rs := <-rc
+		if rs.err != nil && firstError == nil {
+			firstError = rs.err
+		}
+		results[rs.index] = rs.res
+	}
+	wg.Wait()
+
+	return results, firstError
 }

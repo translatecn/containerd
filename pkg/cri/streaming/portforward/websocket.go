@@ -1,35 +1,3 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-/*
-Copyright 2016 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package portforward
 
 import (
@@ -37,14 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"k8s.io/klog/v2"
 
-	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/server/httplog"
@@ -62,43 +27,12 @@ const (
 // V4Options contains details about which streams are required for port
 // forwarding.
 // All fields included in V4Options need to be expressed explicitly in the
-// CRI (k8s.io/cri-api/pkg/apis/{version}/api.proto) PortForwardRequest.
+// CRI (demo/over/api/cri/{version}/api.proto) PortForwardRequest.
 type V4Options struct {
 	Ports []int32
 }
 
 // NewV4Options creates a new options from the Request.
-func NewV4Options(req *http.Request) (*V4Options, error) {
-	if !wsstream.IsWebSocketRequest(req) {
-		return &V4Options{}, nil
-	}
-
-	portStrings := req.URL.Query()[api.PortHeader]
-	if len(portStrings) == 0 {
-		return nil, fmt.Errorf("query parameter %q is required", api.PortHeader)
-	}
-
-	ports := make([]int32, 0, len(portStrings))
-	for _, portString := range portStrings {
-		if len(portString) == 0 {
-			return nil, fmt.Errorf("query parameter %q cannot be empty", api.PortHeader)
-		}
-		for _, p := range strings.Split(portString, ",") {
-			port, err := strconv.ParseUint(p, 10, 16)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse %q as a port: %v", portString, err)
-			}
-			if port < 1 {
-				return nil, fmt.Errorf("port %q must be > 0", portString)
-			}
-			ports = append(ports, int32(port))
-		}
-	}
-
-	return &V4Options{
-		Ports: ports,
-	}, nil
-}
 
 // BuildV4Options returns a V4Options based on the given information.
 func BuildV4Options(ports []int32) (*V4Options, error) {

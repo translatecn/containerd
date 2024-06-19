@@ -1,32 +1,16 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package uncompress
 
 import (
 	"context"
+	"demo/over/labels"
 	"fmt"
 	"io"
 
-	"demo/content"
+	"demo/over/archive/compression"
+	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/images/converter"
-	"demo/pkg/archive/compression"
-	"demo/pkg/labels"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -35,7 +19,7 @@ var _ converter.ConvertFunc = LayerConvertFunc
 // LayerConvertFunc converts tar.gz layers into uncompressed tar layers.
 // Media type is changed, e.g., "application/vnd.oci.image.layer.v1.tar+gzip" -> "application/vnd.oci.image.layer.v1.tar"
 func LayerConvertFunc(ctx context.Context, cs content.Store, desc ocispec.Descriptor) (*ocispec.Descriptor, error) {
-	if !over_images.IsLayerType(desc.MediaType) || IsUncompressedType(desc.MediaType) {
+	if !images.IsLayerType(desc.MediaType) || IsUncompressedType(desc.MediaType) {
 		// No conversion. No need to return an error here.
 		return nil, nil
 	}
@@ -78,7 +62,7 @@ func LayerConvertFunc(ctx context.Context, cs content.Store, desc ocispec.Descri
 	// no need to retain "containerd.io/uncompressed" label, but retain other labels ("containerd.io/distribution.source.*")
 	labelsMap := info.Labels
 	delete(labelsMap, labels.LabelUncompressed)
-	if err = w.Commit(ctx, 0, "", content.WithLabels(labelsMap)); err != nil && !over_errdefs.IsAlreadyExists(err) {
+	if err = w.Commit(ctx, 0, "", content.WithLabels(labelsMap)); err != nil && !errdefs.IsAlreadyExists(err) {
 		return nil, err
 	}
 	if err := w.Close(); err != nil {
@@ -96,8 +80,8 @@ func LayerConvertFunc(ctx context.Context, cs content.Store, desc ocispec.Descri
 func IsUncompressedType(mt string) bool {
 	switch mt {
 	case
-		over_images.MediaTypeDockerSchema2Layer,
-		over_images.MediaTypeDockerSchema2LayerForeign,
+		images.MediaTypeDockerSchema2Layer,
+		images.MediaTypeDockerSchema2LayerForeign,
 		ocispec.MediaTypeImageLayer,
 		ocispec.MediaTypeImageLayerNonDistributable: //nolint:staticcheck // deprecated
 		return true
@@ -108,10 +92,10 @@ func IsUncompressedType(mt string) bool {
 
 func convertMediaType(mt string) string {
 	switch mt {
-	case over_images.MediaTypeDockerSchema2LayerGzip:
-		return over_images.MediaTypeDockerSchema2Layer
-	case over_images.MediaTypeDockerSchema2LayerForeignGzip:
-		return over_images.MediaTypeDockerSchema2LayerForeign
+	case images.MediaTypeDockerSchema2LayerGzip:
+		return images.MediaTypeDockerSchema2Layer
+	case images.MediaTypeDockerSchema2LayerForeignGzip:
+		return images.MediaTypeDockerSchema2LayerForeign
 	case ocispec.MediaTypeImageLayerGzip, ocispec.MediaTypeImageLayerZstd:
 		return ocispec.MediaTypeImageLayer
 	case ocispec.MediaTypeImageLayerNonDistributableGzip, ocispec.MediaTypeImageLayerNonDistributableZstd: //nolint:staticcheck // deprecated

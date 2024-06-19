@@ -1,29 +1,13 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package sandbox
 
 import (
 	"context"
+	"demo/over/typeurl/v2"
 	"fmt"
 	"time"
 
-	"demo/others/typeurl/v2"
+	"demo/over/api/types"
 	"demo/over/platforms"
-	"demo/pkg/api/types"
 )
 
 type CreateOptions struct {
@@ -40,12 +24,6 @@ type CreateOpt func(*CreateOptions) error
 
 // WithRootFS is used to create a sandbox with the provided rootfs mount
 // TODO: Switch to mount.Mount once target added
-func WithRootFS(m []*types.Mount) CreateOpt {
-	return func(co *CreateOptions) error {
-		co.Rootfs = m
-		return nil
-	}
-}
 
 // WithOptions allows passing arbitrary options when creating a new sandbox.
 func WithOptions(options any) CreateOpt {
@@ -74,12 +52,6 @@ type StopOptions struct {
 
 type StopOpt func(*StopOptions)
 
-func WithTimeout(timeout time.Duration) StopOpt {
-	return func(so *StopOptions) {
-		so.Timeout = &timeout
-	}
-}
-
 // Controller is an interface to manage sandboxes at runtime.
 // When running in sandbox mode, shim expected to implement `SandboxService`.
 // Shim lifetimes are now managed manually via sandbox API by the containerd's client.
@@ -90,7 +62,7 @@ type Controller interface {
 	Start(ctx context.Context, sandboxID string) (ControllerInstance, error)
 	// Platform returns target sandbox OS that will be used by Controller.
 	// containerd will rely on this to generate proper OCI spec.
-	Platform(_ctx context.Context, _sandboxID string) (over_platforms.Platform, error)
+	Platform(_ctx context.Context, _sandboxID string) (platforms.Platform, error)
 	// Stop will stop sandbox instance
 	Stop(ctx context.Context, sandboxID string, opts ...StopOpt) error
 	// Wait blocks until sandbox process exits.

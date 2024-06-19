@@ -1,20 +1,4 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-package over_plugin
+package plugin
 
 import (
 	"errors"
@@ -50,56 +34,32 @@ type Type string
 func (t Type) String() string { return string(t) }
 
 const (
-	// InternalPlugin implements an internal plugin to containerd
-	InternalPlugin Type = "io.containerd.internal.v1"
-	// RuntimePlugin implements a runtime
-	RuntimePlugin Type = "io.containerd.runtime.v1"
-	// RuntimePluginV2 implements a runtime v2
-	RuntimePluginV2 Type = "io.containerd.runtime.v2"
-	// ServicePlugin implements a internal service
-	ServicePlugin Type = "io.containerd.service.v1"
-	// GRPCPlugin implements a grpc service
-	GRPCPlugin Type = "io.containerd.grpc.v1"
-	// TTRPCPlugin implements a ttrpc shim service
-	TTRPCPlugin Type = "io.containerd.ttrpc.v1"
-	// SnapshotPlugin implements a snapshotter
-	SnapshotPlugin Type = "io.containerd.snapshotter.v1"
-	// TaskMonitorPlugin implements a task monitor
-	TaskMonitorPlugin Type = "io.containerd.monitor.v1"
-	// DiffPlugin implements a differ
-	DiffPlugin Type = "io.containerd.differ.v1"
-	// MetadataPlugin implements a metadata store
-	MetadataPlugin Type = "io.containerd.metadata.v1"
-	// ContentPlugin implements a content store
-	ContentPlugin Type = "io.containerd.content.v1"
-	// GCPlugin implements garbage collection policy
-	GCPlugin Type = "io.containerd.gc.v1"
-	// EventPlugin implements event handling
-	EventPlugin Type = "io.containerd.event.v1"
-	// LeasePlugin implements lease manager
-	LeasePlugin Type = "io.containerd.lease.v1"
-	// Streaming implements a stream manager
-	StreamingPlugin Type = "io.containerd.streaming.v1"
-	// TracingProcessorPlugin implements a open telemetry span processor
-	TracingProcessorPlugin Type = "io.containerd.tracing.processor.v1"
-	// NRIApiPlugin implements the NRI adaptation interface for containerd.
-	NRIApiPlugin Type = "io.containerd.nri.v1"
-	// TransferPlugin implements a transfer service
-	TransferPlugin Type = "io.containerd.transfer.v1"
-	// SandboxStorePlugin implements a sandbox store
-	SandboxStorePlugin Type = "io.containerd.sandbox.store.v1"
-	// SandboxControllerPlugin implements a sandbox controller
+	InternalPlugin          Type = "io.containerd.internal.v1"
+	RuntimePlugin           Type = "io.containerd.runtime.v1"
+	RuntimePluginV2         Type = "io.containerd.runtime.v2"
+	ServicePlugin           Type = "io.containerd.service.v1"
+	GRPCPlugin              Type = "io.containerd.grpc.v1"
+	TTRPCPlugin             Type = "io.containerd.ttrpc.v1"
+	SnapshotPlugin          Type = "io.containerd.snapshotter.v1"
+	TaskMonitorPlugin       Type = "io.containerd.monitor.v1"
+	DiffPlugin              Type = "io.containerd.differ.v1"
+	MetadataPlugin          Type = "io.containerd.metadata.v1"
+	ContentPlugin           Type = "io.containerd.content.v1"
+	GCPlugin                Type = "io.containerd.gc.v1"
+	EventPlugin             Type = "io.containerd.event.v1"
+	LeasePlugin             Type = "io.containerd.lease.v1"
+	StreamingPlugin         Type = "io.containerd.streaming.v1"
+	TracingProcessorPlugin  Type = "io.containerd.tracing.processor.v1"
+	NRIApiPlugin            Type = "io.containerd.nri.v1"
+	TransferPlugin          Type = "io.containerd.transfer.v1"
+	SandboxStorePlugin      Type = "io.containerd.sandbox.store.v1"
 	SandboxControllerPlugin Type = "io.containerd.sandbox.controller.v1"
-	// WarningPlugin implements a warning service
-	WarningPlugin Type = "io.containerd.warning.v1"
+	WarningPlugin           Type = "io.containerd.warning.v1"
 )
 
 const (
-	// RuntimeLinuxV1 is the legacy linux runtime
-	RuntimeLinuxV1 = "io.containerd.runtime.v1.linux"
-	// RuntimeRuncV1 is the runc runtime that supports a single container
-	RuntimeRuncV1 = "io.containerd.runc.v1"
-	// RuntimeRuncV2 is the runc runtime that supports multiple containers per shim
+	RuntimeLinuxV1     = "io.containerd.runtime.v1.linux"
+	RuntimeRuncV1      = "io.containerd.runc.v1"
 	RuntimeRuncV2      = "io.containerd.runc.v2"
 	DeprecationsPlugin = "deprecations"
 )
@@ -199,8 +159,8 @@ func checkUnique(r *Registration) error {
 // DisableFilter filters out disabled plugins
 type DisableFilter func(r *Registration) bool
 
-// Graph returns an ordered list of registered plugins for initialization.
-// Plugins in disableList specified by id will be disabled.
+// Graph 返回已注册插件的有序列表用于初始化。
+// 由id指定的disableList中的插件将被禁用。
 func Graph(filter DisableFilter) (ordered []*Registration) {
 	register.RLock()
 	defer register.RUnlock()

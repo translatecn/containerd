@@ -1,25 +1,9 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/typeurl/v2"
+	"demo/over/log"
+	"demo/over/typeurl/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,12 +11,12 @@ import (
 	"time"
 
 	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
+	containerdio "demo/over/cio"
 	"demo/over/errdefs"
 	containerdimages "demo/over/images"
 	"demo/over/platforms"
-	containerdio "demo/pkg/cio"
 	"golang.org/x/sync/errgroup"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	cio "demo/pkg/cri/io"
 	containerstore "demo/pkg/cri/store/container"
@@ -225,12 +209,12 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 			containerIO.Pipe()
 			return containerIO, nil
 		})
-		if err != nil && !over_errdefs.IsNotFound(err) {
+		if err != nil && !errdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to load task: %w", err)
 		}
 		var s containerd.Status
 		var notFound bool
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Task is not found.
 			notFound = true
 		} else {
@@ -238,7 +222,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 			s, err = t.Status(ctx)
 			if err != nil {
 				// It's still possible that task is deleted during this window.
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to get task status: %w", err)
 				}
 				notFound = true
@@ -274,7 +258,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				// Task has been created, but not started yet. This could only happen if containerd
 				// gets restarted during container start.
 				// Container must be in `CREATED` state.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to delete task: %w", err)
 				}
 				if status.State() != runtime.ContainerState_CONTAINER_CREATED {
@@ -297,7 +281,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				// wait is a long running background request, no timeout needed.
 				exitCh, err := t.Wait(ctrdutil.NamespacedContext())
 				if err != nil {
-					if !over_errdefs.IsNotFound(err) {
+					if !errdefs.IsNotFound(err) {
 						return fmt.Errorf("failed to wait for task: %w", err)
 					}
 					// Container was in running state, but its task has been deleted,
@@ -311,7 +295,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 				}
 			case containerd.Stopped:
 				// Task is stopped. Update status and delete the task.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 					return fmt.Errorf("failed to delete task: %w", err)
 				}
 				status.FinishedAt = s.ExitTime.UnixNano()
@@ -370,12 +354,12 @@ func (c *criService) loadSandbox(ctx context.Context, cntr containerd.Container)
 
 		// Load sandbox state.
 		t, err := cntr.Task(ctx, nil)
-		if err != nil && !over_errdefs.IsNotFound(err) {
+		if err != nil && !errdefs.IsNotFound(err) {
 			return status, fmt.Errorf("failed to load task: %w", err)
 		}
 		var taskStatus containerd.Status
 		var notFound bool
-		if over_errdefs.IsNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Task is not found.
 			notFound = true
 		} else {
@@ -383,7 +367,7 @@ func (c *criService) loadSandbox(ctx context.Context, cntr containerd.Container)
 			taskStatus, err = t.Status(ctx)
 			if err != nil {
 				// It's still possible that task is deleted during this window.
-				if !over_errdefs.IsNotFound(err) {
+				if !errdefs.IsNotFound(err) {
 					return status, fmt.Errorf("failed to get task status: %w", err)
 				}
 				notFound = true
@@ -398,7 +382,7 @@ func (c *criService) loadSandbox(ctx context.Context, cntr containerd.Container)
 				// wait is a long running background request, no timeout needed.
 				exitCh, err := t.Wait(ctrdutil.NamespacedContext())
 				if err != nil {
-					if !over_errdefs.IsNotFound(err) {
+					if !errdefs.IsNotFound(err) {
 						return status, fmt.Errorf("failed to wait for task: %w", err)
 					}
 					status.State = sandboxstore.StateNotReady
@@ -410,7 +394,7 @@ func (c *criService) loadSandbox(ctx context.Context, cntr containerd.Container)
 				}
 			} else {
 				// Task is not running. Delete the task and set sandbox state as NOTREADY.
-				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 					return status, fmt.Errorf("failed to delete task: %w", err)
 				}
 				status.State = sandboxstore.StateNotReady
@@ -447,7 +431,7 @@ func (c *criService) loadImages(ctx context.Context, cImages []containerd.Image)
 		i := i
 		go func() {
 			defer wg.Done()
-			ok, _, _, _, err := containerdimages.Check(ctx, i.ContentStore(), i.Target(), over_platforms.Default())
+			ok, _, _, _, err := containerdimages.Check(ctx, i.ContentStore(), i.Target(), platforms.Default())
 			if err != nil {
 				log.G(ctx).WithError(err).Errorf("Failed to check image content readiness for %q", i.Name())
 				return

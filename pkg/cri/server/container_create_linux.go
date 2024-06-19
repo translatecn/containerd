@@ -1,23 +1,9 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package server
 
 import (
 	"bufio"
+	"demo/config/cri"
+	"demo/over/snapshots"
 	"errors"
 	"fmt"
 	"io"
@@ -26,20 +12,18 @@ import (
 	"strings"
 
 	"demo/others/cgroups/v3"
-	"demo/over/oci"
+	runtime "demo/over/api/cri/v1"
 	"demo/pkg/contrib/apparmor"
 	"demo/pkg/contrib/seccomp"
-	"demo/snapshots"
+	"demo/pkg/oci"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"github.com/opencontainers/selinux/go-selinux/label"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"demo/pkg/blockio"
-	"demo/pkg/cri/annotations"
-	"demo/pkg/cri/config"
+	"demo/over/blockio"
 	customopts "demo/pkg/cri/opts"
+	"demo/pkg/cri/over/annotations"
 )
 
 const (
@@ -125,10 +109,10 @@ func (c *criService) containerSpec(
 	sandboxConfig *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig,
 	extraMounts []*runtime.Mount,
-	ociRuntime config.Runtime,
+	ociRuntime cri.Runtime,
 ) (_ *runtimespec.Spec, retErr error) {
-	specOpts := []over_oci.SpecOpts{
-		over_oci.WithoutRunMount,
+	specOpts := []oci.SpecOpts{
+		oci.WithoutRunMount,
 	}
 	// only clear the default security settings if the runtime does not have a custom
 	// base runtime spec spec.  Admins can use this functionality to define
@@ -139,18 +123,18 @@ func (c *criService) containerSpec(
 	specOpts = append(specOpts,
 		customopts.WithRelativeRoot(relativeRootfsPath),
 		customopts.WithProcessArgs(config, imageConfig),
-		over_oci.WithDefaultPathEnv,
+		oci.WithDefaultPathEnv,
 		// this will be set based on the security context below
-		over_oci.WithNewPrivileges,
+		oci.WithNewPrivileges,
 	)
 	if config.GetWorkingDir() != "" {
-		specOpts = append(specOpts, over_oci.WithProcessCwd(config.GetWorkingDir()))
+		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
 	} else if imageConfig.WorkingDir != "" {
-		specOpts = append(specOpts, over_oci.WithProcessCwd(imageConfig.WorkingDir))
+		specOpts = append(specOpts, oci.WithProcessCwd(imageConfig.WorkingDir))
 	}
 
 	if config.GetTty() {
-		specOpts = append(specOpts, over_oci.WithTTY)
+		specOpts = append(specOpts, oci.WithTTY)
 	}
 
 	// Add HOSTNAME env.
@@ -163,7 +147,7 @@ func (c *criService) containerSpec(
 			return nil, err
 		}
 	}
-	specOpts = append(specOpts, over_oci.WithEnv([]string{hostnameEnv + "=" + hostname}))
+	specOpts = append(specOpts, oci.WithEnv([]string{hostnameEnv + "=" + hostname}))
 
 	// Apply envs from image config first, so that envs from container config
 	// can override them.
@@ -171,7 +155,7 @@ func (c *criService) containerSpec(
 	for _, e := range config.GetEnvs() {
 		env = append(env, e.GetKey()+"="+e.GetValue())
 	}
-	specOpts = append(specOpts, over_oci.WithEnv(env))
+	specOpts = append(specOpts, oci.WithEnv(env))
 
 	securityContext := config.GetLinux().GetSecurityContext()
 	labelOptions, err := toLabel(securityContext.GetSelinuxOptions())
@@ -181,7 +165,7 @@ func (c *criService) containerSpec(
 	if len(labelOptions) == 0 {
 		// Use pod level SELinux config
 		if sandbox, err := c.sandboxStore.Get(sandboxID); err == nil {
-			labelOptions, err = selinux.DupSecOpt(sandbox.ProcessLabel)
+			labelOptions, err = selinux.DupSecOpt(sandbox.ProcessSelinuxLabel)
 			if err != nil {
 				return nil, err
 			}
@@ -204,18 +188,18 @@ func (c *criService) containerSpec(
 		// Change the default masked/readonly paths to empty slices
 		// See https://github.com/containerd/issues/5029
 		// TODO: Provide an option to set default paths to the ones in oci.populateDefaultUnixSpec()
-		specOpts = append(specOpts, over_oci.WithMaskedPaths([]string{}), over_oci.WithReadonlyPaths([]string{}))
+		specOpts = append(specOpts, oci.WithMaskedPaths([]string{}), oci.WithReadonlyPaths([]string{}))
 
 		// Apply masked paths if specified.
 		// If the container is privileged, this will be cleared later on.
 		if maskedPaths := securityContext.GetMaskedPaths(); maskedPaths != nil {
-			specOpts = append(specOpts, over_oci.WithMaskedPaths(maskedPaths))
+			specOpts = append(specOpts, oci.WithMaskedPaths(maskedPaths))
 		}
 
 		// Apply readonly paths if specified.
 		// If the container is privileged, this will be cleared later on.
 		if readonlyPaths := securityContext.GetReadonlyPaths(); readonlyPaths != nil {
-			specOpts = append(specOpts, over_oci.WithReadonlyPaths(readonlyPaths))
+			specOpts = append(specOpts, oci.WithReadonlyPaths(readonlyPaths))
 		}
 	}
 
@@ -226,12 +210,12 @@ func (c *criService) containerSpec(
 		if !sandboxConfig.GetLinux().GetSecurityContext().GetPrivileged() {
 			return nil, errors.New("no privileged container allowed in sandbox")
 		}
-		specOpts = append(specOpts, over_oci.WithPrivileged)
+		specOpts = append(specOpts, oci.WithPrivileged)
 		if !ociRuntime.PrivilegedWithoutHostDevices {
-			specOpts = append(specOpts, over_oci.WithHostDevices, over_oci.WithAllDevicesAllowed)
+			specOpts = append(specOpts, oci.WithHostDevices, oci.WithAllDevicesAllowed)
 		} else if ociRuntime.PrivilegedWithoutHostDevicesAllDevicesAllowed {
 			// allow rwm on all devices for the container
-			specOpts = append(specOpts, over_oci.WithAllDevicesAllowed)
+			specOpts = append(specOpts, oci.WithAllDevicesAllowed)
 		}
 	}
 
@@ -246,11 +230,11 @@ func (c *criService) containerSpec(
 
 	// TODO: Figure out whether we should set no new privilege for sandbox container by default
 	if securityContext.GetNoNewPrivs() {
-		specOpts = append(specOpts, over_oci.WithNoNewPrivileges)
+		specOpts = append(specOpts, oci.WithNoNewPrivileges)
 	}
 	// TODO(random-liu): [P1] Set selinux options (privileged or not).
 	if securityContext.GetReadonlyRootfs() {
-		specOpts = append(specOpts, over_oci.WithRootFSReadonly())
+		specOpts = append(specOpts, oci.WithRootFSReadonly())
 	}
 
 	if c.config.DisableCgroup {
@@ -259,7 +243,7 @@ func (c *criService) containerSpec(
 		specOpts = append(specOpts, customopts.WithResources(config.GetLinux().GetResources(), c.config.TolerateMissingHugetlbController, c.config.DisableHugetlbController))
 		if sandboxConfig.GetLinux().GetCgroupParent() != "" {
 			cgroupsPath := getCgroupsPath(sandboxConfig.GetLinux().GetCgroupParent(), id)
-			specOpts = append(specOpts, over_oci.WithCgroup(cgroupsPath))
+			specOpts = append(specOpts, oci.WithCgroup(cgroupsPath))
 		}
 	}
 
@@ -272,7 +256,7 @@ func (c *criService) containerSpec(
 	}
 	if blockIOClass != "" {
 		if linuxBlockIO, err := blockio.ClassNameToLinuxOCI(blockIOClass); err == nil {
-			specOpts = append(specOpts, over_oci.WithBlockIO(linuxBlockIO))
+			specOpts = append(specOpts, oci.WithBlockIO(linuxBlockIO))
 		} else {
 			return nil, err
 		}
@@ -284,7 +268,7 @@ func (c *criService) containerSpec(
 		return nil, fmt.Errorf("failed to set RDT class: %w", err)
 	}
 	if rdtClass != "" {
-		specOpts = append(specOpts, over_oci.WithRdt(rdtClass, "", ""))
+		specOpts = append(specOpts, oci.WithRdt(rdtClass, "", ""))
 	}
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
@@ -336,7 +320,7 @@ func (c *criService) containerSpec(
 	// https://github.com/containers/libpod/issues/4363
 	// https://github.com/kubernetes/enhancements/blob/0e409b47497e398b369c281074485c8de129694f/keps/sig-node/20191118-cgroups-v2.md#cgroup-namespace
 	if cgroups.Mode() == cgroups.Unified && !securityContext.GetPrivileged() {
-		specOpts = append(specOpts, over_oci.WithLinuxNamespace(
+		specOpts = append(specOpts, oci.WithLinuxNamespace(
 			runtimespec.LinuxNamespace{
 				Type: runtimespec.CgroupNamespace,
 			}))
@@ -344,8 +328,8 @@ func (c *criService) containerSpec(
 	return c.runtimeSpec(id, ociRuntime.BaseRuntimeSpec, specOpts...)
 }
 
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]over_oci.SpecOpts, error) {
-	var specOpts []over_oci.SpecOpts
+func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+	var specOpts []oci.SpecOpts
 	securityContext := config.GetLinux().GetSecurityContext()
 	// Set container username. This could only be done by containerd, because it needs
 	// access to the container rootfs. Pass user name to containerd, and let it overwrite
@@ -363,7 +347,7 @@ func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageCon
 		userstr = imageConfig.User
 	}
 	if userstr != "" {
-		specOpts = append(specOpts, over_oci.WithUser(userstr))
+		specOpts = append(specOpts, oci.WithUser(userstr))
 	}
 
 	userstr = "0" // runtime default
@@ -420,46 +404,8 @@ func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageCon
 	return specOpts, nil
 }
 
-func generateSeccompSecurityProfile(profilePath string, unsetProfilePath string) (*runtime.SecurityProfile, error) {
-	if profilePath != "" {
-		return generateSecurityProfile(profilePath)
-	}
-	if unsetProfilePath != "" {
-		return generateSecurityProfile(unsetProfilePath)
-	}
-	return nil, nil
-}
-func generateApparmorSecurityProfile(profilePath string) (*runtime.SecurityProfile, error) {
-	if profilePath != "" {
-		return generateSecurityProfile(profilePath)
-	}
-	return nil, nil
-}
-
-func generateSecurityProfile(profilePath string) (*runtime.SecurityProfile, error) {
-	switch profilePath {
-	case runtimeDefault, dockerDefault, "":
-		return &runtime.SecurityProfile{
-			ProfileType: runtime.SecurityProfile_RuntimeDefault,
-		}, nil
-	case unconfinedProfile:
-		return &runtime.SecurityProfile{
-			ProfileType: runtime.SecurityProfile_Unconfined,
-		}, nil
-	default:
-		// Require and Trim default profile name prefix
-		if !strings.HasPrefix(profilePath, profileNamePrefix) {
-			return nil, fmt.Errorf("invalid profile %q", profilePath)
-		}
-		return &runtime.SecurityProfile{
-			ProfileType:  runtime.SecurityProfile_Localhost,
-			LocalhostRef: strings.TrimPrefix(profilePath, profileNamePrefix),
-		}, nil
-	}
-}
-
 // generateSeccompSpecOpts generates containerd SpecOpts for seccomp.
-func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (over_oci.SpecOpts, error) {
+func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
 	if privileged {
 		// Do not set seccomp profile when container is privileged
 		return nil, nil
@@ -496,7 +442,7 @@ func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privil
 }
 
 // generateApparmorSpecOpts generates containerd SpecOpts for apparmor.
-func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (over_oci.SpecOpts, error) {
+func generateApparmorSpecOpts(sp *runtime.SecurityProfile, privileged, apparmorEnabled bool) (oci.SpecOpts, error) {
 	if !apparmorEnabled {
 		// Should fail loudly if user try to specify apparmor profile
 		// but we don't support it.
@@ -614,4 +560,42 @@ func generateUserString(username string, uid, gid *runtime.Int64Value) (string, 
 func snapshotterOpts(snapshotterName string, config *runtime.ContainerConfig) ([]snapshots.Opt, error) {
 	nsOpts := config.GetLinux().GetSecurityContext().GetNamespaceOptions()
 	return snapshotterRemapOpts(nsOpts)
+}
+
+func generateSeccompSecurityProfile(profilePath string, unsetProfilePath string) (*runtime.SecurityProfile, error) {
+	if profilePath != "" {
+		return generateSecurityProfile(profilePath)
+	}
+	if unsetProfilePath != "" {
+		return generateSecurityProfile(unsetProfilePath)
+	}
+	return nil, nil
+}
+func generateApparmorSecurityProfile(profilePath string) (*runtime.SecurityProfile, error) {
+	if profilePath != "" {
+		return generateSecurityProfile(profilePath)
+	}
+	return nil, nil
+}
+
+func generateSecurityProfile(profilePath string) (*runtime.SecurityProfile, error) {
+	switch profilePath {
+	case runtimeDefault, dockerDefault, "":
+		return &runtime.SecurityProfile{
+			ProfileType: runtime.SecurityProfile_RuntimeDefault,
+		}, nil
+	case unconfinedProfile:
+		return &runtime.SecurityProfile{
+			ProfileType: runtime.SecurityProfile_Unconfined,
+		}, nil
+	default:
+		// Require and Trim default profile name prefix
+		if !strings.HasPrefix(profilePath, profileNamePrefix) {
+			return nil, fmt.Errorf("invalid profile %q", profilePath)
+		}
+		return &runtime.SecurityProfile{
+			ProfileType:  runtime.SecurityProfile_Localhost,
+			LocalhostRef: strings.TrimPrefix(profilePath, profileNamePrefix),
+		}, nil
+	}
 }

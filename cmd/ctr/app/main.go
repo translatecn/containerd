@@ -1,43 +1,27 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package app
 
 import (
-	"demo/cmd/ctr/commands/over_events"
-	"demo/cmd/ctr/commands/over_images"
-	"demo/cmd/ctr/commands/over_install"
-	"demo/cmd/ctr/commands/over_leases"
-	namespacesCmd "demo/cmd/ctr/commands/over_namespaces"
-	"demo/cmd/ctr/commands/over_plugins"
-	"demo/cmd/ctr/commands/over_snapshots"
-	versionCmd "demo/cmd/ctr/commands/over_version"
-	"demo/pkg/namespaces"
+	"demo/cmd/ctr/commands/containers"
+	"demo/cmd/ctr/commands/over/events"
+	"demo/cmd/ctr/commands/over/images"
+	"demo/cmd/ctr/commands/over/info"
+	"demo/cmd/ctr/commands/over/install"
+	"demo/cmd/ctr/commands/over/leases"
+	namespacesCmd "demo/cmd/ctr/commands/over/namespaces"
+	"demo/cmd/ctr/commands/over/oci"
+	"demo/cmd/ctr/commands/over/plugins"
+	"demo/cmd/ctr/commands/over/snapshots"
+	versionCmd "demo/cmd/ctr/commands/over/version"
+	"demo/cmd/ctr/commands/pprof"
+	"demo/cmd/ctr/commands/run"
+	"demo/cmd/ctr/commands/tasks"
+	"demo/over/namespaces"
+	"demo/over/version"
 	"fmt"
 	"io"
 
-	"demo/cmd/ctr/commands/containers"
 	"demo/cmd/ctr/commands/content"
-	"demo/cmd/ctr/commands/over_info"
-	ociCmd "demo/cmd/ctr/commands/over_oci"
-	"demo/cmd/ctr/commands/pprof"
-	"demo/cmd/ctr/commands/run"
 	"demo/cmd/ctr/commands/sandboxes"
-	"demo/cmd/ctr/commands/tasks"
-	"demo/version"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/grpclog"
@@ -82,7 +66,7 @@ containerd CLI
 		cli.StringFlag{
 			Name:   "address, a",
 			Usage:  "Address for containerd's GRPC server",
-			Value:  "172.16.244.147:6789",
+			Value:  "vm:6789",
 			EnvVar: "CONTAINERD_ADDRESS",
 		},
 		cli.DurationFlag{
@@ -101,23 +85,22 @@ containerd CLI
 		},
 	}
 	app.Commands = append([]cli.Command{
-		containers.Command,
 		content.Command,
+		sandboxes.Command,
 		pprof.Command,
 		run.Command,
 		tasks.Command,
-		sandboxes.Command,
-
-		over_install.Command,
-		ociCmd.Command,
-		over_plugins.Command,
-		over_snapshots.Command,
-		over_events.Command,
+		containers.Command,
+		install.Command,
+		oci.Command,
+		plugins.Command,
+		snapshots.Command,
+		events.Command,
 		namespacesCmd.Command,
 		versionCmd.Command,
-		over_leases.Command,
-		over_info.Command,
-		over_images.Command,
+		leases.Command,
+		info.Command,
+		images.Command,
 	}, extraCmds...)
 	app.Before = func(context *cli.Context) error {
 		if context.GlobalBool("debug") {

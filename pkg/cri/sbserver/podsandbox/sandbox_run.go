@@ -1,44 +1,28 @@
-/*
-   Copyright The containerd Authors.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package podsandbox
 
 import (
 	"context"
-	"demo/others/log"
-	"demo/others/nri"
-	v1 "demo/others/nri/types/v1"
-	"demo/others/typeurl/v2"
+	criconfig "demo/config/cri"
+	"demo/others/nri_extend"
+	v1 "demo/others/nri_extend/types/v1"
+	runtime "demo/over/api/cri/v1"
+	"demo/over/log"
+	"demo/over/snapshots"
+	"demo/over/typeurl/v2"
 	"demo/pkg/sandbox"
 	"errors"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/selinux/go-selinux"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"demo/containerd"
+	containerdio "demo/over/cio"
 	"demo/over/errdefs"
-	containerdio "demo/pkg/cio"
-	"demo/pkg/cri/annotations"
-	criconfig "demo/pkg/cri/config"
 	customopts "demo/pkg/cri/opts"
+	"demo/pkg/cri/over/annotations"
 	sandboxstore "demo/pkg/cri/store/sandbox"
 	ctrdutil "demo/pkg/cri/util"
-	"demo/snapshots"
 )
 
 func init() {
@@ -107,18 +91,13 @@ func (c *Controller) Start(ctx context.Context, id string) (cin sandbox.Controll
 	}
 	log.G(ctx).WithField("podsandboxid", id).Debugf("sandbox container spec: %#+v", spew.NewFormatter(spec))
 
-	metadata.ProcessLabel = spec.Process.SelinuxLabel
+	metadata.ProcessSelinuxLabel = spec.Process.SelinuxLabel
 	defer func() {
 		if retErr != nil {
-			selinux.ReleaseLabel(metadata.ProcessLabel)
+			selinux.ReleaseLabel(metadata.ProcessSelinuxLabel)
 		}
 	}()
-	labels["selinux_label"] = metadata.ProcessLabel
-
-	// handle any KVM based runtime
-	if err := modifyProcessLabel(ociRuntime.Type, spec); err != nil {
-		return cin, err
-	}
+	labels["selinux_label"] = metadata.ProcessSelinuxLabel
 
 	if config.GetLinux().GetSecurityContext().GetPrivileged() {
 		// If privileged don't set selinux label, but we still record the MCS label so that
@@ -226,7 +205,7 @@ func (c *Controller) Start(ctx context.Context, id string) (cin sandbox.Controll
 			deferCtx, deferCancel := ctrdutil.DeferContext()
 			defer deferCancel()
 			// Cleanup the sandbox container if an error is returned.
-			if _, err := task.Delete(deferCtx, WithNRISandboxDelete(id), containerd.WithProcessKill); err != nil && !over_errdefs.IsNotFound(err) {
+			if _, err := task.Delete(deferCtx, WithNRISandboxDelete(id), containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 				log.G(ctx).WithError(err).Errorf("Failed to delete sandbox container %q", id)
 				cleanupErr = err
 			}
@@ -240,12 +219,12 @@ func (c *Controller) Start(ctx context.Context, id string) (cin sandbox.Controll
 	}
 	c.store.Save(id, exitCh)
 
-	nric, err := nri.New()
+	nric, err := nri_extend.New()
 	if err != nil {
 		return cin, fmt.Errorf("unable to create nri client: %w", err)
 	}
 	if nric != nil {
-		nriSB := &nri.Sandbox{
+		nriSB := &nri_extend.Sandbox{
 			ID:     id,
 			Labels: config.Labels,
 		}

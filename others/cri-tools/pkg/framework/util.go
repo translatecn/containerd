@@ -25,12 +25,12 @@ import (
 	"sync"
 	"time"
 
+	internalapi "demo/over/api/cri"
+	runtimeapi "demo/over/api/cri/v1"
+	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"github.com/docker/distribution/reference"
 	"github.com/pborman/uuid"
 	"gopkg.in/yaml.v3"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

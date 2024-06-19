@@ -28,18 +28,6 @@ type CNIArgs interface {
 	AsEnv() []string
 }
 
-type inherited struct{}
-
-var inheritArgsFromEnv inherited
-
-func (*inherited) AsEnv() []string {
-	return nil
-}
-
-func ArgsFromEnv() CNIArgs {
-	return &inheritArgsFromEnv
-}
-
 type Args struct {
 	Command       string
 	ContainerID   string

@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"sort"
 
+	internalapi "demo/over/api/cri"
+	runtimeapi "demo/over/api/cri/v1"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

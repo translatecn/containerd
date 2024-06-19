@@ -40,11 +40,3 @@ func Validate(s string) error {
 	//}
 	return nil
 }
-
-func reGroup(s string) string {
-	return `(?:` + s + `)`
-}
-
-func reAnchor(s string) string {
-	return `^` + s + `$`
-}

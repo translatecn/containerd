@@ -100,14 +100,6 @@ type Result interface {
 	PrintTo(writer io.Writer) error
 }
 
-func PrintResult(result Result, version string) error {
-	newResult, err := result.GetAsVersion(version)
-	if err != nil {
-		return err
-	}
-	return newResult.Print()
-}
-
 // DNS contains values interesting for DNS resolvers
 type DNS struct {
 	Nameservers []string `json:"nameservers,omitempty"`

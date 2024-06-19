@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.services.images.v1;
@@ -10,15 +8,15 @@ option go_package = "demo/containerd/api/events;events";
 option (containerd.plugin.fieldpath_all) = true;
 
 message ImageCreate {
-	string name = 1;
-	map<string, string> labels = 2;
+  string name = 1;
+  map<string, string> labels = 2;
 }
 
 message ImageUpdate {
-	string name = 1;
-	map<string, string> labels = 2;
+  string name = 1;
+  map<string, string> labels = 2;
 }
 
 message ImageDelete {
-	string name = 1;
+  string name = 1;
 }

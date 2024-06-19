@@ -27,7 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
-	internalapi "k8s.io/cri-api/pkg/apis"
+	internalapi "demo/over/api/cri"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )

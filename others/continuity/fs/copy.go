@@ -25,12 +25,6 @@ type CopyDirOpt func(*copyDirOpts) error
 // WithXAttrErrorHandler allows specifying XAttrErrorHandler
 // If nil XAttrErrorHandler is specified (default), CopyDir stops
 // on a non-nil xattr error.
-func WithXAttrErrorHandler(xeh XAttrErrorHandler) CopyDirOpt {
-	return func(o *copyDirOpts) error {
-		o.xeh = xeh
-		return nil
-	}
-}
 
 // WithXAttrExclude allows for exclusion of specified xattr during CopyDir operation.
 func WithXAttrExclude(keys ...string) CopyDirOpt {

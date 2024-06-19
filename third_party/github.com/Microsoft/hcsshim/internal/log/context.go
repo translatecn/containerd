@@ -20,13 +20,13 @@ var (
 	L = logrus.NewEntry(logrus.StandardLogger())
 
 	// G is an alias for GetEntry
-	G = GetEntry
+	_ = GetEntry
 
 	// S is an alias for SetEntry
-	S = SetEntry
+	_ = SetEntry
 
 	// U is an alias for UpdateContext
-	U = UpdateContext
+	_ = UpdateContext
 )
 
 // GetEntry returns a `logrus.Entry` stored in the context, if one exists.

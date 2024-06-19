@@ -55,7 +55,7 @@ var WithAllCurrentCapabilities = func(ctx context.Context, client Client, c *con
 }
 
 // WithAllKnownCapabilities sets all the known linux capabilities for the container process
-var WithAllKnownCapabilities = func(ctx context.Context, client Client, c *containers.Container, s *Spec) error {
+var _ = func(ctx context.Context, client Client, c *containers.Container, s *Spec) error {
 	caps := cap.Known()
 	return WithCapabilities(caps)(ctx, client, c, s)
 }

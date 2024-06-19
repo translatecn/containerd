@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
 	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
 )
 
 var logsCommand = &cli.Command{

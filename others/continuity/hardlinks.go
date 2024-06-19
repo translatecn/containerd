@@ -4,4 +4,4 @@ import (
 	"fmt"
 )
 
-var errNotAHardLink = fmt.Errorf("invalid hardlink")
+var _ = fmt.Errorf("invalid hardlink")

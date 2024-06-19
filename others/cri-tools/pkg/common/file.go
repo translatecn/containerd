@@ -19,8 +19,6 @@ package common
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
-	gofilepath "path/filepath"
 	"strconv"
 
 	"gopkg.in/yaml.v3"
@@ -59,24 +57,6 @@ func ReadConfig(filepath string) (*Config, error) {
 
 // WriteConfig writes config to file
 // an error if the file was unable to be written to.
-func WriteConfig(c *Config, filepath string) error {
-	if c == nil {
-		c = new(Config)
-		c.yamlData = new(yaml.Node)
-	}
-
-	setConfigOptions(c)
-
-	data, err := yaml.Marshal(c.yamlData)
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(gofilepath.Dir(filepath), 0o755); err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filepath, data, 0o644)
-}
 
 // Extracts config options from the yaml data which is loaded from file
 func getConfigOptions(yamlData yaml.Node) (*Config, error) {

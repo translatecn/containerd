@@ -528,7 +528,7 @@ func (r *Runc) Update(context context.Context, id string, resources *specs.Linux
 	return r.runOrError(cmd)
 }
 
-var ErrParseRuncVersion = errors.New("unable to parse runc version")
+var _ = errors.New("unable to parse runc version")
 
 type Version struct {
 	Runc   string

@@ -4,7 +4,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-var DefaultSampler = trace.AlwaysSample()
+var _ = trace.AlwaysSample()
 
 // SetSpanStatus sets `span.SetStatus` to the proper status depending on `err`. If
 // `err` is `nil` assumes `trace.StatusCodeOk`.
@@ -16,8 +16,8 @@ var DefaultSampler = trace.AlwaysSample()
 //
 // See StartSpan for more information.
 
-var WithServerSpanKind = trace.WithSpanKind(trace.SpanKindServer)
-var WithClientSpanKind = trace.WithSpanKind(trace.SpanKindClient)
+var _ = trace.WithSpanKind(trace.SpanKindServer)
+var _ = trace.WithSpanKind(trace.SpanKindClient)
 
 func spanKindToString(sk int) string {
 	switch sk {

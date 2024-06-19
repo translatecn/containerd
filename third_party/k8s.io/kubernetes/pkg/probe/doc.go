@@ -14,20 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package bandwidth
-
-import (
-	"regexp"
-)
-
-var (
-	classShowMatcher      = regexp.MustCompile(`class htb (1:\d+)`)
-	classAndHandleMatcher = regexp.MustCompile(`filter parent 1:.*fh (\d+::\d+).*flowid (\d+:\d+)`)
-)
-
-// NewTCShaper makes a new tcShaper for the given interface
-
-// Convert a CIDR from text to a hex representation
-// Strips any masked parts of the IP, so 1.2.3.4/16 becomes hex(1.2.0.0)/ffffffff
-
-// Convert a CIDR from hex representation to text, opposite of the above.
+// Package probe contains utilities for health probing, as well as health status information.
+package probe // import "demo/third_party/k8s.io/kubernetes/pkg/probe"

@@ -26,4 +26,3 @@ const (
 func Create(t PidType) error {
 	return unix.Prctl(unix.PR_SCHED_CORE, unix.PR_SCHED_CORE_CREATE, 0, uintptr(t), 0)
 }
-

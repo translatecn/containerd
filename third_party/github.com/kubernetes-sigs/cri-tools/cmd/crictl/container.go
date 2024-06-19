@@ -27,14 +27,14 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/kubernetes/pkg/kubelet/types"
+	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/types"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type containerByCreated []*pb.Container

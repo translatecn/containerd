@@ -16,21 +16,7 @@ limitations under the License.
 
 package benchmark
 
-import (
-	"math/rand"
-	"testing"
-	"time"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-)
-
 // TestPerformance checks configuration parameters (specified through flags) and then runs
 // benchmark tests using the Ginkgo runner.
 // If a "report directory" is specified, one or more JUnit test reports will be
 // generated in this directory.
-func TestPerformance(t *testing.T) {
-	rand.Seed(time.Now().UTC().UnixNano())
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Benchmark Test Suite")
-}

@@ -111,26 +111,16 @@ type (
 // Aliased functions for api/optional.go.
 // nolint
 var (
-	String   = api.String
-	Int      = api.Int
-	Int32    = api.Int32
-	UInt32   = api.UInt32
-	Int64    = api.Int64
-	UInt64   = api.UInt64
-	Bool     = api.Bool
-	FileMode = api.FileMode
+	String = api.String
+	Int    = api.Int
+	Int64  = api.Int64
+	UInt64 = api.UInt64
+	Bool   = api.Bool
 )
 
 // Aliased functions for api/types.go.
 // nolint
 var (
-	FromOCIMounts          = api.FromOCIMounts
-	FromOCIHooks           = api.FromOCIHooks
-	FromOCILinuxNamespaces = api.FromOCILinuxNamespaces
-	FromOCILinuxDevices    = api.FromOCILinuxDevices
-	FromOCILinuxResources  = api.FromOCILinuxResources
-	DupStringSlice         = api.DupStringSlice
-	DupStringMap           = api.DupStringMap
-	IsMarkedForRemoval     = api.IsMarkedForRemoval
-	MarkForRemoval         = api.MarkForRemoval
+	IsMarkedForRemoval = api.IsMarkedForRemoval
+	MarkForRemoval     = api.MarkForRemoval
 )

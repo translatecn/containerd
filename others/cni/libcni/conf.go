@@ -165,38 +165,6 @@ func LoadConf(dir, name string) (*NetworkConfig, error) {
 	return nil, NotFoundError{dir, name}
 }
 
-func LoadConfList(dir, name string) (*NetworkConfigList, error) {
-	files, err := ConfFiles(dir, []string{".conflist"})
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(files)
-
-	for _, confFile := range files {
-		conf, err := ConfListFromFile(confFile)
-		if err != nil {
-			return nil, err
-		}
-		if conf.Name == name {
-			return conf, nil
-		}
-	}
-
-	// Try and load a network configuration file (instead of list)
-	// from the same name, then upconvert.
-	singleConf, err := LoadConf(dir, name)
-	if err != nil {
-		// A little extra logic so the error makes sense
-		if _, ok := err.(NoConfigsFoundError); len(files) != 0 && ok {
-			// Config lists found but no config files found
-			return nil, NotFoundError{dir, name}
-		}
-
-		return nil, err
-	}
-	return ConfListFromConf(singleConf)
-}
-
 func InjectConf(original *NetworkConfig, newValues map[string]interface{}) (*NetworkConfig, error) {
 	config := make(map[string]interface{})
 	err := json.Unmarshal(original.Bytes, &config)

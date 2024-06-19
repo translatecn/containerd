@@ -61,11 +61,11 @@ var (
 	// that may be part of image names. This is purposely a subset of what is
 	// allowed by DNS to ensure backwards compatibility with Docker image
 	// names.
-	DomainRegexp = regexp.MustCompile(domain)
+	_ = regexp.MustCompile(domain)
 
 	tag = `[\w][\w.-]{0,127}`
 	// TagRegexp matches valid tag names. From docker/docker:graph/tags.go.
-	TagRegexp = regexp.MustCompile(tag)
+	_ = regexp.MustCompile(tag)
 
 	anchoredTag = anchored(tag)
 	// anchoredTagRegexp matches valid tag names, anchored at the start and
@@ -74,7 +74,7 @@ var (
 
 	digestPat = `[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,}`
 	// DigestRegexp matches valid digests.
-	DigestRegexp = regexp.MustCompile(digestPat)
+	_ = regexp.MustCompile(digestPat)
 
 	anchoredDigest = anchored(digestPat)
 	// anchoredDigestRegexp matches valid digests, anchored at the start and
@@ -88,7 +88,7 @@ var (
 	// NameRegexp is the format for the name component of references. The
 	// regexp has capturing groups for the domain and name part omitting
 	// the separating forward slash from either.
-	NameRegexp = regexp.MustCompile(namePat)
+	_ = regexp.MustCompile(namePat)
 
 	anchoredName = anchored(
 		optional(capture(domain), literal(`/`)),
@@ -110,13 +110,13 @@ var (
 	// IdentifierRegexp is the format for string identifier used as a
 	// content addressable identifier using sha256. These identifiers
 	// are like digests without the algorithm, since sha256 is used.
-	IdentifierRegexp = regexp.MustCompile(identifier)
+	_ = regexp.MustCompile(identifier)
 
 	shortIdentifier = `([a-f0-9]{6,64})`
 	// ShortIdentifierRegexp is the format used to represent a prefix
 	// of an identifier. A prefix may be used to match a sha256 identifier
 	// within a list of trusted identifiers.
-	ShortIdentifierRegexp = regexp.MustCompile(shortIdentifier)
+	_ = regexp.MustCompile(shortIdentifier)
 
 	anchoredIdentifier = anchored(identifier)
 	// anchoredIdentifierRegexp is used to check or match an

@@ -14,7 +14,7 @@ const (
 	testImageFSPath  = "/test/image/fs/path"
 )
 
-var testConfig = criconfig.Config{
+var _ = criconfig.Config{
 	RootDir:  testRootDir,
 	StateDir: testStateDir,
 	PluginConfig: criconfig.PluginConfig{

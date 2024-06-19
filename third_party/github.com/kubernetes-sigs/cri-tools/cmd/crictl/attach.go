@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"net/url"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 var runtimeAttachCommand = &cli.Command{

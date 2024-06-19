@@ -29,7 +29,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
-	"github.com/pelletier/go-toml"
 )
 
 const (
@@ -246,38 +245,6 @@ func parseImageReferences(refs []string) ([]string, []string) {
 }
 
 // generateRuntimeOptions generates runtime options from cri plugin config.
-func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{}, error) {
-	if r.Options == nil {
-		if r.Type != plugin.RuntimeLinuxV1 { // io.containerd.runc.v2
-			return nil, nil
-		}
-		// This is a legacy config, generate runctypes.RuncOptions.
-		return &runctypes.RuncOptions{
-			Runtime:       r.Engine,
-			RuntimeRoot:   r.Root,
-			SystemdCgroup: c.SystemdCgroup,
-		}, nil
-	}
-	optionsTree, err := toml.TreeFromMap(r.Options)
-	if err != nil {
-		return nil, err
-	}
-	options := getRuntimeOptionsType(r.Type)
-	if err := optionsTree.Unmarshal(options); err != nil {
-		return nil, err
-	}
-
-	// For generic configuration, if no config path specified (preserving old behavior), pass
-	// the whole TOML configuration section to the runtime.
-	if runtimeOpts, ok := options.(*runtimeoptions.Options); ok && runtimeOpts.ConfigPath == "" {
-		runtimeOpts.ConfigBody, err = optionsTree.Marshal()
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal TOML blob for runtime %q: %v", r.Type, err)
-		}
-	}
-
-	return options, nil
-}
 
 // getRuntimeOptionsType gets empty runtime options by the runtime type name.
 func getRuntimeOptionsType(t string) interface{} {

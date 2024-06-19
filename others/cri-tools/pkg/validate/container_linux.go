@@ -24,9 +24,9 @@ import (
 	"path/filepath"
 
 	"demo/others/cri-tools/pkg/framework"
+	internalapi "demo/over/api/cri"
+	runtimeapi "demo/over/api/cri/v1"
 	"golang.org/x/sys/unix"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

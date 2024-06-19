@@ -29,11 +29,11 @@ import (
 	"strings"
 	"sync"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/yaml"
 )
 

@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.types.transfer;
@@ -7,9 +5,9 @@ package containerd.types.transfer;
 option go_package = "demo/containerd/api/types/transfer";
 
 message Progress {
-	string event = 1;
-	string name = 2;
-	repeated string parents = 3;
-	int64 progress = 4;
-	int64 total = 5;
+  string event = 1;
+  string name = 2;
+  repeated string parents = 3;
+  int64 progress = 4;
+  int64 total = 5;
 }

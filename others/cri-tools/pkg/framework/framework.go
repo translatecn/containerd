@@ -17,7 +17,7 @@ limitations under the License.
 package framework
 
 import (
-	internalapi "k8s.io/cri-api/pkg/apis"
+	internalapi "demo/over/api/cri"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

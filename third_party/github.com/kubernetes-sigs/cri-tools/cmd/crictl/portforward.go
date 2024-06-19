@@ -23,13 +23,13 @@ import (
 	"net/url"
 	"os"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 var runtimePortForwardCommand = &cli.Command{

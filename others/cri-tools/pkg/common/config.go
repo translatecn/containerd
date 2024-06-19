@@ -17,10 +17,6 @@ limitations under the License.
 package common
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -41,33 +37,3 @@ type ServerConfiguration struct {
 }
 
 // GetServerConfigFromFile returns the CRI server configuration from file
-func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfiguration, error) {
-	serverConfig := ServerConfiguration{}
-	if _, err := os.Stat(configFileName); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("load config file: %w", err)
-		}
-		// If the config file was not found, try looking in the program's
-		// directory as a fallback. This is to accommodate where the config file
-		// is placed with the cri tools binary.
-		configFileName = filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
-		if _, err := os.Stat(configFileName); err != nil {
-			return nil, fmt.Errorf("load config file: %w", err)
-		}
-	}
-
-	// Get config from file.
-	config, err := ReadConfig(configFileName)
-	if err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
-
-	// Set the config from file to the server config struct for return
-	serverConfig.RuntimeEndpoint = config.RuntimeEndpoint
-	serverConfig.ImageEndpoint = config.ImageEndpoint
-	serverConfig.Timeout = time.Duration(config.Timeout) * time.Second
-	serverConfig.Debug = config.Debug
-	serverConfig.PullImageOnCreate = config.PullImageOnCreate
-	serverConfig.DisablePullOnRun = config.DisablePullOnRun
-	return &serverConfig, nil
-}

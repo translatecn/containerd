@@ -61,17 +61,6 @@ func NewResult(data []byte) (types.Result, error) {
 
 // GetResult converts the given Result object to the ImplementedSpecVersion
 // and returns the concrete type or an error
-func GetResult(r types.Result) (*Result, error) {
-	result020, err := convert.Convert(r, ImplementedSpecVersion)
-	if err != nil {
-		return nil, err
-	}
-	result, ok := result020.(*Result)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert result")
-	}
-	return result, nil
-}
 
 func convertFrom010(from types.Result, toVersion string) (types.Result, error) {
 	if toVersion != "0.2.0" {

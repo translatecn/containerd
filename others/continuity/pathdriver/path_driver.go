@@ -27,7 +27,7 @@ type PathDriver interface {
 type pathDriver struct{}
 
 // LocalPathDriver is the exported pathDriver struct for convenience.
-var LocalPathDriver PathDriver = &pathDriver{}
+var _ PathDriver = &pathDriver{}
 
 func (*pathDriver) Join(paths ...string) string {
 	return filepath.Join(paths...)

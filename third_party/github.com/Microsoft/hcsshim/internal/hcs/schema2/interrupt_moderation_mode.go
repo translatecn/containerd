@@ -32,7 +32,7 @@ const (
 	HighValue   InterruptModerationValue = 300
 )
 
-var InterruptModerationValueToName = map[InterruptModerationValue]InterruptModerationName{
+var _ = map[InterruptModerationValue]InterruptModerationName{
 	DefaultValue:  DefaultName,
 	AdaptiveValue: AdaptiveName,
 	OffValue:      OffName,

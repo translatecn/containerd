@@ -15,7 +15,6 @@
 package types
 
 import (
-	"encoding"
 	"fmt"
 	"reflect"
 	"strings"
@@ -70,53 +69,3 @@ type UnmarshalableArgsError struct {
 }
 
 // LoadArgs parses args from a string in the form "K=V;K2=V2;..."
-func LoadArgs(args string, container interface{}) error {
-	if args == "" {
-		return nil
-	}
-
-	containerValue := reflect.ValueOf(container)
-
-	pairs := strings.Split(args, ";")
-	unknownArgs := []string{}
-	for _, pair := range pairs {
-		kv := strings.Split(pair, "=")
-		if len(kv) != 2 {
-			return fmt.Errorf("ARGS: invalid pair %q", pair)
-		}
-		keyString := kv[0]
-		valueString := kv[1]
-		keyField := GetKeyField(keyString, containerValue)
-		if !keyField.IsValid() {
-			unknownArgs = append(unknownArgs, pair)
-			continue
-		}
-
-		var keyFieldInterface interface{}
-		switch {
-		case keyField.Kind() == reflect.Ptr:
-			keyField.Set(reflect.New(keyField.Type().Elem()))
-			keyFieldInterface = keyField.Interface()
-		case keyField.CanAddr() && keyField.Addr().CanInterface():
-			keyFieldInterface = keyField.Addr().Interface()
-		default:
-			return UnmarshalableArgsError{fmt.Errorf("field '%s' has no valid interface", keyString)}
-		}
-		u, ok := keyFieldInterface.(encoding.TextUnmarshaler)
-		if !ok {
-			return UnmarshalableArgsError{fmt.Errorf(
-				"ARGS: cannot unmarshal into field '%s' - type '%s' does not implement encoding.TextUnmarshaler",
-				keyString, reflect.TypeOf(keyFieldInterface))}
-		}
-		err := u.UnmarshalText([]byte(valueString))
-		if err != nil {
-			return fmt.Errorf("ARGS: error parsing value of pair %q: %w", pair, err)
-		}
-	}
-
-	isIgnoreUnknown := GetKeyField("IgnoreUnknown", containerValue).Bool()
-	if len(unknownArgs) > 0 && !isIgnoreUnknown {
-		return fmt.Errorf("ARGS: unknown args %q", unknownArgs)
-	}
-	return nil
-}

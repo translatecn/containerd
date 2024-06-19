@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.types;
@@ -12,8 +10,8 @@ option go_package = "demo/containerd/api/types;types";
 // oci descriptor found in a manifest.
 // See https://godoc.org/github.com/opencontainers/image-spec/specs-go/v1#Descriptor
 message Descriptor {
-	string media_type = 1;
-	string digest = 2;
-	int64 size = 3;
-	map<string, string> annotations = 5;
+  string media_type = 1;
+  string digest = 2;
+  int64 size = 3;
+  map<string, string> annotations = 5;
 }

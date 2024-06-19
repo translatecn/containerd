@@ -22,7 +22,7 @@ func ContextDialer(ctx context.Context, address string) (net.Conn, error) {
 
 // Dialer returns a GRPC net.Conn connected to the provided address
 // Deprecated: use ContextDialer and grpc.WithContextDialer.
-var Dialer = timeoutDialer
+var _ = timeoutDialer
 
 func timeoutDialer(address string, timeout time.Duration) (net.Conn, error) {
 	var (

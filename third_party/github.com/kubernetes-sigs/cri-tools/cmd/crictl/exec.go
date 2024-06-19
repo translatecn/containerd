@@ -23,13 +23,13 @@ import (
 	"net/url"
 	"time"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	mobyterm "github.com/moby/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubectl/pkg/util/term"
 )
 

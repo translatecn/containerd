@@ -15,12 +15,7 @@
 package version
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"demo/others/cni/pkg/types"
 	types100 "demo/others/cni/pkg/types/100"
-	"demo/others/cni/pkg/types/create"
 )
 
 // Current reports the version of the CNI spec implemented by this library
@@ -35,55 +30,13 @@ func Current() string {
 //
 // Any future CNI spec versions which meet this definition should be added to
 // this list.
-var Legacy = PluginSupports("0.1.0", "0.2.0")
+var _ = PluginSupports("0.1.0", "0.2.0")
 var All = PluginSupports("0.1.0", "0.2.0", "0.3.0", "0.3.1", "0.4.0", "1.0.0")
 
 // VersionsFrom returns a list of versions starting from min, inclusive
-func VersionsStartingFrom(min string) PluginInfo {
-	out := []string{}
-	// cheat, just assume ordered
-	ok := false
-	for _, v := range All.SupportedVersions() {
-		if !ok && v == min {
-			ok = true
-		}
-		if ok {
-			out = append(out, v)
-		}
-	}
-	return PluginSupports(out...)
-}
 
 // Finds a Result object matching the requested version (if any) and asks
 // that object to parse the plugin result, returning an error if parsing failed.
-func NewResult(version string, resultBytes []byte) (types.Result, error) {
-	return create.Create(version, resultBytes)
-}
 
 // ParsePrevResult parses a prevResult in a NetConf structure and sets
 // the NetConf's PrevResult member to the parsed Result object.
-func ParsePrevResult(conf *types.NetConf) error {
-	if conf.RawPrevResult == nil {
-		return nil
-	}
-
-	// Prior to 1.0.0, Result types may not marshal a CNIVersion. Since the
-	// result version must match the config version, if the Result's version
-	// is empty, inject the config version.
-	if ver, ok := conf.RawPrevResult["CNIVersion"]; !ok || ver == "" {
-		conf.RawPrevResult["CNIVersion"] = conf.CNIVersion
-	}
-
-	resultBytes, err := json.Marshal(conf.RawPrevResult)
-	if err != nil {
-		return fmt.Errorf("could not serialize prevResult: %w", err)
-	}
-
-	conf.RawPrevResult = nil
-	conf.PrevResult, err = create.Create(conf.CNIVersion, resultBytes)
-	if err != nil {
-		return fmt.Errorf("could not parse prevResult: %w", err)
-	}
-
-	return nil
-}

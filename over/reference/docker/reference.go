@@ -59,7 +59,7 @@ var (
 	ErrNameTooLong = fmt.Errorf("repository name must not be more than %v characters", NameTotalLengthMax)
 
 	// ErrNameNotCanonical is returned when a name is not canonical.
-	ErrNameNotCanonical = errors.New("repository name must be canonical")
+	_ = errors.New("repository name must be canonical")
 )
 
 // Reference is an opaque object reference identifier that may include

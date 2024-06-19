@@ -28,13 +28,13 @@ import (
 	"sync"
 	"time"
 
+	internalapi "demo/over/api/cri"
+	runtimeapi "demo/over/api/cri/v1"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

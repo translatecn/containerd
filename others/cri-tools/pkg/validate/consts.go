@@ -20,7 +20,7 @@ import (
 	"runtime"
 
 	"demo/others/cri-tools/pkg/framework"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "demo/over/api/cri/v1"
 )
 
 // Container test constants

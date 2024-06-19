@@ -16,22 +16,8 @@ limitations under the License.
 
 package validate
 
-import (
-	"math/rand"
-	"testing"
-	"time"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-)
-
 // TestE2ECRI checks configuration parameters (specified through flags) and then runs
 // E2ECRI tests using the Ginkgo runner.
 // If a "report directory" is specified, one or more JUnit test reports will be
 // generated in this directory.
 // This function is called on each Ginkgo node in parallel mode.
-func TestE2ECRI(t *testing.T) {
-	rand.Seed(time.Now().UTC().UnixNano())
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2ECRI Suite")
-}

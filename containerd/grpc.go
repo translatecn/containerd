@@ -26,10 +26,3 @@ func (ni namespaceInterceptor) stream(ctx context.Context, desc *grpc.StreamDesc
 
 	return streamer(ctx, desc, cc, method, opts...)
 }
-
-func newNSInterceptors(ns string) (grpc.UnaryClientInterceptor, grpc.StreamClientInterceptor) {
-	ni := namespaceInterceptor{
-		namespace: ns,
-	}
-	return grpc.UnaryClientInterceptor(ni.unary), grpc.StreamClientInterceptor(ni.stream)
-}

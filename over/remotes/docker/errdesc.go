@@ -24,7 +24,7 @@ var (
 	})
 
 	// ErrorCodeUnsupported is returned when an operation is not supported.
-	ErrorCodeUnsupported = Register("errcode", ErrorDescriptor{
+	_ = Register("errcode", ErrorDescriptor{
 		Value:   "UNSUPPORTED",
 		Message: "The operation is unsupported.",
 		Description: `The operation was unsupported due to a missing
@@ -34,7 +34,7 @@ var (
 
 	// ErrorCodeUnauthorized is returned if a request requires
 	// authentication.
-	ErrorCodeUnauthorized = Register("errcode", ErrorDescriptor{
+	_ = Register("errcode", ErrorDescriptor{
 		Value:   "UNAUTHORIZED",
 		Message: "authentication required",
 		Description: `The access controller was unable to authenticate
@@ -46,7 +46,7 @@ var (
 
 	// ErrorCodeDenied is returned if a client does not have sufficient
 	// permission to perform an action.
-	ErrorCodeDenied = Register("errcode", ErrorDescriptor{
+	_ = Register("errcode", ErrorDescriptor{
 		Value:   "DENIED",
 		Message: "requested access to the resource is denied",
 		Description: `The access controller denied access for the
@@ -56,7 +56,7 @@ var (
 
 	// ErrorCodeUnavailable provides a common error to report unavailability
 	// of a service or endpoint.
-	ErrorCodeUnavailable = Register("errcode", ErrorDescriptor{
+	_ = Register("errcode", ErrorDescriptor{
 		Value:          "UNAVAILABLE",
 		Message:        "service unavailable",
 		Description:    "Returned when a service is not available",
@@ -65,7 +65,7 @@ var (
 
 	// ErrorCodeTooManyRequests is returned if a client attempts too many
 	// times to contact a service endpoint.
-	ErrorCodeTooManyRequests = Register("errcode", ErrorDescriptor{
+	_ = Register("errcode", ErrorDescriptor{
 		Value:   "TOOMANYREQUESTS",
 		Message: "too many requests",
 		Description: `Returned when a client attempts to contact a

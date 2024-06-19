@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.types.transfer;
@@ -7,9 +5,9 @@ package containerd.types.transfer;
 option go_package = "demo/containerd/api/types/transfer";
 
 message Data {
-	bytes data = 1;
+  bytes data = 1;
 }
 
 message WindowUpdate {
-	int32 update = 1;
+  int32 update = 1;
 }

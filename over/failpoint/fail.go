@@ -77,17 +77,6 @@ type Failpoint struct {
 }
 
 // NewFailpoint returns failpoint control.
-func NewFailpoint(fnName string, terms string) (*Failpoint, error) {
-	entries, err := parseTerms([]byte(terms))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Failpoint{
-		fnName:  fnName,
-		entries: entries,
-	}, nil
-}
 
 // Evaluate evaluates a failpoint.
 func (fp *Failpoint) Evaluate() error {

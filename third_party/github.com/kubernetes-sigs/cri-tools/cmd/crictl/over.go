@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
+	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"time"
 )
 

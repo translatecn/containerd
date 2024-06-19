@@ -1,12 +1,9 @@
 package driver
 
 import (
-	"fmt"
 	"io"
 	"os"
 )
-
-var ErrNotSupported = fmt.Errorf("not supported")
 
 // Driver provides all of the system-level functions in a common interface.
 // The context should call these with full paths and should never use the `os`
@@ -97,7 +94,7 @@ type driver struct{}
 var _ File = &os.File{}
 
 // LocalDriver is the exported Driver struct for convenience.
-var LocalDriver Driver = &driver{}
+var _ Driver = &driver{}
 
 func (d *driver) Open(p string) (File, error) {
 	return os.Open(p)

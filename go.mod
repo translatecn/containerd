@@ -71,18 +71,15 @@ require (
 	k8s.io/apimachinery v0.27.0
 	k8s.io/apiserver v0.26.2
 	k8s.io/client-go v1.5.2
-	k8s.io/cri-api v0.30.2
 	k8s.io/klog/v2 v2.90.1
-	k8s.io/kubernetes v0.0.0-00010101000000-000000000000
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
 	tags.cncf.io/container-device-interface v0.7.2
 )
 
-require k8s.io/component-base v0.26.2 // indirect
+require k8s.io/component-base v0.26.2
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
-	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect

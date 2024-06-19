@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.services.namespaces.v1;
@@ -21,47 +19,47 @@ option go_package = "demo/containerd/api/services/namespaces/v1;namespaces";
 // I hope this goes without saying, but namespaces are themselves NOT
 // namespaced.
 service Namespaces {
-	rpc Get(GetNamespaceRequest) returns (GetNamespaceResponse);
-	rpc List(ListNamespacesRequest) returns (ListNamespacesResponse);
-	rpc Create(CreateNamespaceRequest) returns (CreateNamespaceResponse);
-	rpc Update(UpdateNamespaceRequest) returns (UpdateNamespaceResponse);
-	rpc Delete(DeleteNamespaceRequest) returns (google.protobuf.Empty);
+  rpc Get(GetNamespaceRequest) returns (GetNamespaceResponse);
+  rpc List(ListNamespacesRequest) returns (ListNamespacesResponse);
+  rpc Create(CreateNamespaceRequest) returns (CreateNamespaceResponse);
+  rpc Update(UpdateNamespaceRequest) returns (UpdateNamespaceResponse);
+  rpc Delete(DeleteNamespaceRequest) returns (google.protobuf.Empty);
 }
 
 message Namespace {
-	string name = 1;
+  string name = 1;
 
-	// Labels provides an area to include arbitrary data on namespaces.
-	//
-	// The combined size of a key/value pair cannot exceed 4096 bytes.
-	//
-	// Note that to add a new value to this field, read the existing set and
-	// include the entire result in the update call.
-	map<string, string> labels  = 2;
+  // Labels provides an area to include arbitrary data on namespaces.
+  //
+  // The combined size of a key/value pair cannot exceed 4096 bytes.
+  //
+  // Note that to add a new value to this field, read the existing set and
+  // include the entire result in the update call.
+  map<string, string> labels = 2;
 }
 
 message GetNamespaceRequest {
-	string name = 1;
+  string name = 1;
 }
 
 message GetNamespaceResponse {
-	Namespace namespace = 1;
+  Namespace namespace = 1;
 }
 
 message ListNamespacesRequest {
-	string filter = 1;
+  string filter = 1;
 }
 
 message ListNamespacesResponse {
-	repeated Namespace namespaces = 1;
+  repeated Namespace namespaces = 1;
 }
 
 message CreateNamespaceRequest {
-	Namespace namespace = 1;
+  Namespace namespace = 1;
 }
 
 message CreateNamespaceResponse {
-	Namespace namespace = 1;
+  Namespace namespace = 1;
 }
 
 // UpdateNamespaceRequest updates the metadata for a namespace.
@@ -70,24 +68,24 @@ message CreateNamespaceResponse {
 // https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/field-mask,
 // unless otherwise qualified.
 message UpdateNamespaceRequest {
-	// Namespace provides the target value, as declared by the mask, for the update.
-	//
-	// The namespace field must be set.
-	Namespace namespace = 1;
+  // Namespace provides the target value, as declared by the mask, for the update.
+  //
+  // The namespace field must be set.
+  Namespace namespace = 1;
 
-	// UpdateMask specifies which fields to perform the update on. If empty,
-	// the operation applies to all fields.
-	//
-	// For the most part, this applies only to selectively updating labels on
-	// the namespace. While field masks are typically limited to ascii alphas
-	// and digits, we just take everything after the "labels." as the map key.
-	google.protobuf.FieldMask update_mask = 2;
+  // UpdateMask specifies which fields to perform the update on. If empty,
+  // the operation applies to all fields.
+  //
+  // For the most part, this applies only to selectively updating labels on
+  // the namespace. While field masks are typically limited to ascii alphas
+  // and digits, we just take everything after the "labels." as the map key.
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdateNamespaceResponse {
-	Namespace namespace = 1;
+  Namespace namespace = 1;
 }
 
 message DeleteNamespaceRequest {
-	string name = 1;
+  string name = 1;
 }

@@ -1,5 +1,3 @@
-
-
 syntax = "proto3";
 
 package containerd.events;
@@ -9,15 +7,15 @@ import "google/protobuf/timestamp.proto";
 option go_package = "demo/containerd/api/events;events";
 
 message SandboxCreate {
-	string sandbox_id = 1;
+  string sandbox_id = 1;
 }
 
 message SandboxStart {
-	string sandbox_id = 1;
+  string sandbox_id = 1;
 }
 
 message SandboxExit {
-	string sandbox_id = 1;
-	uint32 exit_status = 2;
-	google.protobuf.Timestamp exited_at = 3;
+  string sandbox_id = 1;
+  uint32 exit_status = 2;
+  google.protobuf.Timestamp exited_at = 3;
 }

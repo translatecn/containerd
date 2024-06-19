@@ -6,4 +6,4 @@ metadata:
 log_directory: /tmp
 linux:
   namespaces:
-    options: {}
+    options: { }

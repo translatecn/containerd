@@ -61,18 +61,6 @@ func NewResult(data []byte) (types.Result, error) {
 		supportedVersions, result.CNIVersion)
 }
 
-func GetResult(r types.Result) (*Result, error) {
-	resultCurrent, err := r.GetAsVersion(ImplementedSpecVersion)
-	if err != nil {
-		return nil, err
-	}
-	result, ok := resultCurrent.(*Result)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert result")
-	}
-	return result, nil
-}
-
 func NewResultFromResult(result types.Result) (*Result, error) {
 	newResult, err := convert.Convert(result, ImplementedSpecVersion)
 	if err != nil {
@@ -245,9 +233,6 @@ func (i *Interface) Copy() *Interface {
 
 // Int returns a pointer to the int value passed in.  Used to
 // set the IPConfig.Interface field.
-func Int(v int) *int {
-	return &v
-}
 
 // IPConfig contains values necessary to configure an IP address on an interface
 type IPConfig struct {

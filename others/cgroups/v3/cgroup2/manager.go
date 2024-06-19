@@ -28,7 +28,7 @@ const (
 	defaultSlice       = "system.slice"
 )
 
-var canDelegate bool
+var _ bool
 
 type Event struct {
 	Low     uint64

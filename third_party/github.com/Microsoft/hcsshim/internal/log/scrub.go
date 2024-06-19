@@ -9,12 +9,12 @@ import (
 const _scrubbedReplacement = "<scrubbed>"
 
 var (
-	ErrUnknownType = errors.New("encoded object is of unknown type")
+	_ = errors.New("encoded object is of unknown type")
 
 	// case sensitive keywords, so "env" is not a substring on "Environment"
-	_scrubKeywords = [][]byte{[]byte("env"), []byte("Environment")}
+	_ = [][]byte{[]byte("env"), []byte("Environment")}
 
-	_scrub int32
+	_ int32
 )
 
 // SetScrubbing enables scrubbing

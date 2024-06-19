@@ -241,15 +241,6 @@ var vmbasedRuntimes = []string{
 	"io.containerd.kata",
 }
 
-func isVMBasedRuntime(runtimeType string) bool {
-	for _, rt := range vmbasedRuntimes {
-		if strings.Contains(runtimeType, rt) {
-			return true
-		}
-	}
-	return false
-}
-
 func parseUsernsIDMap(runtimeIDMap []*runtime.IDMapping) ([]specs.LinuxIDMapping, error) {
 	var m []specs.LinuxIDMapping
 

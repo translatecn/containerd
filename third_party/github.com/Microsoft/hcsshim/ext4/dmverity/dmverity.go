@@ -20,15 +20,15 @@ const (
 )
 
 var (
-	salt   = bytes.Repeat([]byte{0}, 32)
-	sbSize = binary.Size(dmveritySuperblock{})
+	_ = bytes.Repeat([]byte{0}, 32)
+	_ = binary.Size(dmveritySuperblock{})
 )
 
 var (
-	ErrSuperBlockReadFailure  = errors.New("failed to read dm-verity super block")
-	ErrSuperBlockParseFailure = errors.New("failed to parse dm-verity super block")
-	ErrRootHashReadFailure    = errors.New("failed to read dm-verity root hash")
-	ErrNotVeritySuperBlock    = errors.New("invalid dm-verity super-block signature")
+	_ = errors.New("failed to read dm-verity super block")
+	_ = errors.New("failed to parse dm-verity super block")
+	_ = errors.New("failed to read dm-verity root hash")
+	_ = errors.New("invalid dm-verity super-block signature")
 )
 
 type dmveritySuperblock struct {

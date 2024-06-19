@@ -29,9 +29,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
+	internalapi "demo/over/api/cri"
+	pb "demo/over/api/cri/v1"
 	errorUtils "k8s.io/apimachinery/pkg/util/errors"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type sandboxByCreated []*pb.PodSandbox

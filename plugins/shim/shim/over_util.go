@@ -51,6 +51,10 @@ func Command(ctx context.Context, config *CommandConfig) (*exec.Cmd, error) {
 	args = append(args, config.Args...)
 	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", config.Runtime, "--"}
 	//cmd := exec.Command("dlv", append(x, args...)...)
+	// /Users/acejilam/Desktop/containerd/containerd-shim-runc-v2 -- -namespace k8s.io
+	// -address /run/containerd/containerd.sock -publish-binary /Users/acejilam/Desktop/con/Users/acejilam/Desktop/containerd/containerd-shim-runc-v2
+	// -- -namespace k8s.io -address /run/containerd/containerd.sock -publish-binary /Users/acejilam/Desktop/ctainerd/containerd_bin
+	// -id f56fc531a7713ebd6a0ecea8024a55e895094f7138cc2344b0fc341ddb43b6cf start
 	cmd := exec.CommandContext(ctx, config.Runtime, args...) // container-shim-runc-v2
 	cmd.Dir = config.Path
 	cmd.Env = append(

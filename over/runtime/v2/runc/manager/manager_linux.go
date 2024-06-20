@@ -70,6 +70,89 @@ func (m manager) Name() string {
 	return m.name
 }
 
+func (manager) Stop(ctx context.Context, id string) (shim.StopStatus, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return shim.StopStatus{}, err
+	}
+
+	path := filepath.Join(filepath.Dir(cwd), id)
+	ns, err := namespaces.NamespaceRequired(ctx)
+	if err != nil {
+		return shim.StopStatus{}, err
+	}
+	runtime, err := runc.ReadRuntime(path)
+	if err != nil {
+		return shim.StopStatus{}, err
+	}
+	opts, err := runc.ReadOptions(path)
+	if err != nil {
+		return shim.StopStatus{}, err
+	}
+	root := process.RuncRoot
+	if opts != nil && opts.Root != "" {
+		root = opts.Root
+	}
+
+	r := process.NewRunc(root, path, ns, runtime, false)
+	if err := r.Delete(ctx, id, &runcC.DeleteOpts{
+		Force: true,
+	}); err != nil {
+		log.G(ctx).WithError(err).Warn("failed to remove runc container")
+	}
+	if err := mount.UnmountRecursive(filepath.Join(path, "rootfs"), 0); err != nil {
+		log.G(ctx).WithError(err).Warn("failed to cleanup rootfs mount")
+	}
+	pid, err := runcC.ReadPidFile(filepath.Join(path, process.InitPidFile))
+	if err != nil {
+		log.G(ctx).WithError(err).Warn("failed to read init pid file")
+	}
+	return shim.StopStatus{
+		ExitedAt:   time.Now(),
+		ExitStatus: 128 + int(unix.SIGKILL),
+		Pid:        pid,
+	}, nil
+}
+
+func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddress string, debug bool) (*exec.Cmd, error) {
+	ns, err := namespaces.NamespaceRequired(ctx)
+	if err != nil {
+		return nil, err
+	}
+	self, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	args := []string{
+		"-namespace", ns,
+		"-id", id,
+		"-address", containerdAddress,
+	}
+	if debug {
+		args = append(args, "-debug")
+	}
+	x := []string{"--listen=:32345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
+	//  /Users/acejilam/Desktop/containerd/containerd-shim-runc-v2 -namespace k8s.io
+	//  -address /run/containerd/containerd.sock -id f56fc531a7713ebd6a0ecea8024a55e895094f7138cc2344b0fc341ddb43b6cf
+	cmd := exec.Command("dlv", append(x, args...)...)
+	//cmd := exec.Command(self, args...)
+	cmd.Dir = cwd
+	cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true, // 将一个进程从原来所属的进程组迁移到pgid对应的进程组
+	}
+	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->ENV: ", drop.DropEnv(cmd.Env))
+	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Args: ", cmd.Args)
+	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Path: ", cmd.Path)
+	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Process: ", cmd.Process)
+	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Dir: ", cmd.Dir)
+
+	return cmd, nil
+}
 func (manager) Start(ctx context.Context, id string, opts shim.StartOpts) (_ string, retErr error) {
 	cmd, err := newCommand(ctx, id, opts.Address, opts.TTRPCAddress, opts.Debug)
 	if err != nil {
@@ -92,7 +175,7 @@ func (manager) Start(ctx context.Context, id string, opts shim.StartOpts) (_ str
 	}
 
 	socket, err := shim.NewSocket(address)
-	// ///run/containerd/s/1c2bf84c6529ba17d8234a68f92557fb5c1e4214eb17b724580e60b640e4f68a
+	// /run/containerd/s/1c2bf84c6529ba17d8234a68f92557fb5c1e4214eb17b724580e60b640e4f68a
 	if err != nil {
 		// the only time where this would happen is if there is a bug and the socket
 		// was not cleaned up in the cleanup method of the shim or we are using the
@@ -181,79 +264,4 @@ func (manager) Start(ctx context.Context, id string, opts shim.StartOpts) (_ str
 		return "", fmt.Errorf("failed to adjust OOM score for shim: %w", err)
 	}
 	return address, nil
-}
-
-func (manager) Stop(ctx context.Context, id string) (shim.StopStatus, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return shim.StopStatus{}, err
-	}
-
-	path := filepath.Join(filepath.Dir(cwd), id)
-	ns, err := namespaces.NamespaceRequired(ctx)
-	if err != nil {
-		return shim.StopStatus{}, err
-	}
-	runtime, err := runc.ReadRuntime(path)
-	if err != nil {
-		return shim.StopStatus{}, err
-	}
-	opts, err := runc.ReadOptions(path)
-	if err != nil {
-		return shim.StopStatus{}, err
-	}
-	root := process.RuncRoot
-	if opts != nil && opts.Root != "" {
-		root = opts.Root
-	}
-
-	r := process.NewRunc(root, path, ns, runtime, false)
-	if err := r.Delete(ctx, id, &runcC.DeleteOpts{
-		Force: true,
-	}); err != nil {
-		log.G(ctx).WithError(err).Warn("failed to remove runc container")
-	}
-	if err := mount.UnmountRecursive(filepath.Join(path, "rootfs"), 0); err != nil {
-		log.G(ctx).WithError(err).Warn("failed to cleanup rootfs mount")
-	}
-	pid, err := runcC.ReadPidFile(filepath.Join(path, process.InitPidFile))
-	if err != nil {
-		log.G(ctx).WithError(err).Warn("failed to read init pid file")
-	}
-	return shim.StopStatus{
-		ExitedAt:   time.Now(),
-		ExitStatus: 128 + int(unix.SIGKILL),
-		Pid:        pid,
-	}, nil
-}
-func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddress string, debug bool) (*exec.Cmd, error) {
-	ns, err := namespaces.NamespaceRequired(ctx)
-	if err != nil {
-		return nil, err
-	}
-	self, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	args := []string{
-		"-namespace", ns,
-		"-id", id,
-		"-address", containerdAddress,
-	}
-	if debug {
-		args = append(args, "-debug")
-	}
-	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
-	//cmd := exec.Command("dlv", append(x, args...)...)
-	cmd := exec.Command(self, args...)
-	cmd.Dir = cwd
-	cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true, // 将一个进程从原来所属的进程组迁移到pgid对应的进程组
-	}
-	return cmd, nil
 }

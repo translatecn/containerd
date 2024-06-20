@@ -95,5 +95,4 @@ cat << EOF | tee /tmp/etc/cni/net.d//10-containerd-net.conflist
 ```
 
 
-cri-tools
-crictl
+- parseStartResponse

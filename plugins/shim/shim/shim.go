@@ -2,12 +2,14 @@ package shim
 
 import (
 	"context"
+	sandboxapi "demo/over/api/runtime/sandbox/v1"
 	"demo/over/log"
 	"demo/over/namespaces"
 	"demo/over/plugin"
 	"demo/over/protobuf"
 	"demo/over/protobuf/proto"
 	"demo/over/shutdown"
+
 	"demo/over/version"
 	"errors"
 	"flag"
@@ -364,13 +366,16 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 	if err != nil {
 		return fmt.Errorf("failed creating server: %w", err)
 	}
+	//_ = new(task.Service).RegisterTTRPC
+	//_ = new(pause.PauseService).RegisterTTRPC
 
 	for _, srv := range ttrpcServices {
 		if err := srv.RegisterTTRPC(server); err != nil {
 			return fmt.Errorf("failed to register service: %w", err)
 		}
 	}
-
+	_ = shimapi.TaskService.Checkpoint
+	_ = sandboxapi.TTRPCSandboxService.CreateSandbox
 	if err := serve(ctx, server, signals, sd.Shutdown); err != nil {
 		if err != shutdown.ErrShutdown {
 			return err
@@ -391,8 +396,6 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 	}
 }
 
-// serve serves the ttrpc API over a unix socket in the current working directory
-// and blocks until the context is canceled
 func serve(ctx context.Context, server *ttrpc.Server, signals chan os.Signal, shutdown func()) error {
 	dump := make(chan os.Signal, 32)
 	setupDumpStacks(dump)

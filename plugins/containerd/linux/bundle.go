@@ -120,15 +120,6 @@ type bundle struct {
 // ShimOpt specifies shim options for initialization and connection
 type ShimOpt func(*bundle, string, *runctypes.RuncOptions) (shim.Config, client.Opt)
 
-// ShimRemote is a ShimOpt for connecting and starting a remote shim
-func ShimRemote(c *Config, daemonAddress, cgroup string, exitHandler func()) ShimOpt {
-	return func(b *bundle, ns string, ropts *runctypes.RuncOptions) (shim.Config, client.Opt) {
-		config := b.shimConfig(ns, c, ropts)
-		return config,
-			client.WithStart(c.Shim, b.shimAddress(ns, daemonAddress), daemonAddress, cgroup, c.ShimDebug, exitHandler)
-	}
-}
-
 // ShimLocal is a ShimOpt for using an in process shim implementation
 func ShimLocal(c *Config, exchange *exchange.Exchange) ShimOpt {
 	return func(b *bundle, ns string, ropts *runctypes.RuncOptions) (shim.Config, client.Opt) {
@@ -173,11 +164,6 @@ func (b *bundle) legacyShimAddress(namespace string) string {
 }
 
 const socketRoot = "/run/containerd"
-
-func (b *bundle) shimAddress(namespace, socketPath string) string {
-	d := sha256.Sum256([]byte(filepath.Join(socketPath, namespace, b.id)))
-	return fmt.Sprintf("unix://%s/%x", filepath.Join(socketRoot, "s"), d)
-}
 
 func (b *bundle) loadAddress() (string, error) {
 	addressPath := filepath.Join(b.path, "address")
@@ -227,4 +213,15 @@ func atomicDelete(path string) error {
 		return err
 	}
 	return os.RemoveAll(atomicPath)
+}
+func (b *bundle) shimAddress(namespace, socketPath string) string {
+	d := sha256.Sum256([]byte(filepath.Join(socketPath, namespace, b.id)))
+	return fmt.Sprintf("unix://%s/%x", filepath.Join(socketRoot, "s"), d)
+}
+func ShimRemote(c *Config, daemonAddress, cgroup string, exitHandler func()) ShimOpt {
+	return func(b *bundle, ns string, ropts *runctypes.RuncOptions) (shim.Config, client.Opt) {
+		config := b.shimConfig(ns, c, ropts)
+		return config,
+			client.WithStart(c.Shim, b.shimAddress(ns, daemonAddress), daemonAddress, cgroup, c.ShimDebug, exitHandler)
+	}
 }

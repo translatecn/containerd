@@ -150,7 +150,7 @@ type ShimInstance interface {
 
 func parseStartResponse(ctx context.Context, response []byte) (shim.BootstrapParams, error) {
 	var params shim.BootstrapParams
-	rs := []byte{}
+	var rs []byte
 	if strings.Contains(string(response), `API server listening at`) {
 		x := strings.Split(string(response), "\n")
 		d := strings.Join(x[3:], "\n")

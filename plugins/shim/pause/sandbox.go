@@ -26,35 +26,35 @@ func init() {
 				return nil, err
 			}
 
-			return &pauseService{
+			return &PauseService{
 				shutdown: ss.(shutdown.Service),
 			}, nil
 		},
 	})
 }
 
-type pauseService struct {
+type PauseService struct {
 	shutdown shutdown.Service
 }
 
-var _ api.TTRPCSandboxService = (*pauseService)(nil)
+var _ api.TTRPCSandboxService = (*PauseService)(nil)
 
-func (p *pauseService) RegisterTTRPC(server *ttrpc.Server) error {
+func (p *PauseService) RegisterTTRPC(server *ttrpc.Server) error {
 	api.RegisterTTRPCSandboxService(server, p)
 	return nil
 }
 
-func (p *pauseService) CreateSandbox(ctx context.Context, req *api.CreateSandboxRequest) (*api.CreateSandboxResponse, error) {
+func (p *PauseService) CreateSandbox(ctx context.Context, req *api.CreateSandboxRequest) (*api.CreateSandboxResponse, error) {
 	log.Debugf("create sandbox request: %+v", req)
 	return &api.CreateSandboxResponse{}, nil
 }
 
-func (p *pauseService) StartSandbox(ctx context.Context, req *api.StartSandboxRequest) (*api.StartSandboxResponse, error) {
+func (p *PauseService) StartSandbox(ctx context.Context, req *api.StartSandboxRequest) (*api.StartSandboxResponse, error) {
 	log.Debugf("start sandbox request: %+v", req)
 	return &api.StartSandboxResponse{}, nil
 }
 
-func (p *pauseService) Platform(ctx context.Context, req *api.PlatformRequest) (*api.PlatformResponse, error) {
+func (p *PauseService) Platform(ctx context.Context, req *api.PlatformRequest) (*api.PlatformResponse, error) {
 	log.Debugf("platform request: %+v", req)
 
 	platform := types.Platform{
@@ -65,27 +65,27 @@ func (p *pauseService) Platform(ctx context.Context, req *api.PlatformRequest) (
 	return &api.PlatformResponse{Platform: &platform}, nil
 }
 
-func (p *pauseService) StopSandbox(ctx context.Context, req *api.StopSandboxRequest) (*api.StopSandboxResponse, error) {
+func (p *PauseService) StopSandbox(ctx context.Context, req *api.StopSandboxRequest) (*api.StopSandboxResponse, error) {
 	log.Debugf("stop sandbox request: %+v", req)
 	p.shutdown.Shutdown()
 	return &api.StopSandboxResponse{}, nil
 }
 
-func (p *pauseService) WaitSandbox(ctx context.Context, req *api.WaitSandboxRequest) (*api.WaitSandboxResponse, error) {
+func (p *PauseService) WaitSandbox(ctx context.Context, req *api.WaitSandboxRequest) (*api.WaitSandboxResponse, error) {
 	return &api.WaitSandboxResponse{
 		ExitStatus: 0,
 	}, nil
 }
 
-func (p *pauseService) SandboxStatus(ctx context.Context, req *api.SandboxStatusRequest) (*api.SandboxStatusResponse, error) {
+func (p *PauseService) SandboxStatus(ctx context.Context, req *api.SandboxStatusRequest) (*api.SandboxStatusResponse, error) {
 	log.Debugf("sandbox status request: %+v", req)
 	return &api.SandboxStatusResponse{}, nil
 }
 
-func (p *pauseService) PingSandbox(ctx context.Context, req *api.PingRequest) (*api.PingResponse, error) {
+func (p *PauseService) PingSandbox(ctx context.Context, req *api.PingRequest) (*api.PingResponse, error) {
 	return &api.PingResponse{}, nil
 }
 
-func (p *pauseService) ShutdownSandbox(ctx context.Context, request *api.ShutdownSandboxRequest) (*api.ShutdownSandboxResponse, error) {
+func (p *PauseService) ShutdownSandbox(ctx context.Context, request *api.ShutdownSandboxRequest) (*api.ShutdownSandboxResponse, error) {
 	return &api.ShutdownSandboxResponse{}, nil
 }

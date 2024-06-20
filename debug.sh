@@ -60,7 +60,7 @@ go build -o containerd-shim-runc-v2 ./cmd/containerd-shim-runc-v2
 #export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://10.230.205.190:5080/api/default/traces
 #export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 #export OTEL_EXPORTER_OTLP_TRACES_HEADERS=Authorization='Basic cm9vdEBleGFtcGxlLmNvbTpPbmRxZE9BSFZLc3lKTWVT'
-#export DEBUG=1
+export DEBUG=1
 
 # docker run -d \
 #      --name openobserve \

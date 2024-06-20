@@ -53,7 +53,7 @@ var podStatusCommand = &cli.Command{
 }
 var overRuntimeVersionCommand = &cli.Command{
 	Name:  "version",
-	Usage: "Display runtime version information",
+	Usage: "显示运行时版本信息",
 	Action: func(c *cli.Context) error {
 		if c.NArg() != 0 {
 			cli.ShowSubcommandHelp(c)
@@ -78,13 +78,12 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 	// Check if a custom timeout is provided.
 	t := time.Hour
 	// If no EP set then use the default endpoint types
-	fmt.Println(RuntimeEndpoint)
 	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, nil)
 }
 
 var runtimeStatusCommand = &cli.Command{
 	Name:                   "info",
-	Usage:                  "Display information of the container runtime",
+	Usage:                  "显示容器运行时信息",
 	ArgsUsage:              "",
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{

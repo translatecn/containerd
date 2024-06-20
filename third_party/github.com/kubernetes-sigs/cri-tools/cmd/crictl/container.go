@@ -936,13 +936,11 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
 	}
 	if r.Status.Labels != nil {
-		fmt.Println("Labels:")
 		for _, k := range getSortedKeys(r.Status.Labels) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
 		}
 	}
 	if r.Status.Annotations != nil {
-		fmt.Println("Annotations:")
 		for _, k := range getSortedKeys(r.Status.Annotations) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
 		}
@@ -1069,13 +1067,11 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		}
 		fmt.Printf("Created: %v\n", ctm)
 		if c.Labels != nil {
-			fmt.Println("Labels:")
 			for _, k := range getSortedKeys(c.Labels) {
 				fmt.Printf("\t%s -> %s\n", k, c.Labels[k])
 			}
 		}
 		if c.Annotations != nil {
-			fmt.Println("Annotations:")
 			for _, k := range getSortedKeys(c.Annotations) {
 				fmt.Printf("\t%s -> %s\n", k, c.Annotations[k])
 			}

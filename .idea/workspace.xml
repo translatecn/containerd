@@ -5,11 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a0a5fafa-c684-4e3a-b7ba-d5c11f33ec98" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/crictl.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/container-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/examples/container-config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sandbox-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/examples/sandbox-config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/over/api/cri/v1/api.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/api/cri/v1/api.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/cri/cri.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/cri/cri.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/container.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/container.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/over.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/over.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/docs/crictl.md" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/docs/crictl.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/docs/crictl.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/apis/scheduling/zz_generated.deepcopy.go" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/k8s.io/kubernetes/pkg/apis/scheduling/zz_generated.deepcopy.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +48,7 @@
     "Go Build.crictl info.executor": "Debug",
     "Go Build.crictl inpsect.executor": "Debug",
     "Go Build.crictl inspect.executor": "Debug",
+    "Go Build.crictl pods.executor": "Debug",
     "Go Build.go build main.go.executor": "Debug",
     "Go Remote.containerd.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -64,6 +69,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/over/api/cri" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunManager" selected="Go Remote.containerd">
@@ -87,6 +95,16 @@
       <filePath value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/main.go" />
       <method v="2" />
     </configuration>
+    <configuration name="crictl pods" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="containerd" />
+      <working_directory value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools" />
+      <parameters value="pods" />
+      <kind value="DIRECTORY" />
+      <package value="demo" />
+      <directory value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl" />
+      <filePath value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/main.go" />
+      <method v="2" />
+    </configuration>
     <configuration name="containerd" type="GoRemoteDebugConfigurationType" factoryName="Go Remote" host="vm">
       <option name="disconnectOption" value="STOP" />
       <disconnect value="STOP" />
@@ -94,6 +112,7 @@
     </configuration>
     <list>
       <item itemvalue="Go Build.crictl info" />
+      <item itemvalue="Go Build.crictl pods" />
       <item itemvalue="Go Build.crictl inspect" />
       <item itemvalue="Go Remote.containerd" />
     </list>
@@ -121,101 +140,6 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run_linux.go</url>
-          <line>290</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run_linux.go</url>
-          <line>289</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run_linux.go</url>
-          <line>293</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run_linux.go</url>
-          <line>294</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
-          <line>216</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_stop.go</url>
-          <line>25</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_log_reopen.go</url>
-          <line>15</line>
-          <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_remove.go</url>
-          <line>23</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_start.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="11" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_status.go</url>
-          <line>18</line>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_log_reopen.go</url>
-          <line>15</line>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_remove.go</url>
-          <line>23</line>
-          <option name="timeStamp" value="14" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_status.go</url>
-          <line>18</line>
-          <option name="timeStamp" value="15" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_start.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="16" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_stop.go</url>
-          <line>25</line>
-          <option name="timeStamp" value="17" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_status.go</url>
-          <line>16</line>
-          <option name="timeStamp" value="18" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/server/container_status.go</url>
-          <line>17</line>
-          <option name="timeStamp" value="19" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
-          <line>198</line>
-          <option name="timeStamp" value="20" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_status.go</url>
-          <line>13</line>
-          <option name="timeStamp" value="25" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/cri/instrument/instrumented_service.go</url>
           <line>555</line>
@@ -252,9 +176,84 @@
           <option name="timeStamp" value="38" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/over/api/cri/v1/api.pb.go</url>
-          <line>10704</line>
-          <option name="timeStamp" value="41" />
+          <url>file://$PROJECT_DIR$/cmd/ctr/commands/commands.go</url>
+          <line>250</line>
+          <option name="timeStamp" value="42" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/ctr/commands/over/images/images.go</url>
+          <line>336</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/ctr/commands/over/leases/leases.go</url>
+          <line>175</line>
+          <option name="timeStamp" value="44" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/ctr/commands/over/namespaces/namespaces.go</url>
+          <line>161</line>
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/config.go</url>
+          <line>75</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/config.go</url>
+          <line>77</line>
+          <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/config.go</url>
+          <line>79</line>
+          <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
+          <line>425</line>
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
+          <line>426</line>
+          <option name="timeStamp" value="50" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
+          <line>333</line>
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/sandbox.go</url>
+          <line>338</line>
+          <option name="timeStamp" value="52" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/instrument/instrumented_service.go</url>
+          <line>528</line>
+          <option name="timeStamp" value="53" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/server/sandbox_run.go</url>
+          <line>41</line>
+          <option name="timeStamp" value="54" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/instrument/instrumented_service.go</url>
+          <line>531</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go</url>
+          <line>38</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go</url>
+          <line>39</line>
+          <option name="timeStamp" value="57" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

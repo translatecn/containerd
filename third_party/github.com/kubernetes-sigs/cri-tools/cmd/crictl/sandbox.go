@@ -238,13 +238,11 @@ func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quie
 		}
 	}
 	if r.Status.Labels != nil {
-		fmt.Println("Labels:")
 		for _, k := range getSortedKeys(r.Status.Labels) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
 		}
 	}
 	if r.Status.Annotations != nil {
-		fmt.Println("Annotations:")
 		for _, k := range getSortedKeys(r.Status.Annotations) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
 		}
@@ -555,13 +553,11 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 		ctm := time.Unix(0, pod.CreatedAt)
 		fmt.Printf("Created: %v\n", ctm)
 		if pod.Labels != nil {
-			fmt.Println("Labels:")
 			for _, k := range getSortedKeys(pod.Labels) {
 				fmt.Printf("\t%s -> %s\n", k, pod.Labels[k])
 			}
 		}
 		if pod.Annotations != nil {
-			fmt.Println("Annotations:")
 			for _, k := range getSortedKeys(pod.Annotations) {
 				fmt.Printf("\t%s -> %s\n", k, pod.Annotations[k])
 			}
@@ -570,7 +566,6 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 			strings.Title(strings.ToLower(columnPodRuntime)),
 			getSandboxesRuntimeHandler(pod))
 
-		fmt.Println()
 	}
 
 	display.Flush()

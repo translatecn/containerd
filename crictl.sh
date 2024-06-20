@@ -1,12 +1,12 @@
-# 运行 pod 沙箱
-sanbox_id=$(./bin/crictl runp --runtime=runc ./examples/sandbox-config.json)
+# 运行 pod 沙箱  RunPodSandbox
+sanbox_id=$(./bin/crictl runp --runtime=runc ./examples/sandbox-config.yaml)
 ./bin/crictl inspectp $sanbox_id
 ./bin/crictl pods
 
 ./bin/crictl pull registry.cn-hangzhou.aliyuncs.com/acejilam/busybox
 
 # 在 pod 沙箱中创建容器
-container_id=$(./bin/crictl create $sanbox_id ./examples/container-config.json ./examples/sandbox-config.json)
+container_id=$(./bin/crictl create $sanbox_id ./examples/container-config.yaml ./examples/sandbox-config.yaml)
 ./bin/crictl start $container_id
 ./bin/crictl ps
 

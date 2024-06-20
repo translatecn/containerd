@@ -16,7 +16,7 @@ import (
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
 // TODO(random-liu): We should change CRI to distinguish image id and image spec. (See
 // kubernetes/kubernetes#46255)
-func (c *criService) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
+func (c *CriService) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
 	span := tracing.SpanFromContext(ctx)
 	image, err := c.localResolve(r.GetImage().GetImage())
 	if err != nil {
@@ -69,7 +69,7 @@ type verboseImageInfo struct {
 }
 
 // toCRIImageInfo converts internal image object information to CRI image status response info map.
-func (c *criService) toCRIImageInfo(ctx context.Context, image *imagestore.Image, verbose bool) (map[string]string, error) {
+func (c *CriService) toCRIImageInfo(ctx context.Context, image *imagestore.Image, verbose bool) (map[string]string, error) {
 	if !verbose {
 		return nil, nil
 	}

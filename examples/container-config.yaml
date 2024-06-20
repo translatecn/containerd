@@ -1,0 +1,10 @@
+metadata:
+  name: busybox
+  stopSignal: SIGTERM       // STOPSIGNAL SIGTERM
+image:
+  image: registry.cn-hangzhou.aliyuncs.com/acejilam/busybox
+command:
+  - sleep
+  - 1d
+log_path: busybox.0.log
+linux: {}

@@ -34,7 +34,7 @@ const (
 	seccompDefaultProfile = dockerDefault
 )
 
-func (c *criService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
+func (c *CriService) containerSpecOpts(config *runtime.ContainerConfig, imageConfig *imagespec.ImageConfig) ([]oci.SpecOpts, error) {
 	var (
 		specOpts []oci.SpecOpts
 		err      error
@@ -133,7 +133,7 @@ func generateSecurityProfile(profilePath string) (*runtime.SecurityProfile, erro
 }
 
 // generateSeccompSpecOpts generates containerd SpecOpts for seccomp.
-func (c *criService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
+func (c *CriService) generateSeccompSpecOpts(sp *runtime.SecurityProfile, privileged, seccompEnabled bool) (oci.SpecOpts, error) {
 	if privileged {
 		// Do not set seccomp profile when container is privileged
 		return nil, nil

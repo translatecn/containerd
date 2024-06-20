@@ -18,7 +18,6 @@ import (
 	"demo/pkg/cri/constants"
 	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver"
-	"demo/pkg/cri/server"
 	nriservice "demo/pkg/nri"
 )
 
@@ -83,14 +82,9 @@ func initCRIService(ic *plugin.InitContext) (interface{}, error) {
 		return nil, fmt.Errorf("failed to create containerd client: %w", err)
 	}
 
-	var s server.CRIService
-	if os.Getenv("ENABLE_CRI_SANDBOXES") != "" {
-		log.G(ctx).Info("使用实验性的CRI沙盒服务器-取消设置ENABLE_CRI_SANDBOXES为禁用")
-		s, err = sbserver.NewCRIService(c, client, getNRIAPI(ic), warn)
-	} else {
-		log.G(ctx).Info("using legacy CRI server")
-		s, err = server.NewCRIService(c, client, getNRIAPI(ic), warn)
-	}
+	log.G(ctx).Info("使用实验性的CRI沙盒服务器")
+	os.Setenv("ENABLE_CRI_SANDBOXES", "sandboxed")
+	s, err := sbserver.NewCRIService(c, client, getNRIAPI(ic), warn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CRI service: %w", err)
 	}

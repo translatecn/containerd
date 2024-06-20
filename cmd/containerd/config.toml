@@ -30,25 +30,27 @@ grpc_histogram = false
 #      sampling_ratio = 1.0
 #      service_name = "containerd"
 
-[plugins."io.containerd.grpc.v1.cri"]
-sandbox_image = "registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.7"
-max_container_log_line_size = -1
-max_concurrent_downloads = 20
-disable_apparmor = true
-[plugins."io.containerd.grpc.v1.cri".containerd]
-snapshotter = "overlayfs"
-default_runtime_name = "runc"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-runtime_type = "io.containerd.runc.v2"
-runtime_engine = ""
-runtime_root = ""
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-SystemdCgroup = true
-[plugins."io.containerd.grpc.v1.cri".registry]
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-endpoint = ["https://noohub.ru", "https://huecker.io", "https://fojswzvv.mirror.aliyuncs.com"]
+    [plugins."io.containerd.grpc.v1.cri"]
+        sandbox_image = "registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.7"
+        max_container_log_line_size = -1
+        max_concurrent_downloads = 20
+        disable_apparmor = true
+        [plugins."io.containerd.grpc.v1.cri".containerd]
+            snapshotter = "overlayfs"
+            default_runtime_name = "runc"
+        [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
+            sandbox_mode = "shim"
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+                runtime_type = "io.containerd.runc.v2"
+                runtime_engine = ""
+                runtime_root = ""
+                [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+                    SystemdCgroup = true
+        [plugins."io.containerd.grpc.v1.cri".registry]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                    endpoint = ["https://noohub.ru", "https://huecker.io", "https://fojswzvv.mirror.aliyuncs.com"]
 
 [timeouts]
 "io.containerd.timeout.bolt.open" = "0s"

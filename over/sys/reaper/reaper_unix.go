@@ -37,24 +37,6 @@ func (s *subscriber) do(fn func()) {
 	s.Unlock()
 }
 
-func Reap() error {
-	now := time.Now()
-	exits, err := reap(false)
-	for _, e := range exits {
-		done := Default.notify(Exit{
-			Timestamp: now,
-			Pid:       e.Pid,
-			Status:    e.Status,
-		})
-
-		select {
-		case <-done:
-		case <-time.After(1 * time.Second):
-		}
-	}
-	return err
-}
-
 type Exit struct {
 	Timestamp time.Time
 	Pid       int
@@ -157,8 +139,7 @@ type exit struct {
 	Status int
 }
 
-// reap reaps all child processes for the calling process and returns their
-// exit information
+// Reap 获取调用进程的所有子进程并返回它们的退出信息
 func reap(wait bool) (exits []exit, err error) {
 	var (
 		ws  unix.WaitStatus
@@ -208,7 +189,6 @@ func (m *monitor) Subscribe() chan Exit {
 	return c
 }
 
-// Unsubscribe to process exit changes
 func (m *monitor) Unsubscribe(c chan Exit) {
 	m.Lock()
 	s, ok := m.subscribers[c]
@@ -229,4 +209,21 @@ func (m *monitor) Start(c *exec.Cmd) (chan Exit, error) {
 		return nil, err
 	}
 	return ec, nil
+}
+func Reap() error {
+	now := time.Now()
+	exits, err := reap(false)
+	for _, e := range exits {
+		done := Default.notify(Exit{
+			Timestamp: now,
+			Pid:       e.Pid,
+			Status:    e.Status,
+		})
+
+		select {
+		case <-done:
+		case <-time.After(1 * time.Second):
+		}
+	}
+	return err
 }

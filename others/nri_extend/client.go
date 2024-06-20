@@ -78,7 +78,6 @@ func (c *Client) Invoke(ctx context.Context, task Task, state types.State) ([]*t
 	return c.InvokeWithSandbox(ctx, task, state, nil)
 }
 
-// InvokeWithSandbox invokes the ConfList of nri plugins
 func (c *Client) InvokeWithSandbox(ctx context.Context, task Task, state types.State, sandbox *Sandbox) ([]*types.Result, error) {
 	if len(c.conf.Plugins) == 0 {
 		return nil, nil

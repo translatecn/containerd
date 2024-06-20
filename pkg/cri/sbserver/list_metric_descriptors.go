@@ -8,6 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (c *criService) ListMetricDescriptors(context.Context, *runtime.ListMetricDescriptorsRequest) (*runtime.ListMetricDescriptorsResponse, error) {
+func (c *CriService) ListMetricDescriptors(context.Context, *runtime.ListMetricDescriptorsRequest) (*runtime.ListMetricDescriptorsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMetricDescriptors not implemented")
 }

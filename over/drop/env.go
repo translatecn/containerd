@@ -2,7 +2,9 @@ package drop
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -14,7 +16,16 @@ func DropEnv(environ []string) string {
 	for k, _ := range eA2M(os.Environ()) {
 		delete(eM, k)
 	}
-	marshal, _ := json.Marshal(eM)
+	var keys []string
+	for k, _ := range eM {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var res []string
+	for _, k := range keys {
+		res = append(res, fmt.Sprintf("%s=%s", k, eM[k]))
+	}
+	marshal, _ := json.Marshal(res)
 	return string(marshal)
 }
 func eA2M(environ []string) map[string]string {

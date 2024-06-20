@@ -17,8 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-	"github.com/kubernetes-sigs/cri-tools/pkg/over_remote"
 	"os"
 	"runtime"
 	"sort"
@@ -26,10 +24,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-
-	internalapi "demo/over/api/cri"
-
-	"github.com/kubernetes-sigs/cri-tools/pkg/over_version"
 )
 
 const defaultTimeout = 2 * time.Second
@@ -54,42 +48,6 @@ var (
 	DisablePullOnRun bool
 )
 
-func getImageService(context *cli.Context) (res internalapi.ImageManagerService, err error) {
-	if ImageEndpoint == "" {
-		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
-			return nil, fmt.Errorf("--image-endpoint is not set")
-		}
-		ImageEndpoint = RuntimeEndpoint
-		ImageEndpointIsSet = RuntimeEndpointIsSet
-	}
-
-	logrus.Debugf("get image connection")
-	// If no EP set then use the default endpoint types
-	if !ImageEndpointIsSet {
-		//logrus.Warningf("image connect using default endpoints: %v. "+
-		//	"As the default settings are now deprecated, you should set the "+
-		//	"endpoint instead.", defaultRuntimeEndpoints)
-		logrus.Debug("Note that performance maybe affected as each default " +
-			"connection attempt takes n-seconds to complete before timing out " +
-			"and going to the next in sequence.")
-
-		//for _, endPoint := range defaultRuntimeEndpoints {
-		//	logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
-		//
-		//	res, err = remote.NewRemoteImageService(endPoint, Timeout, nil)
-		//	if err != nil {
-		//		logrus.Error(err)
-		//		continue
-		//	}
-		//
-		//	logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
-		//	break
-		//}
-		return res, err
-	}
-	return over_remote.NewRemoteImageService(ImageEndpoint, Timeout, nil)
-}
-
 func getTimeout(timeDuration time.Duration) time.Duration {
 	if timeDuration.Seconds() > 0 {
 		return timeDuration
@@ -106,36 +64,35 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = over_version.Version
+	app.Version = "version.Version"
 
 	app.Commands = []*cli.Command{
 		runtimeAttachCommand,
-		createContainerCommand,
+		createContainerCommand, // ✅
 		runtimeExecCommand,
-		listImageCommand,
+		listImageCommand, // ✅
 		containerStatusCommand,
 		imageStatusCommand,
 		imageFsInfoCommand,
 		podStatusCommand,
 		logsCommand,
 		runtimePortForwardCommand,
-		listContainersCommand,
-		pullImageCommand,
+		listContainersCommand, // ✅
+		pullImageCommand,      // ✅
 		runContainerCommand,
-		runPodCommand,
+		runPodCommand, // ✅
 		removeContainerCommand,
 		removeImageCommand,
 		removePodCommand,
-		listPodCommand,
-		startContainerCommand,
+		listPodCommand,            // ✅
+		startContainerCommand,     // ✅
 		runtimeStatusCommand,      // ✅
 		overRuntimeVersionCommand, // ✅
 		stopContainerCommand,
 		stopPodCommand,
 		updateContainerCommand,
-		configCommand,
-		statsCommand,
-		podStatsCommand,
+		statsCommand,    // ✅
+		podStatsCommand, // ✅
 		completionCommand,
 		checkpointContainerCommand,
 	}

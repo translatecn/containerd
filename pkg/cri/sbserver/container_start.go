@@ -2,27 +2,89 @@ package sbserver
 
 import (
 	"context"
-	cioutil "demo/over/ioutil"
-	"demo/over/log"
-	"errors"
-	"fmt"
-	"io"
-	"time"
-
 	"demo/containerd"
 	runtime "demo/over/api/cri/v1"
 	containerdio "demo/over/cio"
 	"demo/over/errdefs"
+	cioutil "demo/over/ioutil"
+	"demo/over/log"
+	sandboxstore "demo/pkg/cri/store/sandbox"
+	ctrdutil "demo/pkg/cri/util"
+	"errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"io"
+	"time"
 
 	cio "demo/pkg/cri/io"
 	containerstore "demo/pkg/cri/store/container"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 )
 
-// StartContainer starts the container.
-func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (retRes *runtime.StartContainerResponse, retErr error) {
+// resetContainerStarting resets the container starting state on start failure. So
+// that we could remove the container later.
+func resetContainerStarting(container containerstore.Container) error {
+	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+		status.Starting = false
+		return status, nil
+	})
+}
+
+// createContainerLoggers creates container loggers and return write closer for stdout and stderr.
+func (c *CriService) createContainerLoggers(logPath string, tty bool) (stdout io.WriteCloser, stderr io.WriteCloser, err error) {
+	if logPath != "" {
+		// Only generate container log when log path is specified.
+		f, err := openLogFile(logPath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create and open log file: %w", err)
+		}
+		defer func() {
+			if err != nil {
+				f.Close()
+			}
+		}()
+		var stdoutCh, stderrCh <-chan struct{}
+		wc := cioutil.NewSerialWriteCloser(f)
+		stdout, stdoutCh = cio.NewCRILogger(logPath, wc, cio.Stdout, c.config.MaxContainerLogLineSize)
+		// Only redirect stderr when there is no tty.
+		if !tty {
+			stderr, stderrCh = cio.NewCRILogger(logPath, wc, cio.Stderr, c.config.MaxContainerLogLineSize)
+		}
+		go func() {
+			if stdoutCh != nil {
+				<-stdoutCh
+			}
+			if stderrCh != nil {
+				<-stderrCh
+			}
+			logrus.Debugf("Finish redirecting log file %q, closing it", logPath)
+			f.Close()
+		}()
+	} else {
+		stdout = cio.NewDiscardLogger()
+		stderr = cio.NewDiscardLogger()
+	}
+	return
+}
+
+func setContainerStarting(container containerstore.Container) error {
+	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+		// Return error if container is not in created state.
+		if status.State() != runtime.ContainerState_CONTAINER_CREATED {
+			return status, fmt.Errorf("container is in %s state", criContainerStateToString(status.State()))
+		}
+		// Do not start the container when there is a removal in progress.
+		if status.Removing {
+			return status, errors.New("container is in removing state, can't be started")
+		}
+		if status.Starting {
+			return status, errors.New("container is already in starting state")
+		}
+		status.Starting = true
+		return status, nil
+	})
+}
+
+func (c *CriService) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (retRes *runtime.StartContainerResponse, retErr error) {
 	start := time.Now()
 	cntr, err := c.containerStore.Get(r.GetContainerId())
 	if err != nil {
@@ -94,17 +156,11 @@ func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContain
 		return cntr.IO, nil
 	}
 
-	ctrInfo, err := container.Info(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container info: %w", err)
-	}
-
 	ociRuntime, err := c.getSandboxRuntime(sandbox.Config, sandbox.Metadata.RuntimeHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sandbox runtime: %w", err)
 	}
-
-	taskOpts := c.taskOpts(ctrInfo.Runtime.Name)
+	taskOpts := []containerd.NewTaskOpts{}
 	if ociRuntime.Path != "" {
 		taskOpts = append(taskOpts, containerd.WithRuntimePath(ociRuntime.Path))
 	}
@@ -173,70 +229,4 @@ func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContain
 	containerStartTimer.WithValues(info.Runtime.Name).UpdateSince(start)
 
 	return &runtime.StartContainerResponse{}, nil
-}
-
-// setContainerStarting sets the container into starting state. In starting state, the
-// container will not be removed or started again.
-func setContainerStarting(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
-		// Return error if container is not in created state.
-		if status.State() != runtime.ContainerState_CONTAINER_CREATED {
-			return status, fmt.Errorf("container is in %s state", criContainerStateToString(status.State()))
-		}
-		// Do not start the container when there is a removal in progress.
-		if status.Removing {
-			return status, errors.New("container is in removing state, can't be started")
-		}
-		if status.Starting {
-			return status, errors.New("container is already in starting state")
-		}
-		status.Starting = true
-		return status, nil
-	})
-}
-
-// resetContainerStarting resets the container starting state on start failure. So
-// that we could remove the container later.
-func resetContainerStarting(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
-		status.Starting = false
-		return status, nil
-	})
-}
-
-// createContainerLoggers creates container loggers and return write closer for stdout and stderr.
-func (c *criService) createContainerLoggers(logPath string, tty bool) (stdout io.WriteCloser, stderr io.WriteCloser, err error) {
-	if logPath != "" {
-		// Only generate container log when log path is specified.
-		f, err := openLogFile(logPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create and open log file: %w", err)
-		}
-		defer func() {
-			if err != nil {
-				f.Close()
-			}
-		}()
-		var stdoutCh, stderrCh <-chan struct{}
-		wc := cioutil.NewSerialWriteCloser(f)
-		stdout, stdoutCh = cio.NewCRILogger(logPath, wc, cio.Stdout, c.config.MaxContainerLogLineSize)
-		// Only redirect stderr when there is no tty.
-		if !tty {
-			stderr, stderrCh = cio.NewCRILogger(logPath, wc, cio.Stderr, c.config.MaxContainerLogLineSize)
-		}
-		go func() {
-			if stdoutCh != nil {
-				<-stdoutCh
-			}
-			if stderrCh != nil {
-				<-stderrCh
-			}
-			logrus.Debugf("Finish redirecting log file %q, closing it", logPath)
-			f.Close()
-		}()
-	} else {
-		stdout = cio.NewDiscardLogger()
-		stderr = cio.NewDiscardLogger()
-	}
-	return
 }

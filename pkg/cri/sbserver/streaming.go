@@ -29,7 +29,7 @@ const (
 	withoutTLS
 )
 
-func getStreamListenerMode(c *criService) (streamListenerMode, error) {
+func getStreamListenerMode(c *CriService) (streamListenerMode, error) {
 	if c.config.EnableTLSStreaming {
 		if c.config.X509KeyPairStreaming.TLSCertFile != "" && c.config.X509KeyPairStreaming.TLSKeyFile != "" {
 			return x509KeyPairTLS, nil
@@ -51,7 +51,7 @@ func getStreamListenerMode(c *criService) (streamListenerMode, error) {
 	return withoutTLS, nil
 }
 
-func newStreamServer(c *criService, addr, port, streamIdleTimeout string) (streaming.Server, error) {
+func newStreamServer(c *CriService, addr, port, streamIdleTimeout string) (streaming.Server, error) {
 	if addr == "" {
 		a, err := k8snet.ResolveBindAddress(nil)
 		if err != nil {
@@ -101,10 +101,10 @@ func newStreamServer(c *criService, addr, port, streamIdleTimeout string) (strea
 }
 
 type streamRuntime struct {
-	c *criService
+	c *CriService
 }
 
-func newStreamRuntime(c *criService) streaming.Runtime {
+func newStreamRuntime(c *CriService) streaming.Runtime {
 	return &streamRuntime{c: c}
 }
 

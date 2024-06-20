@@ -13,7 +13,7 @@ import (
 
 const networkAttachCount = 2
 
-func (c *criService) initPlatform() (err error) {
+func (c *CriService) initPlatform() (err error) {
 	if userns.RunningInUserNS() {
 		if c.apparmorEnabled() || !c.config.RestrictOOMScoreAdj {
 			logrus.Warn("Running CRI plugin in a user namespace typically requires disable_apparmor and restrict_oom_score_adj to be true")
@@ -79,6 +79,6 @@ func (c *criService) initPlatform() (err error) {
 	return nil
 }
 
-func (c *criService) cniLoadOptions() []cni.Opt {
+func (c *CriService) cniLoadOptions() []cni.Opt {
 	return []cni.Opt{cni.WithLoNetwork, cni.WithDefaultConf}
 }

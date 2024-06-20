@@ -23,7 +23,7 @@ import (
 )
 
 // ListContainerStats returns stats of all running containers.
-func (c *criService) ListContainerStats(
+func (c *CriService) ListContainerStats(
 	ctx context.Context,
 	in *runtime.ListContainerStatsRequest,
 ) (*runtime.ListContainerStatsResponse, error) {
@@ -47,7 +47,7 @@ type metricsHandler func(containerstore.Metadata, *types.Metric) (*runtime.Conta
 // Returns a function to be used for transforming container metrics into the right format.
 // Uses the platform the given sandbox advertises to implement its logic. If the platform is
 // unsupported for metrics this will return a wrapped [errdefs.ErrNotImplemented].
-func (c *criService) getMetricsHandler(ctx context.Context, sandboxID string) (metricsHandler, error) {
+func (c *CriService) getMetricsHandler(ctx context.Context, sandboxID string) (metricsHandler, error) {
 	sandbox, err := c.sandboxStore.Get(sandboxID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sandbox id %q: %w", sandboxID, err)
@@ -75,7 +75,7 @@ func (c *criService) getMetricsHandler(ctx context.Context, sandboxID string) (m
 	}
 }
 
-func (c *criService) toCRIContainerStats(
+func (c *CriService) toCRIContainerStats(
 	ctx context.Context,
 	stats []*types.Metric,
 	containers []containerstore.Container,
@@ -133,7 +133,7 @@ func (c *criService) toCRIContainerStats(
 	return containerStats, nil
 }
 
-func (c *criService) getUsageNanoCores(containerID string, isSandbox bool, currentUsageCoreNanoSeconds uint64, currentTimestamp time.Time) (uint64, error) {
+func (c *CriService) getUsageNanoCores(containerID string, isSandbox bool, currentUsageCoreNanoSeconds uint64, currentTimestamp time.Time) (uint64, error) {
 	var oldStats *stats.ContainerStats
 
 	if isSandbox {
@@ -198,7 +198,7 @@ func (c *criService) getUsageNanoCores(containerID string, isSandbox bool, curre
 	return newUsageNanoCores, nil
 }
 
-func (c *criService) normalizeContainerStatsFilter(filter *runtime.ContainerStatsFilter) {
+func (c *CriService) normalizeContainerStatsFilter(filter *runtime.ContainerStatsFilter) {
 	if cntr, err := c.containerStore.Get(filter.GetId()); err == nil {
 		filter.Id = cntr.ID
 	}
@@ -209,7 +209,7 @@ func (c *criService) normalizeContainerStatsFilter(filter *runtime.ContainerStat
 
 // buildTaskMetricsRequest constructs a tasks.MetricsRequest based on
 // the information in the stats request and the containerStore
-func (c *criService) buildTaskMetricsRequest(
+func (c *CriService) buildTaskMetricsRequest(
 	r *runtime.ListContainerStatsRequest,
 ) (*tasks.MetricsRequest, []containerstore.Container, error) {
 	req := &tasks.MetricsRequest{}
@@ -248,7 +248,7 @@ func matchLabelSelector(selector, labels map[string]string) bool {
 	return true
 }
 
-func (c *criService) windowsContainerMetrics(
+func (c *CriService) windowsContainerMetrics(
 	meta containerstore.Metadata,
 	stats *types.Metric,
 ) (*runtime.ContainerStats, error) {
@@ -303,7 +303,7 @@ func (c *criService) windowsContainerMetrics(
 	return &cs, nil
 }
 
-func (c *criService) linuxContainerMetrics(
+func (c *CriService) linuxContainerMetrics(
 	meta containerstore.Metadata,
 	stats *types.Metric,
 ) (*runtime.ContainerStats, error) {
@@ -415,7 +415,7 @@ func getAvailableBytesV2(memory *cg2.MemoryStat, workingSetBytes uint64) uint64 
 	return 0
 }
 
-func (c *criService) cpuContainerStats(ID string, isSandbox bool, stats interface{}, timestamp time.Time) (*runtime.CpuUsage, error) {
+func (c *CriService) cpuContainerStats(ID string, isSandbox bool, stats interface{}, timestamp time.Time) (*runtime.CpuUsage, error) {
 	switch metrics := stats.(type) {
 	case *cg1.Metrics:
 		metrics.GetCPU().GetUsage()
@@ -441,7 +441,7 @@ func (c *criService) cpuContainerStats(ID string, isSandbox bool, stats interfac
 	return nil, nil
 }
 
-func (c *criService) memoryContainerStats(ID string, stats interface{}, timestamp time.Time) (*runtime.MemoryUsage, error) {
+func (c *CriService) memoryContainerStats(ID string, stats interface{}, timestamp time.Time) (*runtime.MemoryUsage, error) {
 	switch metrics := stats.(type) {
 	case *cg1.Metrics:
 		if metrics.Memory != nil && metrics.Memory.Usage != nil {

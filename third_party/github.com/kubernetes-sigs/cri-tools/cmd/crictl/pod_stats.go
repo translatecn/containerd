@@ -49,7 +49,7 @@ type podStatsOptions struct {
 
 var podStatsCommand = &cli.Command{
 	Name:                   "statsp",
-	Usage:                  "List pod resource usage statistics",
+	Usage:                  "列出pod资源使用统计信息", //
 	UseShortOptionHandling: true,
 	ArgsUsage:              "[ID]",
 	Flags: []cli.Flag{

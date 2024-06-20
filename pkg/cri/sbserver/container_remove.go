@@ -15,7 +15,7 @@ import (
 )
 
 // RemoveContainer removes the container.
-func (c *criService) RemoveContainer(ctx context.Context, r *runtime.RemoveContainerRequest) (_ *runtime.RemoveContainerResponse, retErr error) {
+func (c *CriService) RemoveContainer(ctx context.Context, r *runtime.RemoveContainerRequest) (_ *runtime.RemoveContainerResponse, retErr error) {
 	start := time.Now()
 	ctrID := r.GetContainerId()
 	container, err := c.containerStore.Get(ctrID)

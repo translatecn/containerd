@@ -50,8 +50,8 @@ func Command(ctx context.Context, config *CommandConfig) (*exec.Cmd, error) {
 	}
 	args = append(args, config.Args...)
 	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", config.Runtime, "--"}
-	//cmd := exec.CommandContext(ctx, "dlv", append(x, args...)...)
-	cmd := exec.CommandContext(ctx, config.Runtime, args...)
+	//cmd := exec.Command("dlv", append(x, args...)...)
+	cmd := exec.CommandContext(ctx, config.Runtime, args...) // container-shim-runc-v2
 	cmd.Dir = config.Path
 	cmd.Env = append(
 		os.Environ(),

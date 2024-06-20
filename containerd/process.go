@@ -24,7 +24,7 @@ type Process interface {
 	Delete(context.Context, ...ProcessDeleteOpts) (*ExitStatus, error)
 	// Kill sends the provided signal to the process
 	Kill(context.Context, syscall.Signal, ...KillOpts) error
-	// Wait asynchronously waits for the process to exit, and sends the exit code to the returned channel
+	// Wait 异步等待进程退出，并将退出代码发送到返回的通道
 	Wait(context.Context) (<-chan ExitStatus, error)
 	// CloseIO allows various pipes to be closed on the process
 	CloseIO(context.Context, ...IOCloserOpts) error

@@ -21,10 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	goruntime "runtime"
 	"sort"
-	"strings"
 	"time"
 
 	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/types"
@@ -32,7 +30,6 @@ import (
 	internalapi "demo/over/api/cri"
 	pb "demo/over/api/cri/v1"
 	"github.com/docker/go-units"
-	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -136,86 +133,6 @@ var runPullFlags = []cli.Flag{
 	},
 }
 
-var createContainerCommand = &cli.Command{
-	Name:      "create",
-	Usage:     "Create a new container",
-	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags: append(createPullFlags, &cli.DurationFlag{
-		Name:  "cancel-timeout",
-		Value: time.Hour,
-		Usage: "Seconds to wait for a container create request to complete before cancelling the request",
-	}),
-
-	Action: func(c *cli.Context) (err error) {
-		if c.Args().Len() != 3 {
-			return cli.ShowSubcommandHelp(c)
-		}
-		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
-			return errors.New("confict: no-pull and with-pull are both set")
-		}
-
-		withPull := (!c.Bool("no-pull") && PullImageOnCreate) || c.Bool("with-pull")
-
-		var imageClient internalapi.ImageManagerService
-		if withPull {
-			imageClient, err = getImageService(c)
-			if err != nil {
-				return err
-			}
-		}
-
-		opts := createOptions{
-			podID: c.Args().Get(0),
-			runOptions: &runOptions{
-				configPath: c.Args().Get(1),
-				podConfig:  c.Args().Get(2),
-				pullOptions: &pullOptions{
-					withPull: withPull,
-					creds:    c.String("creds"),
-					auth:     c.String("auth"),
-					username: c.String("username"),
-				},
-				timeout: c.Duration("cancel-timeout"),
-			},
-		}
-
-		runtimeClient, err := getRuntimeService(c, opts.timeout)
-		if err != nil {
-			return err
-		}
-
-		ctrID, err := CreateContainer(imageClient, runtimeClient, opts)
-		if err != nil {
-			return fmt.Errorf("creating container: %w", err)
-		}
-		fmt.Println(ctrID)
-		return nil
-	},
-}
-
-var startContainerCommand = &cli.Command{
-	Name:      "start",
-	Usage:     "Start one or more created containers",
-	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
-	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
-		}
-		runtimeClient, err := getRuntimeService(c, 0)
-		if err != nil {
-			return err
-		}
-
-		for i := 0; i < c.NArg(); i++ {
-			containerID := c.Args().Get(i)
-			if err := StartContainer(runtimeClient, containerID); err != nil {
-				return fmt.Errorf("starting the container %q: %w", containerID, err)
-			}
-		}
-		return nil
-	},
-}
-
 var updateContainerCommand = &cli.Command{
 	Name:      "update",
 	Usage:     "Update one or more running containers",
@@ -278,37 +195,6 @@ var updateContainerCommand = &cli.Command{
 			containerID := c.Args().Get(i)
 			if err := UpdateContainerResources(runtimeClient, containerID, options); err != nil {
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
-			}
-		}
-		return nil
-	},
-}
-
-var stopContainerCommand = &cli.Command{
-	Name:                   "stop",
-	Usage:                  "Stop one or more running containers",
-	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
-	UseShortOptionHandling: true,
-	Flags: []cli.Flag{
-		&cli.Int64Flag{
-			Name:    "timeout",
-			Aliases: []string{"t"},
-			Usage:   "Seconds to wait to kill the container after a graceful stop is requested",
-		},
-	},
-	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
-		}
-		runtimeClient, err := getRuntimeService(c, 0)
-		if err != nil {
-			return err
-		}
-
-		for i := 0; i < c.NArg(); i++ {
-			containerID := c.Args().Get(i)
-			if err := StopContainer(runtimeClient, containerID, c.Int64("timeout")); err != nil {
-				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
 		}
 		return nil
@@ -425,125 +311,6 @@ var containerStatusCommand = &cli.Command{
 			if err := ContainerStatus(runtimeClient, containerID, c.String("output"), c.String("template"), c.Bool("quiet")); err != nil {
 				return fmt.Errorf("getting the status of the container %q: %w", containerID, err)
 			}
-		}
-		return nil
-	},
-}
-
-var listContainersCommand = &cli.Command{
-	Name:                   "ps",
-	Usage:                  "List containers",
-	UseShortOptionHandling: true,
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "verbose",
-			Aliases: []string{"v"},
-			Usage:   "Show verbose information for containers",
-		},
-		&cli.StringFlag{
-			Name:  "id",
-			Value: "",
-			Usage: "Filter by container id",
-		},
-		&cli.StringFlag{
-			Name:  "name",
-			Value: "",
-			Usage: "filter by container name regular expression pattern",
-		},
-		&cli.StringFlag{
-			Name:    "pod",
-			Aliases: []string{"p"},
-			Value:   "",
-			Usage:   "Filter by pod id",
-		},
-		&cli.StringFlag{
-			Name:  "image",
-			Value: "",
-			Usage: "Filter by container image",
-		},
-		&cli.StringFlag{
-			Name:    "state",
-			Aliases: []string{"s"},
-			Value:   "",
-			Usage:   "Filter by container state",
-		},
-		&cli.StringSliceFlag{
-			Name:  "label",
-			Usage: "Filter by key=value label",
-		},
-		&cli.BoolFlag{
-			Name:    "quiet",
-			Aliases: []string{"q"},
-			Usage:   "Only display container IDs",
-		},
-		&cli.StringFlag{
-			Name:    "output",
-			Aliases: []string{"o"},
-			Usage:   "Output format, One of: json|yaml|table",
-			Value:   "table",
-		},
-		&cli.BoolFlag{
-			Name:    "all",
-			Aliases: []string{"a"},
-			Usage:   "Show all containers",
-		},
-		&cli.BoolFlag{
-			Name:    "latest",
-			Aliases: []string{"l"},
-			Usage:   "Show the most recently created container (includes all states)",
-		},
-		&cli.IntFlag{
-			Name:    "last",
-			Aliases: []string{"n"},
-			Usage:   "Show last n recently created containers (includes all states). Set 0 for unlimited.",
-		},
-		&cli.BoolFlag{
-			Name:  "no-trunc",
-			Usage: "Show output without truncating the ID",
-		},
-		&cli.BoolFlag{
-			Name:    "resolve-image-path",
-			Aliases: []string{"r"},
-			Usage:   "Show image path instead of image id",
-		},
-	},
-	Action: func(c *cli.Context) error {
-		if c.NArg() != 0 {
-			return cli.ShowSubcommandHelp(c)
-		}
-
-		runtimeClient, err := getRuntimeService(c, 0)
-		if err != nil {
-			return err
-		}
-
-		imageClient, err := getImageService(c)
-		if err != nil {
-			return err
-		}
-
-		opts := listOptions{
-			id:               c.String("id"),
-			podID:            c.String("pod"),
-			state:            c.String("state"),
-			verbose:          c.Bool("verbose"),
-			quiet:            c.Bool("quiet"),
-			output:           c.String("output"),
-			all:              c.Bool("all"),
-			nameRegexp:       c.String("name"),
-			latest:           c.Bool("latest"),
-			last:             c.Int("last"),
-			noTrunc:          c.Bool("no-trunc"),
-			image:            c.String("image"),
-			resolveImagePath: c.Bool("resolve-image-path"),
-		}
-		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
-		if err != nil {
-			return err
-		}
-
-		if err = ListContainers(runtimeClient, imageClient, opts); err != nil {
-			return fmt.Errorf("listing containers: %w", err)
 		}
 		return nil
 	},
@@ -675,72 +442,6 @@ func RunContainer(
 	return nil
 }
 
-// CreateContainer sends a CreateContainerRequest to the server, and parses
-// the returned CreateContainerResponse.
-func CreateContainer(
-	iClient internalapi.ImageManagerService,
-	rClient internalapi.RuntimeService,
-	opts createOptions,
-) (string, error) {
-
-	config, err := loadContainerConfig(opts.configPath)
-	if err != nil {
-		return "", err
-	}
-	var podConfig *pb.PodSandboxConfig
-	if opts.podConfig != "" {
-		podConfig, err = loadPodSandboxConfig(opts.podConfig)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	// When there is a with-pull request or the image default mode is to
-	// pull-image-on-create(true) and no-pull was not set we pull the image when
-	// they ask for a create as a helper on the cli to reduce extra steps. As a
-	// reminder if the image is already in cache only the manifest will be pulled
-	// down to verify.
-	if opts.withPull {
-		auth, err := getAuth(opts.creds, opts.auth, opts.username)
-		if err != nil {
-			return "", err
-		}
-
-		// Try to pull the image before container creation
-		image := config.GetImage().GetImage()
-		ann := config.GetImage().GetAnnotations()
-		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann); err != nil {
-			return "", err
-		}
-	}
-
-	request := &pb.CreateContainerRequest{
-		PodSandboxId:  opts.podID,
-		Config:        config,
-		SandboxConfig: podConfig,
-	}
-	logrus.Debugf("CreateContainerRequest: %v", request)
-	r, err := rClient.CreateContainer(context.TODO(), opts.podID, config, podConfig)
-	logrus.Debugf("CreateContainerResponse: %v", r)
-	if err != nil {
-		return "", err
-	}
-	return r, nil
-}
-
-// StartContainer sends a StartContainerRequest to the server, and parses
-// the returned StartContainerResponse.
-func StartContainer(client internalapi.RuntimeService, id string) error {
-	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
-	}
-	if err := client.StartContainer(context.TODO(), id); err != nil {
-		return err
-	}
-	fmt.Println(id)
-	return nil
-}
-
 type updateOptions struct {
 	// (Windows only) Number of CPUs available to the container.
 	CPUCount int64
@@ -792,19 +493,6 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
 	resources := &pb.ContainerResources{Linux: request.Linux}
 	if err := client.UpdateContainerResources(context.TODO(), id, resources); err != nil {
-		return err
-	}
-	fmt.Println(id)
-	return nil
-}
-
-// StopContainer sends a StopContainerRequest to the server, and parses
-// the returned StopContainerResponse.
-func StopContainer(client internalapi.RuntimeService, id string, timeout int64) error {
-	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
-	}
-	if err := client.StopContainer(context.TODO(), id, timeout); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -952,153 +640,6 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 	return nil
 }
 
-// ListContainers sends a ListContainerRequest to the server, and parses
-// the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts listOptions) error {
-	filter := &pb.ContainerFilter{}
-	if opts.id != "" {
-		filter.Id = opts.id
-	}
-	if opts.podID != "" {
-		filter.PodSandboxId = opts.podID
-	}
-	st := &pb.ContainerStateValue{}
-	if !opts.all && opts.state == "" {
-		st.State = pb.ContainerState_CONTAINER_RUNNING
-		filter.State = st
-	}
-	if opts.state != "" {
-		st.State = pb.ContainerState_CONTAINER_UNKNOWN
-		switch strings.ToLower(opts.state) {
-		case "created":
-			st.State = pb.ContainerState_CONTAINER_CREATED
-			filter.State = st
-		case "running":
-			st.State = pb.ContainerState_CONTAINER_RUNNING
-			filter.State = st
-		case "exited":
-			st.State = pb.ContainerState_CONTAINER_EXITED
-			filter.State = st
-		case "unknown":
-			st.State = pb.ContainerState_CONTAINER_UNKNOWN
-			filter.State = st
-		default:
-			log.Fatalf("--state should be one of created, running, exited or unknown")
-		}
-	}
-	if opts.latest || opts.last > 0 {
-		// Do not filter by state if latest/last is specified.
-		filter.State = nil
-	}
-	if opts.labels != nil {
-		filter.LabelSelector = opts.labels
-	}
-	r, err := runtimeClient.ListContainers(context.TODO(), filter)
-	logrus.Debugf("ListContainerResponse: %v", r)
-	if err != nil {
-		return err
-	}
-	r = getContainersList(r, opts)
-
-	switch opts.output {
-	case "json":
-		return outputProtobufObjAsJSON(&pb.ListContainersResponse{Containers: r})
-	case "yaml":
-		return outputProtobufObjAsYAML(&pb.ListContainersResponse{Containers: r})
-	case "table":
-	// continue; output will be generated after the switch block ends.
-	default:
-		return fmt.Errorf("unsupported output format %q", opts.output)
-	}
-
-	display := newTableDisplay(20, 1, 3, ' ', 0)
-	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
-	}
-	for _, c := range r {
-		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
-			return fmt.Errorf("check image match: %w", err)
-		} else if !match {
-			continue
-		}
-		if opts.quiet {
-			fmt.Printf("%s\n", c.Id)
-			continue
-		}
-
-		createdAt := time.Unix(0, c.CreatedAt)
-		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
-		if !opts.verbose {
-			id := c.Id
-			image := c.Image.Image
-			podID := c.PodSandboxId
-			if !opts.noTrunc {
-				id = getTruncatedID(id, "")
-				podID = getTruncatedID(podID, "")
-				// Now c.Image.Image is imageID in kubelet.
-				if digest, err := godigest.Parse(image); err == nil {
-					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
-				}
-			}
-			if opts.resolveImagePath {
-				orig, err := getRepoImage(imageClient, image)
-				if err != nil {
-					return fmt.Errorf("failed to fetch repo image %v", err)
-				}
-				image = orig
-			}
-			podName := getPodNameFromLabels(c.Labels)
-			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				fmt.Sprintf("%d", c.Metadata.Attempt), podID, podName})
-			continue
-		}
-
-		fmt.Printf("ID: %s\n", c.Id)
-		fmt.Printf("PodID: %s\n", c.PodSandboxId)
-		if c.Metadata != nil {
-			if c.Metadata.Name != "" {
-				fmt.Printf("Name: %s\n", c.Metadata.Name)
-			}
-			fmt.Printf("Attempt: %v\n", c.Metadata.Attempt)
-		}
-		fmt.Printf("State: %s\n", convertContainerState(c.State))
-		if c.Image != nil {
-			fmt.Printf("Image: %s\n", c.Image.Image)
-		}
-		fmt.Printf("Created: %v\n", ctm)
-		if c.Labels != nil {
-			for _, k := range getSortedKeys(c.Labels) {
-				fmt.Printf("\t%s -> %s\n", k, c.Labels[k])
-			}
-		}
-		if c.Annotations != nil {
-			for _, k := range getSortedKeys(c.Annotations) {
-				fmt.Printf("\t%s -> %s\n", k, c.Annotations[k])
-			}
-		}
-		fmt.Println()
-	}
-
-	display.Flush()
-	return nil
-}
-
-func convertContainerState(state pb.ContainerState) string {
-	switch state {
-	case pb.ContainerState_CONTAINER_CREATED:
-		return "Created"
-	case pb.ContainerState_CONTAINER_RUNNING:
-		return "Running"
-	case pb.ContainerState_CONTAINER_EXITED:
-		return "Exited"
-	case pb.ContainerState_CONTAINER_UNKNOWN:
-		return "Unknown"
-	default:
-		log.Fatalf("Unknown container state %q", state)
-		return ""
-	}
-}
-
 func getPodNameFromLabels(label map[string]string) string {
 	podName, ok := label[types.KubernetesPodNameLabel]
 	if ok {
@@ -1132,4 +673,114 @@ func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.C
 	}(n, len(filtered))
 
 	return filtered[:n]
+}
+
+// CreateContainer sends a CreateContainerRequest to the server, and parses
+// the returned CreateContainerResponse.
+func CreateContainer(
+	iClient internalapi.ImageManagerService,
+	rClient internalapi.RuntimeService,
+	opts createOptions,
+) (string, error) {
+
+	config, err := loadContainerConfig(opts.configPath)
+	if err != nil {
+		return "", err
+	}
+	var podConfig *pb.PodSandboxConfig
+	if opts.podConfig != "" {
+		podConfig, err = loadPodSandboxConfig(opts.podConfig)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// When there is a with-pull request or the image default mode is to
+	// pull-image-on-create(true) and no-pull was not set we pull the image when
+	// they ask for a create as a helper on the cli to reduce extra steps. As a
+	// reminder if the image is already in cache only the manifest will be pulled
+	// down to verify.
+	if opts.withPull {
+		auth, err := getAuth(opts.creds, opts.auth, opts.username)
+		if err != nil {
+			return "", err
+		}
+
+		// Try to pull the image before container creation
+		image := config.GetImage().GetImage()
+		ann := config.GetImage().GetAnnotations()
+		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann); err != nil {
+			return "", err
+		}
+	}
+
+	request := &pb.CreateContainerRequest{
+		PodSandboxId:  opts.podID,
+		Config:        config,
+		SandboxConfig: podConfig,
+	}
+	logrus.Debugf("CreateContainerRequest: %v", request)
+	r, err := rClient.CreateContainer(context.TODO(), opts.podID, config, podConfig)
+	logrus.Debugf("CreateContainerResponse: %v", r)
+	if err != nil {
+		return "", err
+	}
+	return r, nil
+}
+
+// StartContainer sends a StartContainerRequest to the server, and parses
+// the returned StartContainerResponse.
+func StartContainer(client internalapi.RuntimeService, id string) error {
+	if id == "" {
+		return fmt.Errorf("ID cannot be empty")
+	}
+	if err := client.StartContainer(context.TODO(), id); err != nil {
+		return err
+	}
+	fmt.Println(id)
+	return nil
+}
+
+var stopContainerCommand = &cli.Command{
+	Name:                   "stop",
+	Usage:                  "Stop one or more running containers",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		&cli.Int64Flag{
+			Name:    "timeout",
+			Aliases: []string{"t"},
+			Usage:   "Seconds to wait to kill the container after a graceful stop is requested",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			return fmt.Errorf("ID cannot be empty")
+		}
+		runtimeClient, err := getRuntimeService(c, 0)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < c.NArg(); i++ {
+			containerID := c.Args().Get(i)
+			if err := StopContainer(runtimeClient, containerID, c.Int64("timeout")); err != nil {
+				return fmt.Errorf("stopping the container %q: %w", containerID, err)
+			}
+		}
+		return nil
+	},
+}
+
+// StopContainer sends a StopContainerRequest to the server, and parses
+// the returned StopContainerResponse.
+func StopContainer(client internalapi.RuntimeService, id string, timeout int64) error {
+	if id == "" {
+		return fmt.Errorf("ID cannot be empty")
+	}
+	if err := client.StopContainer(context.TODO(), id, timeout); err != nil {
+		return err
+	}
+	fmt.Println(id)
+	return nil
 }

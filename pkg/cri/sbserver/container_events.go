@@ -4,7 +4,7 @@ import (
 	runtime "demo/over/api/cri/v1"
 )
 
-func (c *criService) GetContainerEvents(r *runtime.GetEventsRequest, s runtime.RuntimeService_GetContainerEventsServer) error {
+func (c *CriService) GetContainerEvents(r *runtime.GetEventsRequest, s runtime.RuntimeService_GetContainerEventsServer) error {
 	// TODO (https://github.com/containerd/issues/7318):
 	// replace with a real implementation that broadcasts containerEventsChan
 	// to all subscribers.

@@ -1,87 +1,41 @@
 package main
 
 import (
-	"context"
-	"demo/containerd"
-	"demo/over/cio"
-	"demo/over/namespaces"
-	oci "demo/pkg/oci"
 	"fmt"
-	"log"
+	"os/exec"
 	"syscall"
-	"time"
 )
 
 func main() {
-	if err := redisExample(); err != nil {
-		log.Fatal(err)
+
+	// 创建多个子进程
+	for i := 0; i < 10; i++ {
+		go func() {
+			cmd := exec.Command("sleep", "10")
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				Setpgid: true, // 创建新进程组，以便Ctrl+C信号不会被传递到子进程
+			}
+			cmd.Start()
+			cmd.Wait()
+		}()
 	}
-}
-
-func redisExample() error {
-	// create a new client connected to the default socket path for containerd
-	client, err := containerd.New("/run/containerd/containerd.sock")
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	// create a new context with an "example" namespace
-	ctx := namespaces.WithNamespace(context.Background(), "example")
-
-	// pull the redis image from DockerHub
-	image, err := client.Pull(ctx, "docker.io/library/redis:alpine", containerd.WithPullUnpack)
-	if err != nil {
-		return err
-	}
-
-	// create a container
-	container, err := client.NewContainer(
-		ctx,
-		"redis-server",
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot("redis-server-snapshot", image),
-		containerd.WithNewSpec(oci.WithImageConfig(image)),
-	)
-	if err != nil {
-		return err
-	}
-	defer container.Delete(ctx, containerd.WithSnapshotCleanup)
-
-	// create a task from the container
-	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
-	if err != nil {
-		return err
-	}
-	defer task.Delete(ctx)
-
-	// make sure we wait before calling start
-	exitStatusC, err := task.Wait(ctx)
-	if err != nil {
-		return err
+	// 等待任意一个子进程退出并回收资源
+	var ws syscall.WaitStatus
+	for {
+		pid, _ := syscall.Wait4(-1, &ws, syscall.WNOHANG, nil)
+		if pid > 0 {
+			if ws.Exited() {
+				exitStatus := ws.ExitStatus()
+				fmt.Printf("子进程 %d 退出，退出状态码：%d\n", pid, exitStatus)
+			} else if ws.Signaled() {
+				signal := ws.Signal()
+				fmt.Printf("子进程 %d 收到信号：%d\n", pid, signal)
+			} else {
+				fmt.Printf("子进程 %d 退出，但状态未知\n", pid)
+			}
+		} else {
+			//fmt.Println("没有子进程退出")
+		}
 	}
 
-	// call start on the task to execute the redis server
-	if err := task.Start(ctx); err != nil {
-		return err
-	}
-
-	// sleep for a lil bit to see the logs
-	time.Sleep(3 * time.Second)
-
-	// kill the process and get the exit status
-	if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
-		return err
-	}
-
-	// wait for the process to fully exit and print out the exit status
-
-	status := <-exitStatusC
-	code, _, err := status.Result()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("redis-server exited with status: %d\n", code)
-
-	return nil
 }

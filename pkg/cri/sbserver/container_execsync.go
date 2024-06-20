@@ -54,7 +54,7 @@ func (cw *cappedWriter) isFull() bool {
 
 // ExecSync executes a command in the container, and returns the stdout output.
 // If command exits with a non-zero exit code, an error is returned.
-func (c *criService) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (*runtime.ExecSyncResponse, error) {
+func (c *CriService) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (*runtime.ExecSyncResponse, error) {
 	const maxStreamSize = 1024 * 1024 * 16
 
 	var stdout, stderr bytes.Buffer
@@ -94,7 +94,7 @@ type execOptions struct {
 	timeout time.Duration
 }
 
-func (c *criService) execInternal(ctx context.Context, container containerd.Container, id string, opts execOptions) (*uint32, error) {
+func (c *CriService) execInternal(ctx context.Context, container containerd.Container, id string, opts execOptions) (*uint32, error) {
 	// Cancel the context before returning to ensure goroutines are stopped.
 	// This is important, because if `Start` returns error, `Wait` will hang
 	// forever unless we cancel the context.
@@ -233,7 +233,7 @@ func (c *criService) execInternal(ctx context.Context, container containerd.Cont
 // For example, if the `kubectl exec -it` process is killed, IO will be closed. In
 // this case, the CRI plugin will still have a goroutine waiting for the exec process
 // to exit and log the exit code, but dockershim won't.
-func (c *criService) execInContainer(ctx context.Context, id string, opts execOptions) (*uint32, error) {
+func (c *CriService) execInContainer(ctx context.Context, id string, opts execOptions) (*uint32, error) {
 	// Get container from our container store.
 	cntr, err := c.containerStore.Get(id)
 

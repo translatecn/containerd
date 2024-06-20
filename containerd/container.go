@@ -184,105 +184,6 @@ func (c *container) Image(ctx context.Context) (Image, error) {
 	return NewImage(c.client, i), nil
 }
 
-func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...NewTaskOpts) (_ Task, err error) {
-	i, err := ioCreate(c.id)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err != nil && i != nil {
-			i.Cancel()
-			i.Close()
-		}
-	}()
-	cfg := i.Config()
-	request := &tasks.CreateTaskRequest{
-		ContainerID: c.id,
-		Terminal:    cfg.Terminal,
-		Stdin:       cfg.Stdin,  // 进程间通信的特殊文件类型
-		Stdout:      cfg.Stdout, // 进程间通信的特殊文件类型
-		Stderr:      cfg.Stderr, // 进程间通信的特殊文件类型
-	}
-	r, err := c.get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if r.SnapshotKey != "" {
-		if r.Snapshotter == "" {
-			return nil, fmt.Errorf("unable to resolve rootfs mounts without snapshotter on container: %w", errdefs.ErrInvalidArgument)
-		}
-
-		// get the rootfs from the snapshotter and add it to the request
-		s, err := c.client.getSnapshotter(ctx, r.Snapshotter)
-		if err != nil {
-			return nil, err
-		}
-		mounts, err := s.Mounts(ctx, r.SnapshotKey)
-		if err != nil {
-			return nil, err
-		}
-		spec, err := c.Spec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, m := range mounts {
-			if spec.Linux != nil && spec.Linux.MountLabel != "" {
-				context := label.FormatMountLabel("", spec.Linux.MountLabel)
-				if context != "" {
-					m.Options = append(m.Options, context)
-				}
-			}
-			request.Rootfs = append(request.Rootfs, &types.Mount{
-				Type:    m.Type,
-				Source:  m.Source,
-				Target:  m.Target,
-				Options: m.Options,
-			})
-		}
-	}
-	info := TaskInfo{
-		runtime: r.Runtime.Name,
-	}
-	for _, o := range opts {
-		if err := o(ctx, c.client, &info); err != nil {
-			return nil, err
-		}
-	}
-	if info.RootFS != nil {
-		for _, m := range info.RootFS {
-			request.Rootfs = append(request.Rootfs, &types.Mount{
-				Type:    m.Type,
-				Source:  m.Source,
-				Target:  m.Target,
-				Options: m.Options,
-			})
-		}
-	}
-	request.RuntimePath = info.RuntimePath
-	if info.Options != nil {
-		any, err := typeurl.MarshalAny(info.Options)
-		if err != nil {
-			return nil, err
-		}
-		request.Options = protobuf.FromAny(any)
-	}
-	t := &task{
-		client: c.client,
-		io:     i,
-		id:     c.id,
-		c:      c,
-	}
-	if info.Checkpoint != nil {
-		request.Checkpoint = info.Checkpoint
-	}
-	response, err := c.client.TaskService().Create(ctx, request)
-	if err != nil {
-		return nil, errdefs.FromGRPC(err)
-	}
-	t.pid = response.Pid
-	return t, nil
-}
-
 func (c *container) Checkpoint(ctx context.Context, ref string, opts ...CheckpointOpts) (Image, error) {
 	index := &ocispec.Index{
 		Versioned: ver.Versioned{
@@ -437,4 +338,102 @@ func (c *container) Update(ctx context.Context, opts ...UpdateContainerOpts) err
 		return errdefs.FromGRPC(err)
 	}
 	return nil
+}
+func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...NewTaskOpts) (_ Task, err error) {
+	i, err := ioCreate(c.id)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil && i != nil {
+			i.Cancel()
+			i.Close()
+		}
+	}()
+	cfg := i.Config()
+	request := &tasks.CreateTaskRequest{
+		ContainerID: c.id,
+		Terminal:    cfg.Terminal,
+		Stdin:       cfg.Stdin,  // 进程间通信的特殊文件类型
+		Stdout:      cfg.Stdout, // 进程间通信的特殊文件类型
+		Stderr:      cfg.Stderr, // 进程间通信的特殊文件类型
+	}
+	r, err := c.get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if r.SnapshotKey != "" {
+		if r.Snapshotter == "" {
+			return nil, fmt.Errorf("unable to resolve rootfs mounts without snapshotter on container: %w", errdefs.ErrInvalidArgument)
+		}
+
+		// get the rootfs from the snapshotter and add it to the request
+		s, err := c.client.getSnapshotter(ctx, r.Snapshotter)
+		if err != nil {
+			return nil, err
+		}
+		mounts, err := s.Mounts(ctx, r.SnapshotKey)
+		if err != nil {
+			return nil, err
+		}
+		spec, err := c.Spec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range mounts {
+			if spec.Linux != nil && spec.Linux.MountLabel != "" {
+				context := label.FormatMountLabel("", spec.Linux.MountLabel)
+				if context != "" {
+					m.Options = append(m.Options, context)
+				}
+			}
+			request.Rootfs = append(request.Rootfs, &types.Mount{
+				Type:    m.Type,
+				Source:  m.Source,
+				Target:  m.Target,
+				Options: m.Options,
+			})
+		}
+	}
+	info := TaskInfo{
+		runtime: r.Runtime.Name,
+	}
+	for _, o := range opts {
+		if err := o(ctx, c.client, &info); err != nil {
+			return nil, err
+		}
+	}
+	if info.RootFS != nil {
+		for _, m := range info.RootFS {
+			request.Rootfs = append(request.Rootfs, &types.Mount{
+				Type:    m.Type,
+				Source:  m.Source,
+				Target:  m.Target,
+				Options: m.Options,
+			})
+		}
+	}
+	request.RuntimePath = info.RuntimePath
+	if info.Options != nil {
+		any, err := typeurl.MarshalAny(info.Options)
+		if err != nil {
+			return nil, err
+		}
+		request.Options = protobuf.FromAny(any)
+	}
+	t := &task{
+		client: c.client,
+		io:     i,
+		id:     c.id,
+		c:      c,
+	}
+	if info.Checkpoint != nil {
+		request.Checkpoint = info.Checkpoint
+	}
+	response, err := c.client.TaskService().Create(ctx, request)
+	if err != nil {
+		return nil, errdefs.FromGRPC(err)
+	}
+	t.pid = response.Pid
+	return t, nil
 }

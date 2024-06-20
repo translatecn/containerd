@@ -7,8 +7,6 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	github_com_gogo_protobuf_sortkeys "github.com/gogo/protobuf/sortkeys"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -11332,26 +11330,6 @@ type ImageServiceServer interface {
 	RemoveImage(context.Context, *RemoveImageRequest) (*RemoveImageResponse, error)
 	// ImageFSInfo returns information of the filesystem that is used to store images.
 	ImageFsInfo(context.Context, *ImageFsInfoRequest) (*ImageFsInfoResponse, error)
-}
-
-// UnimplementedImageServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedImageServiceServer struct {
-}
-
-func (*UnimplementedImageServiceServer) ListImages(ctx context.Context, req *ListImagesRequest) (*ListImagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListImages not implemented")
-}
-func (*UnimplementedImageServiceServer) ImageStatus(ctx context.Context, req *ImageStatusRequest) (*ImageStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ImageStatus not implemented")
-}
-func (*UnimplementedImageServiceServer) PullImage(ctx context.Context, req *PullImageRequest) (*PullImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PullImage not implemented")
-}
-func (*UnimplementedImageServiceServer) RemoveImage(ctx context.Context, req *RemoveImageRequest) (*RemoveImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveImage not implemented")
-}
-func (*UnimplementedImageServiceServer) ImageFsInfo(ctx context.Context, req *ImageFsInfoRequest) (*ImageFsInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ImageFsInfo not implemented")
 }
 
 func RegisterImageServiceServer(s *grpc.Server, srv ImageServiceServer) {

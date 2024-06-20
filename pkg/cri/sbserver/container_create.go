@@ -3,27 +3,26 @@ package sbserver
 import (
 	"context"
 	criconfig "demo/config/cri"
+	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
 	"demo/over/log"
 	"demo/over/typeurl/v2"
+	cio "demo/pkg/cri/io"
 	"errors"
 	"fmt"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
-
-	runtime "demo/over/api/cri/v1"
 	"github.com/davecgh/go-spew/spew"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux"
 	"github.com/opencontainers/selinux/go-selinux/label"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
-	"demo/containerd"
 	"demo/over/blockio"
 	"demo/over/containers"
 	"demo/over/platforms"
-	cio "demo/pkg/cri/io"
 	customopts "demo/pkg/cri/opts"
 	"demo/pkg/cri/over/annotations"
 	containerstore "demo/pkg/cri/store/container"
@@ -36,288 +35,10 @@ func init() {
 		"github.com/containerd/cri/pkg/store/container", "Metadata")
 }
 
-// CreateContainer creates a new container in the given PodSandbox.
-func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (_ *runtime.CreateContainerResponse, retErr error) {
-	config := r.GetConfig()
-	log.G(ctx).Debugf("Container config %+v", config)
-	sandboxConfig := r.GetSandboxConfig()
-	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
-	if err != nil {
-		return nil, fmt.Errorf("failed to find sandbox id %q: %w", r.GetPodSandboxId(), err)
-	}
-
-	controller, err := c.getSandboxController(sandbox.Config, sandbox.RuntimeHandler)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sandbox controller: %w", err)
-	}
-
-	cstatus, err := controller.Status(ctx, sandbox.ID, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get controller status: %w", err)
-	}
-
-	var (
-		sandboxID  = cstatus.SandboxID
-		sandboxPid = cstatus.Pid
-	)
-
-	// Generate unique id and name for the container and reserve the name.
-	// Reserve the container name to avoid concurrent `CreateContainer` request creating
-	// the same container.
-	id := util.GenerateID()
-	metadata := config.GetMetadata()
-	if metadata == nil {
-		return nil, errors.New("container config must include metadata")
-	}
-	containerName := metadata.Name
-	name := makeContainerName(metadata, sandboxConfig.GetMetadata())
-	log.G(ctx).Debugf("Generated id %q for container %q", id, name)
-	if err = c.containerNameIndex.Reserve(name, id); err != nil {
-		return nil, fmt.Errorf("failed to reserve container name %q: %w", name, err)
-	}
-	defer func() {
-		// Release the name if the function returns with an error.
-		if retErr != nil {
-			c.containerNameIndex.ReleaseByName(name)
-		}
-	}()
-
-	// Create initial internal container metadata.
-	meta := containerstore.Metadata{
-		ID:        id,
-		Name:      name,
-		SandboxID: sandboxID,
-		Config:    config,
-	}
-
-	// Prepare container image snapshot. For container, the image should have
-	// been pulled before creating the container, so do not ensure the image.
-	image, err := c.localResolve(config.GetImage().GetImage())
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve image %q: %w", config.GetImage().GetImage(), err)
-	}
-	containerdImage, err := c.toContainerdImage(ctx, image)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get image from containerd %q: %w", image.ID, err)
-	}
-
-	start := time.Now()
-
-	// Create container root directory.
-	containerRootDir := c.getContainerRootDir(id)
-	if err = c.os.MkdirAll(containerRootDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create container root directory %q: %w",
-			containerRootDir, err)
-	}
-	defer func() {
-		if retErr != nil {
-			// Cleanup the container root directory.
-			if err = c.os.RemoveAll(containerRootDir); err != nil {
-				log.G(ctx).WithError(err).Errorf("Failed to remove container root directory %q",
-					containerRootDir)
-			}
-		}
-	}()
-	volatileContainerRootDir := c.getVolatileContainerRootDir(id)
-	if err = c.os.MkdirAll(volatileContainerRootDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create volatile container root directory %q: %w",
-			volatileContainerRootDir, err)
-	}
-	defer func() {
-		if retErr != nil {
-			// Cleanup the volatile container root directory.
-			if err = c.os.RemoveAll(volatileContainerRootDir); err != nil {
-				log.G(ctx).WithError(err).Errorf("Failed to remove volatile container root directory %q",
-					volatileContainerRootDir)
-			}
-		}
-	}()
-
-	platform, err := controller.Platform(ctx, sandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query sandbox platform: %w", err)
-	}
-
-	var volumeMounts []*runtime.Mount
-	if !c.config.IgnoreImageDefinedVolumes {
-		// Create container image volumes mounts.
-		volumeMounts = c.volumeMounts(platform, containerRootDir, config.GetMounts(), &image.ImageSpec.Config)
-	} else if len(image.ImageSpec.Config.Volumes) != 0 {
-		log.G(ctx).Debugf("Ignoring volumes defined in image %v because IgnoreImageDefinedVolumes is set", image.ID)
-	}
-
-	ociRuntime, err := c.getSandboxRuntime(sandboxConfig, sandbox.Metadata.RuntimeHandler)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sandbox runtime: %w", err)
-	}
-	log.G(ctx).Debugf("Use OCI runtime %+v for sandbox %q and container %q", ociRuntime, sandboxID, id)
-
-	spec, err := c.buildContainerSpec(
-		platform,
-		id,
-		sandboxID,
-		sandboxPid,
-		sandbox.NetNSPath,
-		containerName,
-		containerdImage.Name(),
-		config,
-		sandboxConfig,
-		&image.ImageSpec.Config,
-		volumeMounts,
-		ociRuntime,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate container %q spec: %w", id, err)
-	}
-
-	meta.ProcessLabel = spec.Process.SelinuxLabel
-
-	if config.GetLinux().GetSecurityContext().GetPrivileged() {
-		// If privileged don't set the SELinux label but still record it on the container so
-		// the unused MCS label can be release later
-		spec.Process.SelinuxLabel = ""
-	}
-	defer func() {
-		if retErr != nil {
-			selinux.ReleaseLabel(spec.Process.SelinuxLabel)
-		}
-	}()
-
-	log.G(ctx).Debugf("Container %q spec: %#+v", id, spew.NewFormatter(spec))
-
-	// Grab any platform specific snapshotter opts.
-	sOpts := snapshotterOpts(c.config.ContainerdConfig.Snapshotter, config)
-
-	// Set snapshotter before any other options.
-	opts := []containerd.NewContainerOpts{
-		containerd.WithSnapshotter(c.runtimeSnapshotter(ctx, ociRuntime)),
-		// Prepare container rootfs. This is always writeable even if
-		// the container wants a readonly rootfs since we want to give
-		// the runtime (runc) a chance to modify (e.g. to create mount
-		// points corresponding to spec.Mounts) before making the
-		// rootfs readonly (requested by spec.Root.Readonly).
-		customopts.WithNewSnapshot(id, containerdImage, sOpts...),
-	}
-	if len(volumeMounts) > 0 {
-		mountMap := make(map[string]string)
-		for _, v := range volumeMounts {
-			mountMap[filepath.Clean(v.HostPath)] = v.ContainerPath
-		}
-		opts = append(opts, customopts.WithVolumes(mountMap))
-	}
-	meta.ImageRef = image.ID
-	meta.StopSignal = image.ImageSpec.Config.StopSignal
-
-	// Validate log paths and compose full container log path.
-	if sandboxConfig.GetLogDirectory() != "" && config.GetLogPath() != "" {
-		meta.LogPath = filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		log.G(ctx).Debugf("Composed container full log path %q using sandbox log dir %q and container log path %q",
-			meta.LogPath, sandboxConfig.GetLogDirectory(), config.GetLogPath())
-	} else {
-		log.G(ctx).Infof("Logging will be disabled due to empty log paths for sandbox (%q) or container (%q)",
-			sandboxConfig.GetLogDirectory(), config.GetLogPath())
-	}
-
-	containerIO, err := cio.NewContainerIO(id,
-		cio.WithNewFIFOs(volatileContainerRootDir, config.GetTty(), config.GetStdin()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create container io: %w", err)
-	}
-	defer func() {
-		if retErr != nil {
-			if err := containerIO.Close(); err != nil {
-				log.G(ctx).WithError(err).Errorf("Failed to close container io %q", id)
-			}
-		}
-	}()
-
-	specOpts, err := c.platformSpecOpts(platform, config, &image.ImageSpec.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container spec opts: %w", err)
-	}
-
-	containerLabels := buildLabels(config.Labels, image.ImageSpec.Config.Labels, containerKindContainer)
-
-	sandboxInfo, err := c.client.SandboxStore().Get(ctx, sandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get sandbox %q metdata: %w", sandboxID, err)
-	}
-
-	opts = append(opts,
-		containerd.WithSpec(spec, specOpts...),
-		containerd.WithRuntime(sandboxInfo.Runtime.Name, sandboxInfo.Runtime.Options),
-		containerd.WithContainerLabels(containerLabels),
-		containerd.WithContainerExtension(containerMetadataExtension, &meta),
-	)
-
-	// When using sandboxed shims, containerd's runtime needs to know which sandbox shim instance to use.
-	if ociRuntime.SandboxMode == string(criconfig.ModeShim) {
-		opts = append(opts, containerd.WithSandbox(sandboxID))
-	}
-
-	opts = append(opts, c.nri.WithContainerAdjustment())
-	defer func() {
-		if retErr != nil {
-			deferCtx, deferCancel := util.DeferContext()
-			defer deferCancel()
-			c.nri.UndoCreateContainer(deferCtx, &sandbox, id, spec)
-		}
-	}()
-
-	var cntr containerd.Container
-	if cntr, err = c.client.NewContainer(ctx, id, opts...); err != nil {
-		return nil, fmt.Errorf("failed to create containerd container: %w", err)
-	}
-	defer func() {
-		if retErr != nil {
-			deferCtx, deferCancel := util.DeferContext()
-			defer deferCancel()
-			if err := cntr.Delete(deferCtx, containerd.WithSnapshotCleanup); err != nil {
-				log.G(ctx).WithError(err).Errorf("Failed to delete containerd container %q", id)
-			}
-		}
-	}()
-
-	status := containerstore.Status{CreatedAt: time.Now().UnixNano()}
-	status = copyResourcesToStatus(spec, status)
-	container, err := containerstore.NewContainer(meta,
-		containerstore.WithStatus(status, containerRootDir),
-		containerstore.WithContainer(cntr),
-		containerstore.WithContainerIO(containerIO),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create internal container object for %q: %w", id, err)
-	}
-	defer func() {
-		if retErr != nil {
-			// Cleanup container checkpoint on error.
-			if err := container.Delete(); err != nil {
-				log.G(ctx).WithError(err).Errorf("Failed to cleanup container checkpoint for %q", id)
-			}
-		}
-	}()
-
-	// Add container into container store.
-	if err := c.containerStore.Add(container); err != nil {
-		return nil, fmt.Errorf("failed to add container %q into store: %w", id, err)
-	}
-
-	c.generateAndSendContainerEvent(ctx, id, sandboxID, runtime.ContainerEventType_CONTAINER_CREATED_EVENT)
-
-	err = c.nri.PostCreateContainer(ctx, &sandbox, &container)
-	if err != nil {
-		log.G(ctx).WithError(err).Errorf("NRI post-create notification failed")
-	}
-
-	containerCreateTimer.WithValues(ociRuntime.Type).UpdateSince(start)
-
-	return &runtime.CreateContainerResponse{ContainerId: id}, nil
-}
-
 // volumeMounts sets up image volumes for container. Rely on the removal of container
 // root directory to do cleanup. Note that image volume will be skipped, if there is criMounts
 // specified with the same destination.
-func (c *criService) volumeMounts(platform platforms.Platform, containerRootDir string, criMounts []*runtime.Mount, config *imagespec.ImageConfig) []*runtime.Mount {
+func (c *CriService) volumeMounts(platform platforms.Platform, containerRootDir string, criMounts []*runtime.Mount, config *imagespec.ImageConfig) []*runtime.Mount {
 	if len(config.Volumes) == 0 {
 		return nil
 	}
@@ -353,7 +74,7 @@ func (c *criService) volumeMounts(platform platforms.Platform, containerRootDir 
 }
 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
-func (c *criService) runtimeSpec(id string, platform platforms.Platform, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
+func (c *CriService) runtimeSpec(id string, platform platforms.Platform, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
 	ctx := util.NamespacedContext()
 	container := &containers.Container{ID: id}
@@ -389,7 +110,7 @@ func (c *criService) runtimeSpec(id string, platform platforms.Platform, baseSpe
 
 // Overrides the default snapshotter if Snapshotter is set for this runtime.
 // See https://github.com/containerd/issues/6657
-func (c *criService) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
+func (c *CriService) runtimeSnapshotter(ctx context.Context, ociRuntime criconfig.Runtime) string {
 	if ociRuntime.Snapshotter == "" {
 		return c.config.ContainerdConfig.Snapshotter
 	}
@@ -446,7 +167,7 @@ func generateUserString(username string, uid, gid *runtime.Int64Value) (string, 
 // platformSpecOpts adds additional runtime spec options that may rely on
 // runtime information (rootfs mounted), or platform specific checks with
 // no defined workaround (yet) to specify for other platforms.
-func (c *criService) platformSpecOpts(
+func (c *CriService) platformSpecOpts(
 	platform platforms.Platform,
 	config *runtime.ContainerConfig,
 	imageConfig *imagespec.ImageConfig,
@@ -493,7 +214,7 @@ func (c *criService) platformSpecOpts(
 }
 
 // buildContainerSpec build container's OCI spec depending on controller's target platform OS.
-func (c *criService) buildContainerSpec(
+func (c *CriService) buildContainerSpec(
 	platform platforms.Platform,
 	id string,
 	sandboxID string,
@@ -573,7 +294,7 @@ func (c *criService) buildContainerSpec(
 	return c.runtimeSpec(id, platform, ociRuntime.BaseRuntimeSpec, specOpts...)
 }
 
-func (c *criService) buildLinuxSpec(
+func (c *CriService) buildLinuxSpec(
 	id string,
 	sandboxID string,
 	sandboxPid uint32,
@@ -805,7 +526,7 @@ func (c *criService) buildLinuxSpec(
 	return specOpts, nil
 }
 
-func (c *criService) buildWindowsSpec(
+func (c *CriService) buildWindowsSpec(
 	id string,
 	sandboxID string,
 	sandboxPid uint32,
@@ -903,7 +624,7 @@ func (c *criService) buildWindowsSpec(
 	return specOpts, nil
 }
 
-func (c *criService) buildDarwinSpec(
+func (c *CriService) buildDarwinSpec(
 	id string,
 	sandboxID string,
 	containerName string,
@@ -955,7 +676,7 @@ func (c *criService) buildDarwinSpec(
 
 // containerMounts sets up necessary container system file mounts
 // including /dev/shm, /etc/hosts and /etc/resolv.conf.
-func (c *criService) linuxContainerMounts(sandboxID string, config *runtime.ContainerConfig) []*runtime.Mount {
+func (c *CriService) linuxContainerMounts(sandboxID string, config *runtime.ContainerConfig) []*runtime.Mount {
 	var mounts []*runtime.Mount
 	securityContext := config.GetLinux().GetSecurityContext()
 	if !isInCRIMounts(etcHostname, config.GetMounts()) {
@@ -1008,4 +729,282 @@ func (c *criService) linuxContainerMounts(sandboxID string, config *runtime.Cont
 		})
 	}
 	return mounts
+}
+
+// CreateContainer creates a new container in the given PodSandbox.
+func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (_ *runtime.CreateContainerResponse, retErr error) {
+	config := r.GetConfig()
+	log.G(ctx).Debugf("Container config %+v", config)
+	sandboxConfig := r.GetSandboxConfig()
+	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find sandbox id %q: %w", r.GetPodSandboxId(), err)
+	}
+
+	controller, err := c.getSandboxController(sandbox.Config, sandbox.RuntimeHandler)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sandbox controller: %w", err)
+	}
+
+	cstatus, err := controller.Status(ctx, sandbox.ID, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get controller status: %w", err)
+	}
+
+	var (
+		sandboxID  = cstatus.SandboxID
+		sandboxPid = cstatus.Pid
+	)
+
+	// Generate unique id and name for the container and reserve the name.
+	// Reserve the container name to avoid concurrent `CreateContainer` request creating
+	// the same container.
+	id := util.GenerateID()
+	metadata := config.GetMetadata()
+	if metadata == nil {
+		return nil, errors.New("container config must include metadata")
+	}
+	containerName := metadata.Name
+	name := makeContainerName(metadata, sandboxConfig.GetMetadata())
+	log.G(ctx).Debugf("Generated id %q for container %q", id, name)
+	if err = c.containerNameIndex.Reserve(name, id); err != nil {
+		return nil, fmt.Errorf("failed to reserve container name %q: %w", name, err)
+	}
+	defer func() {
+		// Release the name if the function returns with an error.
+		if retErr != nil {
+			c.containerNameIndex.ReleaseByName(name)
+		}
+	}()
+
+	// Create initial internal container metadata.
+	meta := containerstore.Metadata{
+		ID:        id,
+		Name:      name,
+		SandboxID: sandboxID,
+		Config:    config,
+	}
+
+	// Prepare container image snapshot. For container, the image should have
+	// been pulled before creating the container, so do not ensure the image.
+	image, err := c.localResolve(config.GetImage().GetImage())
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve image %q: %w", config.GetImage().GetImage(), err)
+	}
+	containerdImage, err := c.toContainerdImage(ctx, image)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image from containerd %q: %w", image.ID, err)
+	}
+
+	start := time.Now()
+
+	// Create container root directory.  /var/lib/containerd/io.containerd.grpc.v1.cri/containers/60ee8cbb0bfcc5c475ae6e61a3113b4a99829a5092359d723ec5ecae99d32668
+	containerRootDir := c.getContainerRootDir(id)
+	if err = c.os.MkdirAll(containerRootDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create container root directory %q: %w",
+			containerRootDir, err)
+	}
+	defer func() {
+		if retErr != nil {
+			// Cleanup the container root directory.
+			if err = c.os.RemoveAll(containerRootDir); err != nil {
+				log.G(ctx).WithError(err).Errorf("Failed to remove container root directory %q",
+					containerRootDir)
+			}
+		}
+	}()
+	volatileContainerRootDir := c.getVolatileContainerRootDir(id) // /run/containerd/io.containerd.grpc.v1.cri/containers/60ee8cbb0bfcc5c475ae6e61a3113b4a99829a5092359d723ec5ecae99d32668
+	if err = c.os.MkdirAll(volatileContainerRootDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create volatile container root directory %q: %w",
+			volatileContainerRootDir, err)
+	}
+	defer func() {
+		if retErr != nil {
+			// Cleanup the volatile container root directory.
+			if err = c.os.RemoveAll(volatileContainerRootDir); err != nil {
+				log.G(ctx).WithError(err).Errorf("Failed to remove volatile container root directory %q",
+					volatileContainerRootDir)
+			}
+		}
+	}()
+
+	platform, err := controller.Platform(ctx, sandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query sandbox platform: %w", err)
+	}
+
+	var volumeMounts []*runtime.Mount
+	if !c.config.IgnoreImageDefinedVolumes {
+		// Create container image volumes mounts.
+		volumeMounts = c.volumeMounts(platform, containerRootDir, config.GetMounts(), &image.ImageSpec.Config)
+	} else if len(image.ImageSpec.Config.Volumes) != 0 {
+		log.G(ctx).Debugf("Ignoring volumes defined in image %v because IgnoreImageDefinedVolumes is set", image.ID)
+	}
+
+	ociRuntime, err := c.getSandboxRuntime(sandboxConfig, sandbox.Metadata.RuntimeHandler)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sandbox runtime: %w", err)
+	}
+	log.G(ctx).Debugf("Use OCI runtime %+v for sandbox %q and container %q", ociRuntime, sandboxID, id)
+
+	spec, err := c.buildContainerSpec(
+		platform,
+		id,
+		sandboxID,
+		sandboxPid,
+		sandbox.NetNSPath,
+		containerName,
+		containerdImage.Name(),
+		config,
+		sandboxConfig,
+		&image.ImageSpec.Config,
+		volumeMounts,
+		ociRuntime,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate container %q spec: %w", id, err)
+	}
+
+	meta.ProcessLabel = spec.Process.SelinuxLabel
+
+	if config.GetLinux().GetSecurityContext().GetPrivileged() {
+		// If privileged don't set the SELinux label but still record it on the container so
+		// the unused MCS label can be release later
+		spec.Process.SelinuxLabel = ""
+	}
+	defer func() {
+		if retErr != nil {
+			selinux.ReleaseLabel(spec.Process.SelinuxLabel)
+		}
+	}()
+
+	log.G(ctx).Debugf("Container %q spec: %#+v", id, spew.NewFormatter(spec))
+
+	// Grab any platform specific snapshotter opts.
+	sOpts := snapshotterOpts(c.config.ContainerdConfig.Snapshotter, config)
+
+	// Set snapshotter before any other options.
+	opts := []containerd.NewContainerOpts{
+		containerd.WithSnapshotter(c.runtimeSnapshotter(ctx, ociRuntime)),
+		// Prepare container rootfs. This is always writeable even if
+		// the container wants a readonly rootfs since we want to give
+		// the runtime (runc) a chance to modify (e.g. to create mount
+		// points corresponding to spec.Mounts) before making the
+		// rootfs readonly (requested by spec.Root.Readonly).
+		customopts.WithNewSnapshot(id, containerdImage, sOpts...),
+	}
+	if len(volumeMounts) > 0 {
+		mountMap := make(map[string]string)
+		for _, v := range volumeMounts {
+			mountMap[filepath.Clean(v.HostPath)] = v.ContainerPath
+		}
+		opts = append(opts, customopts.WithVolumes(mountMap))
+	}
+	meta.ImageRef = image.ID
+	meta.StopSignal = image.ImageSpec.Config.StopSignal
+
+	// Validate log paths and compose full container log path.
+	if sandboxConfig.GetLogDirectory() != "" && config.GetLogPath() != "" {
+		meta.LogPath = filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
+		log.G(ctx).Debugf("Composed container full log path %q using sandbox log dir %q and container log path %q",
+			meta.LogPath, sandboxConfig.GetLogDirectory(), config.GetLogPath())
+	} else {
+		log.G(ctx).Infof("Logging will be disabled due to empty log paths for sandbox (%q) or container (%q)",
+			sandboxConfig.GetLogDirectory(), config.GetLogPath())
+	}
+
+	containerIO, err := cio.NewContainerIO(id,
+		cio.WithNewFIFOs(volatileContainerRootDir, config.GetTty(), config.GetStdin()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create container io: %w", err)
+	}
+	defer func() {
+		if retErr != nil {
+			if err := containerIO.Close(); err != nil {
+				log.G(ctx).WithError(err).Errorf("Failed to close container io %q", id)
+			}
+		}
+	}()
+
+	specOpts, err := c.platformSpecOpts(platform, config, &image.ImageSpec.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container spec opts: %w", err)
+	}
+
+	containerLabels := buildLabels(config.Labels, image.ImageSpec.Config.Labels, containerKindContainer)
+
+	sandboxInfo, err := c.client.SandboxStore().Get(ctx, sandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get sandbox %q metdata: %w", sandboxID, err)
+	}
+
+	opts = append(opts,
+		containerd.WithSpec(spec, specOpts...),
+		containerd.WithRuntime(sandboxInfo.Runtime.Name, sandboxInfo.Runtime.Options),
+		containerd.WithContainerLabels(containerLabels),
+		containerd.WithContainerExtension(containerMetadataExtension, &meta),
+	)
+
+	// When using sandboxed shims, containerd's runtime needs to know which sandbox shim instance to use.
+	if ociRuntime.SandboxMode == string(criconfig.ModeShim) {
+		opts = append(opts, containerd.WithSandbox(sandboxID))
+	}
+
+	opts = append(opts, c.nri.WithContainerAdjustment())
+	defer func() {
+		if retErr != nil {
+			deferCtx, deferCancel := util.DeferContext()
+			defer deferCancel()
+			c.nri.UndoCreateContainer(deferCtx, &sandbox, id, spec)
+		}
+	}()
+
+	var cntr containerd.Container
+	if cntr, err = c.client.NewContainer(ctx, id, opts...); err != nil {
+		return nil, fmt.Errorf("failed to create containerd container: %w", err)
+	}
+	defer func() {
+		if retErr != nil {
+			deferCtx, deferCancel := util.DeferContext()
+			defer deferCancel()
+			if err := cntr.Delete(deferCtx, containerd.WithSnapshotCleanup); err != nil {
+				log.G(ctx).WithError(err).Errorf("Failed to delete containerd container %q", id)
+			}
+		}
+	}()
+
+	status := containerstore.Status{CreatedAt: time.Now().UnixNano()}
+	status = copyResourcesToStatus(spec, status)
+	container, err := containerstore.NewContainer(meta,
+		containerstore.WithStatus(status, containerRootDir),
+		containerstore.WithContainer(cntr),
+		containerstore.WithContainerIO(containerIO),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create internal container object for %q: %w", id, err)
+	}
+	defer func() {
+		if retErr != nil {
+			// Cleanup container checkpoint on error.
+			if err := container.Delete(); err != nil {
+				log.G(ctx).WithError(err).Errorf("Failed to cleanup container checkpoint for %q", id)
+			}
+		}
+	}()
+
+	// Add container into container store.
+	if err := c.containerStore.Add(container); err != nil {
+		return nil, fmt.Errorf("failed to add container %q into store: %w", id, err)
+	}
+
+	c.generateAndSendContainerEvent(ctx, id, sandboxID, runtime.ContainerEventType_CONTAINER_CREATED_EVENT)
+
+	err = c.nri.PostCreateContainer(ctx, &sandbox, &container)
+	if err != nil {
+		log.G(ctx).WithError(err).Errorf("NRI post-create notification failed")
+	}
+
+	containerCreateTimer.WithValues(ociRuntime.Type).UpdateSince(start)
+
+	return &runtime.CreateContainerResponse{ContainerId: id}, nil
 }

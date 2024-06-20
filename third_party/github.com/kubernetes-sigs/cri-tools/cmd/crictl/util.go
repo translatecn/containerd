@@ -153,20 +153,6 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	return &config, nil
 }
 
-func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
-	f, err := openFile(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var config pb.PodSandboxConfig
-	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
-		return nil, err
-	}
-	return &config, nil
-}
-
 func openFile(path string) (*os.File, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -354,4 +340,17 @@ func getRepoImage(imageClient internalapi.ImageManagerService, image string) (st
 		return r.Image.RepoTags[0], nil
 	}
 	return image, nil
+}
+func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
+	f, err := openFile(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var config pb.PodSandboxConfig
+	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
+		return nil, err
+	}
+	return &config, nil
 }

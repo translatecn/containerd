@@ -11,7 +11,7 @@ import (
 )
 
 // ListPodSandboxStats returns stats of all ready sandboxes.
-func (c *criService) ListPodSandboxStats(
+func (c *CriService) ListPodSandboxStats(
 	ctx context.Context,
 	r *runtime.ListPodSandboxStatsRequest,
 ) (*runtime.ListPodSandboxStatsResponse, error) {
@@ -34,7 +34,7 @@ func (c *criService) ListPodSandboxStats(
 	return podSandboxStats, errs.ErrorOrNil()
 }
 
-func (c *criService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSandboxStatsRequest) []sandboxstore.Sandbox {
+func (c *CriService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSandboxStatsRequest) []sandboxstore.Sandbox {
 	sandboxesInStore := c.sandboxStore.List()
 
 	if r.GetFilter() == nil {

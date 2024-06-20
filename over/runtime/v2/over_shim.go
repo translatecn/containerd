@@ -150,10 +150,17 @@ type ShimInstance interface {
 
 func parseStartResponse(ctx context.Context, response []byte) (shim.BootstrapParams, error) {
 	var params shim.BootstrapParams
-
-	if err := json.Unmarshal(response, &params); err != nil || params.Version < 2 {
+	rs := []byte{}
+	if strings.Contains(string(response), `API server listening at`) {
+		x := strings.Split(string(response), "\n")
+		d := strings.Join(x[3:], "\n")
+		rs = []byte(d)
+	} else {
+		rs = response
+	}
+	if err := json.Unmarshal(rs, &params); err != nil || params.Version < 2 {
 		// Use TTRPC for legacy shims
-		params.Address = string(response)
+		params.Address = string(rs)
 		params.Protocol = "ttrpc"
 	}
 
@@ -509,7 +516,7 @@ func (s *ShimTask) Resume(ctx context.Context) error {
 }
 
 func (s *ShimTask) Start(ctx context.Context) error {
-	_, err := s.task.Start(ctx, &task.StartRequest{
+	_, err := s.task.Start(ctx, &task.StartRequest{ // 调用 shim
 		ID: s.ID(),
 	})
 	if err != nil {

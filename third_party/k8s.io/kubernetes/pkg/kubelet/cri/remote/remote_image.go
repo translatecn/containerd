@@ -33,7 +33,6 @@ import (
 	internalapi "demo/over/api/cri"
 	runtimeapi "demo/over/api/cri/v1"
 	"demo/third_party/k8s.io/kubernetes/pkg/features"
-	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/util"
 )
 
 // remoteImageService is a gRPC implementation of internalapi.ImageManagerService.
@@ -45,10 +44,6 @@ type remoteImageService struct {
 // NewRemoteImageService creates a new internalapi.ImageManagerService.
 func NewRemoteImageService(endpoint string, connectionTimeout time.Duration, tp trace.TracerProvider) (internalapi.ImageManagerService, error) {
 	klog.V(3).InfoS("Connecting to image service", "endpoint", endpoint)
-	addr, dialer, err := util.GetAddressAndDialer(endpoint)
-	if err != nil {
-		return nil, err
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
@@ -56,8 +51,9 @@ func NewRemoteImageService(endpoint string, connectionTimeout time.Duration, tp 
 	dialOpts := []grpc.DialOption{}
 	dialOpts = append(dialOpts,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
+		grpc.WithTimeout(connectionTimeout),
+	)
 	if utilfeature.DefaultFeatureGate.Enabled(features.KubeletTracing) {
 		tracingOpts := []otelgrpc.Option{
 			otelgrpc.WithPropagators(tracing.Propagators()),
@@ -70,9 +66,9 @@ func NewRemoteImageService(endpoint string, connectionTimeout time.Duration, tp 
 			grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor(tracingOpts...)))
 	}
 
-	conn, err := grpc.DialContext(ctx, addr, dialOpts...)
+	conn, err := grpc.Dial(endpoint, dialOpts...)
 	if err != nil {
-		klog.ErrorS(err, "Connect remote image service failed", "address", addr)
+		klog.ErrorS(err, "Connect remote image service failed", "address", endpoint)
 		return nil, err
 	}
 
@@ -90,33 +86,13 @@ func NewRemoteImageService(endpoint string, connectionTimeout time.Duration, tp 
 func (r *remoteImageService) validateServiceConnection(ctx context.Context, conn *grpc.ClientConn, endpoint string) error {
 	klog.V(4).InfoS("Validating the CRI v1 API image version")
 	r.imageClient = runtimeapi.NewImageServiceClient(conn)
-
+	_ = runtimeapi.ImageServiceServer.ImageFsInfo
 	if _, err := r.imageClient.ImageFsInfo(ctx, &runtimeapi.ImageFsInfoRequest{}); err != nil {
 		return fmt.Errorf("validate CRI v1 image API for endpoint %q: %w", endpoint, err)
 	}
 
 	klog.V(2).InfoS("Validated CRI v1 image API")
 	return nil
-}
-
-// ListImages lists available images.
-func (r *remoteImageService) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
-	ctx, cancel := context.WithTimeout(ctx, r.timeout)
-	defer cancel()
-
-	return r.listImagesV1(ctx, filter)
-}
-
-func (r *remoteImageService) listImagesV1(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
-	resp, err := r.imageClient.ListImages(ctx, &runtimeapi.ListImagesRequest{
-		Filter: filter,
-	})
-	if err != nil {
-		klog.ErrorS(err, "ListImages with filter from image service failed", "filter", filter)
-		return nil, err
-	}
-
-	return resp.Images, nil
 }
 
 // ImageStatus returns the status of the image.
@@ -128,6 +104,7 @@ func (r *remoteImageService) ImageStatus(ctx context.Context, image *runtimeapi.
 }
 
 func (r *remoteImageService) imageStatusV1(ctx context.Context, image *runtimeapi.ImageSpec, verbose bool) (*runtimeapi.ImageStatusResponse, error) {
+	_ = runtimeapi.ImageServiceServer.ImageStatus
 	resp, err := r.imageClient.ImageStatus(ctx, &runtimeapi.ImageStatusRequest{
 		Image:   image,
 		Verbose: verbose,
@@ -149,39 +126,11 @@ func (r *remoteImageService) imageStatusV1(ctx context.Context, image *runtimeap
 	return resp, nil
 }
 
-// PullImage pulls an image with authentication config.
-func (r *remoteImageService) PullImage(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	return r.pullImageV1(ctx, image, auth, podSandboxConfig)
-}
-
-func (r *remoteImageService) pullImageV1(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
-	resp, err := r.imageClient.PullImage(ctx, &runtimeapi.PullImageRequest{
-		Image:         image,
-		Auth:          auth,
-		SandboxConfig: podSandboxConfig,
-	})
-	if err != nil {
-		klog.ErrorS(err, "PullImage from image service failed", "image", image.Image)
-		return "", err
-	}
-
-	if resp.ImageRef == "" {
-		klog.ErrorS(errors.New("PullImage failed"), "ImageRef of image is not set", "image", image.Image)
-		errorMessage := fmt.Sprintf("imageRef of image %q is not set", image.Image)
-		return "", errors.New(errorMessage)
-	}
-
-	return resp.ImageRef, nil
-}
-
 // RemoveImage removes the image.
 func (r *remoteImageService) RemoveImage(ctx context.Context, image *runtimeapi.ImageSpec) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
-
+	_ = runtimeapi.ImageServiceServer.RemoveImage
 	if _, err = r.imageClient.RemoveImage(ctx, &runtimeapi.RemoveImageRequest{
 		Image: image,
 	}); err != nil {
@@ -203,10 +152,61 @@ func (r *remoteImageService) ImageFsInfo(ctx context.Context) ([]*runtimeapi.Fil
 }
 
 func (r *remoteImageService) imageFsInfoV1(ctx context.Context) ([]*runtimeapi.FilesystemUsage, error) {
+	_ = runtimeapi.ImageServiceServer.ImageFsInfo
 	resp, err := r.imageClient.ImageFsInfo(ctx, &runtimeapi.ImageFsInfoRequest{})
 	if err != nil {
 		klog.ErrorS(err, "ImageFsInfo from image service failed")
 		return nil, err
 	}
 	return resp.GetImageFilesystems(), nil
+}
+
+// ListImages lists available images.
+func (r *remoteImageService) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.timeout)
+	defer cancel()
+
+	return r.listImagesV1(ctx, filter)
+}
+
+func (r *remoteImageService) listImagesV1(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
+	_ = runtimeapi.ImageServiceServer.ListImages
+	resp, err := r.imageClient.ListImages(ctx, &runtimeapi.ListImagesRequest{
+		Filter: filter,
+	})
+	if err != nil {
+		klog.ErrorS(err, "ListImages with filter from image service failed", "filter", filter)
+		return nil, err
+	}
+
+	return resp.Images, nil
+}
+
+// PullImage pulls an image with authentication config.
+func (r *remoteImageService) PullImage(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	return r.pullImageV1(ctx, image, auth, podSandboxConfig)
+}
+
+func (r *remoteImageService) pullImageV1(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
+	_ = runtimeapi.ImageServiceServer.PullImage
+	resp, err := r.imageClient.PullImage(ctx, &runtimeapi.PullImageRequest{
+		Image:         image,
+		Auth:          auth,
+		SandboxConfig: podSandboxConfig,
+	})
+	if err != nil {
+		klog.ErrorS(err, "PullImage from image service failed", "image", image.Image)
+		return "", err
+	}
+
+	if resp.ImageRef == "" {
+		klog.ErrorS(errors.New("PullImage failed"), "ImageRef of image is not set", "image", image.Image)
+		errorMessage := fmt.Sprintf("imageRef of image %q is not set", image.Image)
+		return "", errors.New(errorMessage)
+	}
+
+	return resp.ImageRef, nil
 }

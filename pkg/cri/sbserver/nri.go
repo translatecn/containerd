@@ -7,7 +7,7 @@ import (
 )
 
 type criImplementation struct {
-	c *criService
+	c *CriService
 }
 
 func (i *criImplementation) Config() *criconfig.Config {

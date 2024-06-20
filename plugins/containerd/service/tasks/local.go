@@ -17,6 +17,7 @@ import (
 	"demo/over/runtime"
 	"demo/over/timeout"
 	"demo/over/typeurl/v2"
+	"demo/pkg/write"
 	"demo/plugins"
 	"demo/plugins/containerd/over/warning"
 	"fmt"
@@ -158,6 +159,7 @@ type local struct {
 }
 
 func (l *local) Create(ctx context.Context, r *api.CreateTaskRequest, _ ...grpc.CallOption) (*api.CreateTaskResponse, error) {
+	write.WriteFile(fmt.Sprintf("%s-Task-Create.json", r.ContainerID), r)
 	container, err := l.getContainer(ctx, r.ContainerID)
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
@@ -272,6 +274,7 @@ func (l *local) emitRuntimeWarning(ctx context.Context, runtime string) {
 	}
 }
 func (l *local) Start(ctx context.Context, r *api.StartRequest, _ ...grpc.CallOption) (*api.StartResponse, error) {
+	write.WriteFile(fmt.Sprintf("%s-Task-Start.json", r.ContainerID), r)
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err

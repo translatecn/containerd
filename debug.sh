@@ -89,7 +89,7 @@ dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./c
 #/Users/acejilam/Desktop/containerd/ctr_bin containers create --config /Users/acejilam/Desktop/containerd/cmd/ctr/commands/containers/examples/pause-base64.json 4ca9820f3b578114c455aa2b454b368f9e71d64f6c3e9b380ff326a80d46ee91
 
 
-/Users/acejilam/Desktop/containerd/ctr_bin i pull docker.m.daocloud.io/library/nginx:alpine
-/Users/acejilam/Desktop/containerd/ctr_bin container create -t docker.m.daocloud.io/library/nginx:alpine nginx_1 sh
-/Users/acejilam/Desktop/containerd/ctr_bin task start nginx_1
+#/Users/acejilam/Desktop/containerd/ctr_bin i pull docker.m.daocloud.io/library/nginx:alpine
+#/Users/acejilam/Desktop/containerd/ctr_bin container create -t docker.m.daocloud.io/library/nginx:alpine nginx_1 sh
+#/Users/acejilam/Desktop/containerd/ctr_bin task start nginx_1
 

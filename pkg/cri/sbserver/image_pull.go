@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	criconfig "demo/config/cri"
-	"demo/over/ctr_tracing"
+	tracing "demo/over/ctr_tracing"
 	"demo/over/log"
 	distribution "demo/over/reference/docker"
+	snpkg "demo/over/snapshotters"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -32,230 +33,15 @@ import (
 	containerdimages "demo/over/images"
 	"demo/over/remotes/docker"
 	"demo/over/remotes/docker/config"
-	snpkg "demo/over/snapshotters"
 	"demo/pkg/cri/over/annotations"
 	crilabels "demo/pkg/cri/over/labels"
 )
-
-// For image management:
-// 1) We have an in-memory metadata index to:
-//   a. Maintain ImageID -> RepoTags, ImageID -> RepoDigset relationships; ImageID
-//   is the digest of image config, which conforms to oci image spec.
-//   b. Cache constant and useful information such as image chainID, config etc.
-//   c. An image will be added into the in-memory metadata only when it's successfully
-//   pulled and unpacked.
-//
-// 2) We use containerd image metadata store and content store:
-//   a. To resolve image reference (digest/tag) locally. During pulling image, we
-//   normalize the image reference provided by user, and put it into image metadata
-//   store with resolved descriptor. For the other operations, if image id is provided,
-//   we'll access the in-memory metadata index directly; if image reference is
-//   provided, we'll normalize it, resolve it in containerd image metadata store
-//   to get the image id.
-//   b. As the backup of in-memory metadata in 1). During startup, the in-memory
-//   metadata could be re-constructed from image metadata store + content store.
-//
-// Several problems with current approach:
-// 1) An entry in containerd image metadata store doesn't mean a "READY" (successfully
-// pulled and unpacked) image. E.g. during pulling, the client gets killed. In that case,
-// if we saw an image without snapshots or with in-complete contents during startup,
-// should we re-pull the image? Or should we remove the entry?
-//
-// yanxuean: We can't delete image directly, because we don't know if the image
-// is pulled by us. There are resource leakage.
-//
-// 2) Containerd suggests user to add entry before pulling the image. However if
-// an error occurs during the pulling, should we remove the entry from metadata
-// store? Or should we leave it there until next startup (resource leakage)?
-//
-// 3) The cri plugin only exposes "READY" (successfully pulled and unpacked) images
-// to the user, which are maintained in the in-memory metadata index. However, it's
-// still possible that someone else removes the content or snapshot by-pass the cri plugin,
-// how do we detect that and update the in-memory metadata correspondingly? Always
-// check whether corresponding snapshot is ready when reporting image status?
-//
-// 4) Is the content important if we cached necessary information in-memory
-// after we pull the image? How to manage the disk usage of contents? If some
-// contents are missing but snapshots are ready, is the image still "READY"?
-
-// PullImage pulls an image with authentication config.
-func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (_ *runtime.PullImageResponse, err error) {
-	span := tracing.SpanFromContext(ctx)
-	defer func() {
-		// TODO: add domain label for imagePulls metrics, and we may need to provide a mechanism
-		// for the user to configure the set of registries that they are interested in.
-		if err != nil {
-			imagePulls.WithValues("failure").Inc()
-		} else {
-			imagePulls.WithValues("success").Inc()
-		}
-	}()
-
-	inProgressImagePulls.Inc()
-	defer inProgressImagePulls.Dec()
-	startTime := time.Now()
-
-	imageRef := r.GetImage().GetImage()
-	namedRef, err := distribution.ParseDockerRef(imageRef)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse image reference %q: %w", imageRef, err)
-	}
-	ref := namedRef.String()
-	if ref != imageRef {
-		log.G(ctx).Debugf("PullImage using normalized image ref: %q", ref)
-	}
-
-	imagePullProgressTimeout, err := time.ParseDuration(c.config.ImagePullProgressTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse image_pull_progress_timeout %q: %w", c.config.ImagePullProgressTimeout, err)
-	}
-
-	var (
-		pctx, pcancel = context.WithCancel(ctx)
-
-		pullReporter = newPullProgressReporter(ref, pcancel, imagePullProgressTimeout)
-
-		resolver = docker.NewResolver(docker.ResolverOptions{
-			Headers: c.config.Registry.Headers,
-			Hosts:   c.registryHosts(ctx, r.GetAuth(), pullReporter.optionUpdateClient),
-		})
-		isSchema1    bool
-		imageHandler containerdimages.HandlerFunc = func(_ context.Context,
-			desc imagespec.Descriptor) ([]imagespec.Descriptor, error) {
-			if desc.MediaType == containerdimages.MediaTypeDockerSchema1Manifest {
-				isSchema1 = true
-			}
-			return nil, nil
-		}
-	)
-
-	defer pcancel()
-	snapshotter, err := c.snapshotterFromPodSandboxConfig(ctx, ref, r.SandboxConfig)
-	if err != nil {
-		return nil, err
-	}
-	log.G(ctx).Debugf("PullImage %q with snapshotter %s", ref, snapshotter)
-	span.SetAttributes(
-		tracing.Attribute("image.ref", ref),
-		tracing.Attribute("snapshotter.name", snapshotter),
-	)
-
-	labels := c.getLabels(ctx, ref)
-
-	pullOpts := []containerd.RemoteOpt{
-		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
-		containerd.WithResolver(resolver),
-		containerd.WithPullSnapshotter(snapshotter),
-		containerd.WithPullUnpack,
-		containerd.WithPullLabels(labels),
-		containerd.WithMaxConcurrentDownloads(c.config.MaxConcurrentDownloads),
-		containerd.WithImageHandler(imageHandler),
-		containerd.WithUnpackOpts([]containerd.UnpackOpt{
-			containerd.WithUnpackDuplicationSuppressor(c.unpackDuplicationSuppressor),
-		}),
-	}
-
-	pullOpts = append(pullOpts, c.encryptedImagesPullOpts()...)
-	if !c.config.ContainerdConfig.DisableSnapshotAnnotations {
-		pullOpts = append(pullOpts,
-			containerd.WithImageHandlerWrapper(snpkg.AppendInfoHandlerWrapper(ref)))
-	}
-
-	if c.config.ContainerdConfig.DiscardUnpackedLayers {
-		// Allows GC to clean layers up from the content store after unpacking
-		pullOpts = append(pullOpts,
-			containerd.WithChildLabelMap(containerdimages.ChildGCLabelsFilterLayers))
-	}
-
-	pullReporter.start(pctx)
-	image, err := c.client.Pull(pctx, ref, pullOpts...)
-	pcancel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to pull and unpack image %q: %w", ref, err)
-	}
-	span.AddEvent("Pull and unpack image complete")
-
-	configDesc, err := image.Config(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get image config descriptor: %w", err)
-	}
-	imageID := configDesc.Digest.String()
-
-	repoDigest, repoTag := getRepoDigestAndTag(namedRef, image.Target().Digest, isSchema1)
-	for _, r := range []string{imageID, repoTag, repoDigest} {
-		if r == "" {
-			continue
-		}
-		if err := c.createImageReference(ctx, r, image.Target(), labels); err != nil {
-			return nil, fmt.Errorf("failed to create image reference %q: %w", r, err)
-		}
-		// Update image store to reflect the newest state in containerd.
-		// No need to use `updateImage`, because the image reference must
-		// have been managed by the cri plugin.
-		if err := c.imageStore.Update(ctx, r); err != nil {
-			return nil, fmt.Errorf("failed to update image store %q: %w", r, err)
-		}
-	}
-
-	const mbToByte = 1024 * 1024
-	size, _ := image.Size(ctx)
-	imagePullingSpeed := float64(size) / mbToByte / time.Since(startTime).Seconds()
-	imagePullThroughput.Observe(imagePullingSpeed)
-
-	log.G(ctx).Infof("Pulled image %q with image id %q, repo tag %q, repo digest %q, size %q in %s", imageRef, imageID,
-		repoTag, repoDigest, strconv.FormatInt(size, 10), time.Since(startTime))
-	// NOTE(random-liu): the actual state in containerd is the source of truth, even we maintain
-	// in-memory image store, it's only for in-memory indexing. The image could be removed
-	// by someone else anytime, before/during/after we create the metadata. We should always
-	// check the actual state in containerd before using the image or returning status of the
-	// image.
-	return &runtime.PullImageResponse{ImageRef: imageID}, nil
-}
-
-// ParseAuth parses AuthConfig and returns username and password/secret required by containerd.
-func ParseAuth(auth *runtime.AuthConfig, host string) (string, string, error) {
-	if auth == nil {
-		return "", "", nil
-	}
-	if auth.ServerAddress != "" {
-		// Do not return the auth info when server address doesn't match.
-		u, err := url.Parse(auth.ServerAddress)
-		if err != nil {
-			return "", "", fmt.Errorf("parse server address: %w", err)
-		}
-		if host != u.Host {
-			return "", "", nil
-		}
-	}
-	if auth.Username != "" {
-		return auth.Username, auth.Password, nil
-	}
-	if auth.IdentityToken != "" {
-		return "", auth.IdentityToken, nil
-	}
-	if auth.Auth != "" {
-		decLen := base64.StdEncoding.DecodedLen(len(auth.Auth))
-		decoded := make([]byte, decLen)
-		_, err := base64.StdEncoding.Decode(decoded, []byte(auth.Auth))
-		if err != nil {
-			return "", "", err
-		}
-		user, passwd, ok := strings.Cut(string(decoded), ":")
-		if !ok {
-			return "", "", fmt.Errorf("invalid decoded auth: %q", decoded)
-		}
-		return user, strings.Trim(passwd, "\x00"), nil
-	}
-	// TODO(random-liu): Support RegistryToken.
-	// An empty auth config is valid for anonymous registry
-	return "", "", nil
-}
 
 // createImageReference creates image reference inside containerd image store.
 // Note that because create and update are not finished in one transaction, there could be race. E.g.
 // the image reference is deleted by someone else after create returns already exists, but before update
 // happens.
-func (c *criService) createImageReference(ctx context.Context, name string, desc imagespec.Descriptor, labels map[string]string) error {
+func (c *CriService) createImageReference(ctx context.Context, name string, desc imagespec.Descriptor, labels map[string]string) error {
 	img := containerdimages.Image{
 		Name:   name,
 		Target: desc,
@@ -290,7 +76,7 @@ func (c *criService) createImageReference(ctx context.Context, name string, desc
 }
 
 // getLabels get image labels to be added on CRI image
-func (c *criService) getLabels(ctx context.Context, name string) map[string]string {
+func (c *CriService) getLabels(ctx context.Context, name string) map[string]string {
 	labels := map[string]string{crilabels.ImageLabelKey: crilabels.ImageLabelValue}
 	configSandboxImage := c.config.SandboxImage
 	// parse sandbox image
@@ -310,7 +96,7 @@ func (c *criService) getLabels(ctx context.Context, name string) map[string]stri
 // updateImage updates image store to reflect the newest state of an image reference
 // in containerd. If the reference is not managed by the cri plugin, the function also
 // generates necessary metadata for the image and make it managed.
-func (c *criService) updateImage(ctx context.Context, r string) error {
+func (c *CriService) updateImage(ctx context.Context, r string) error {
 	img, err := c.client.GetImage(ctx, r)
 	if err != nil && !errdefs.IsNotFound(err) {
 		return fmt.Errorf("get image by reference: %w", err)
@@ -344,7 +130,7 @@ func (c *criService) updateImage(ctx context.Context, r string) error {
 }
 
 // getTLSConfig returns a TLSConfig configured with a CA/Cert/Key specified by registryTLSConfig
-func (c *criService) getTLSConfig(registryTLSConfig criconfig.TLSConfig) (*tls.Config, error) {
+func (c *CriService) getTLSConfig(registryTLSConfig criconfig.TLSConfig) (*tls.Config, error) {
 	var (
 		tlsConfig = &tls.Config{}
 		cert      tls.Certificate
@@ -401,95 +187,6 @@ func hostDirFromRoots(roots []string) func(string) (string, error) {
 	}
 }
 
-// registryHosts is the registry hosts to be used by the resolver.
-func (c *criService) registryHosts(ctx context.Context, auth *runtime.AuthConfig, updateClientFn config.UpdateClientFunc) docker.RegistryHosts {
-	paths := filepath.SplitList(c.config.Registry.ConfigPath)
-	if len(paths) > 0 {
-		hostOptions := config.HostOptions{
-			UpdateClient: updateClientFn,
-		}
-		hostOptions.Credentials = func(host string) (string, string, error) {
-			hostauth := auth
-			if hostauth == nil {
-				config := c.config.Registry.Configs[host]
-				if config.Auth != nil {
-					hostauth = toRuntimeAuthConfig(*config.Auth)
-				}
-			}
-			return ParseAuth(hostauth, host)
-		}
-		hostOptions.HostDir = hostDirFromRoots(paths)
-
-		return config.ConfigureHosts(ctx, hostOptions)
-	}
-
-	return func(host string) ([]docker.RegistryHost, error) {
-		var registries []docker.RegistryHost
-
-		endpoints, err := c.registryEndpoints(host)
-		if err != nil {
-			return nil, fmt.Errorf("get registry endpoints: %w", err)
-		}
-		for _, e := range endpoints {
-			u, err := url.Parse(e)
-			if err != nil {
-				return nil, fmt.Errorf("parse registry endpoint %q from mirrors: %w", e, err)
-			}
-
-			var (
-				transport = newTransport()
-				client    = &http.Client{Transport: transport}
-				config    = c.config.Registry.Configs[u.Host]
-			)
-
-			if config.TLS != nil {
-				transport.TLSClientConfig, err = c.getTLSConfig(*config.TLS)
-				if err != nil {
-					return nil, fmt.Errorf("get TLSConfig for registry %q: %w", e, err)
-				}
-			} else if docker.IsLocalhost(host) && u.Scheme == "http" {
-				// Skipping TLS verification for localhost
-				transport.TLSClientConfig = &tls.Config{
-					InsecureSkipVerify: true,
-				}
-			}
-
-			// Make a copy of `auth`, so that different authorizers would not reference
-			// the same auth variable.
-			auth := auth
-			if auth == nil && config.Auth != nil {
-				auth = toRuntimeAuthConfig(*config.Auth)
-			}
-
-			if updateClientFn != nil {
-				if err := updateClientFn(client); err != nil {
-					return nil, fmt.Errorf("failed to update http client: %w", err)
-				}
-			}
-
-			authorizer := docker.NewDockerAuthorizer(
-				docker.WithAuthClient(client),
-				docker.WithAuthCreds(func(host string) (string, string, error) {
-					return ParseAuth(auth, host)
-				}))
-
-			if u.Path == "" {
-				u.Path = "/v2"
-			}
-
-			registries = append(registries, docker.RegistryHost{
-				Client:       client,
-				Authorizer:   authorizer,
-				Host:         u.Host,
-				Scheme:       u.Scheme,
-				Path:         u.Path,
-				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull,
-			})
-		}
-		return registries, nil
-	}
-}
-
 // defaultScheme returns the default scheme for a registry host.
 func defaultScheme(host string) string {
 	if docker.IsLocalhost(host) {
@@ -514,7 +211,7 @@ func addDefaultScheme(endpoint string) (string, error) {
 // registryEndpoints returns endpoints for a given host.
 // It adds default registry endpoint if it does not exist in the passed-in endpoint list.
 // It also supports wildcard host matching with `*`.
-func (c *criService) registryEndpoints(host string) ([]string, error) {
+func (c *CriService) registryEndpoints(host string) ([]string, error) {
 	var endpoints []string
 	_, ok := c.config.Registry.Mirrors[host]
 	if ok {
@@ -565,7 +262,7 @@ func newTransport() *http.Transport {
 
 // encryptedImagesPullOpts returns the necessary list of pull options required
 // for decryption of encrypted images based on the cri decryption configuration.
-func (c *criService) encryptedImagesPullOpts() []containerd.RemoteOpt {
+func (c *CriService) encryptedImagesPullOpts() []containerd.RemoteOpt {
 	if c.config.ImageDecryption.KeyModel == criconfig.KeyModelNode {
 		ltdd := imgcrypt.Payload{}
 		decUnpackOpt := encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&ltdd))
@@ -758,11 +455,13 @@ func (rt *pullRequestReporterRoundTripper) RoundTrip(req *http.Request) (*http.R
 	return resp, err
 }
 
+// -------------------------------------------------------------------------------------------------------------------
+
 // Given that runtime information is not passed from PullImageRequest, we depend on an experimental annotation
 // passed from pod sandbox config to get the runtimeHandler. The annotation key is specified in configuration.
 // Once we know the runtime, try to override default snapshotter if it is set for this runtime.
 // See https://github.com/containerd/issues/6657
-func (c *criService) snapshotterFromPodSandboxConfig(ctx context.Context, imageRef string,
+func (c *CriService) snapshotterFromPodSandboxConfig(ctx context.Context, imageRef string,
 	s *runtime.PodSandboxConfig) (string, error) {
 	snapshotter := c.config.ContainerdConfig.Snapshotter
 	if s == nil || s.Annotations == nil {
@@ -782,4 +481,262 @@ func (c *criService) snapshotterFromPodSandboxConfig(ctx context.Context, imageR
 	snapshotter = c.runtimeSnapshotter(context.Background(), ociRuntime)
 	log.G(ctx).Infof("experimental: PullImage %q for runtime %s, using snapshotter %s", imageRef, runtimeHandler, snapshotter)
 	return snapshotter, nil
+}
+func (c *CriService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (_ *runtime.PullImageResponse, err error) {
+	span := tracing.SpanFromContext(ctx)
+	defer func() {
+		// TODO: add domain label for imagePulls metrics, and we may need to provide a mechanism
+		// for the user to configure the set of registries that they are interested in.
+		if err != nil {
+			imagePulls.WithValues("failure").Inc()
+		} else {
+			imagePulls.WithValues("success").Inc()
+		}
+	}()
+
+	inProgressImagePulls.Inc()
+	defer inProgressImagePulls.Dec()
+	startTime := time.Now()
+
+	imageRef := r.GetImage().GetImage()
+	namedRef, err := distribution.ParseDockerRef(imageRef)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse image reference %q: %w", imageRef, err)
+	}
+	ref := namedRef.String()
+	if ref != imageRef {
+		log.G(ctx).Debugf("PullImage using normalized image ref: %q", ref)
+	}
+
+	imagePullProgressTimeout, err := time.ParseDuration(c.config.ImagePullProgressTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse image_pull_progress_timeout %q: %w", c.config.ImagePullProgressTimeout, err)
+	}
+
+	var (
+		pctx, pcancel = context.WithCancel(ctx)
+
+		pullReporter = newPullProgressReporter(ref, pcancel, imagePullProgressTimeout)
+
+		resolver = docker.NewResolver(docker.ResolverOptions{
+			Headers: c.config.Registry.Headers, // 配置文件里写的
+			Hosts:   c.registryHosts(ctx, r.GetAuth(), pullReporter.optionUpdateClient),
+		})
+		isSchema1    bool
+		imageHandler containerdimages.HandlerFunc = func(_ context.Context,
+			desc imagespec.Descriptor) ([]imagespec.Descriptor, error) {
+			if desc.MediaType == containerdimages.MediaTypeDockerSchema1Manifest {
+				isSchema1 = true
+			}
+			return nil, nil
+		}
+	)
+
+	defer pcancel()
+	snapshotter, err := c.snapshotterFromPodSandboxConfig(ctx, ref, r.SandboxConfig)
+	if err != nil {
+		return nil, err
+	}
+	log.G(ctx).Debugf("PullImage %q with snapshotter %s", ref, snapshotter)
+	span.SetAttributes(
+		tracing.Attribute("image.ref", ref),
+		tracing.Attribute("snapshotter.name", snapshotter),
+	)
+
+	labels := c.getLabels(ctx, ref)
+
+	pullOpts := []containerd.RemoteOpt{
+		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
+		containerd.WithResolver(resolver),
+		containerd.WithPullSnapshotter(snapshotter),
+		containerd.WithPullUnpack,
+		containerd.WithPullLabels(labels),
+		containerd.WithMaxConcurrentDownloads(c.config.MaxConcurrentDownloads),
+		containerd.WithImageHandler(imageHandler),
+		containerd.WithUnpackOpts([]containerd.UnpackOpt{
+			containerd.WithUnpackDuplicationSuppressor(c.unpackDuplicationSuppressor),
+		}),
+	}
+
+	pullOpts = append(pullOpts, c.encryptedImagesPullOpts()...)
+	if !c.config.ContainerdConfig.DisableSnapshotAnnotations {
+		pullOpts = append(pullOpts,
+			containerd.WithImageHandlerWrapper(snpkg.AppendInfoHandlerWrapper(ref)))
+	}
+
+	if c.config.ContainerdConfig.DiscardUnpackedLayers {
+		// Allows GC to clean layers up from the content store after unpacking
+		pullOpts = append(pullOpts,
+			containerd.WithChildLabelMap(containerdimages.ChildGCLabelsFilterLayers))
+	}
+
+	pullReporter.start(pctx)
+	image, err := c.client.Pull(pctx, ref, pullOpts...)
+	pcancel()
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull and unpack image %q: %w", ref, err)
+	}
+	span.AddEvent("Pull and unpack image complete")
+
+	configDesc, err := image.Config(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get image config descriptor: %w", err)
+	}
+	imageID := configDesc.Digest.String()
+
+	repoDigest, repoTag := getRepoDigestAndTag(namedRef, image.Target().Digest, isSchema1)
+	for _, r := range []string{imageID, repoTag, repoDigest} {
+		if r == "" {
+			continue
+		}
+		if err := c.createImageReference(ctx, r, image.Target(), labels); err != nil {
+			return nil, fmt.Errorf("failed to create image reference %q: %w", r, err)
+		}
+		// Update image store to reflect the newest state in containerd.
+		// No need to use `updateImage`, because the image reference must
+		// have been managed by the cri plugin.
+		if err := c.imageStore.Update(ctx, r); err != nil {
+			return nil, fmt.Errorf("failed to update image store %q: %w", r, err)
+		}
+	}
+
+	const mbToByte = 1024 * 1024
+	size, _ := image.Size(ctx)
+	imagePullingSpeed := float64(size) / mbToByte / time.Since(startTime).Seconds()
+	imagePullThroughput.Observe(imagePullingSpeed)
+
+	log.G(ctx).Infof("Pulled image %q with image id %q, repo tag %q, repo digest %q, size %q in %s", imageRef, imageID,
+		repoTag, repoDigest, strconv.FormatInt(size, 10), time.Since(startTime))
+	// NOTE(random-liu): the actual state in containerd is the source of truth, even we maintain
+	// in-memory image store, it's only for in-memory indexing. The image could be removed
+	// by someone else anytime, before/during/after we create the metadata. We should always
+	// check the actual state in containerd before using the image or returning status of the
+	// image.
+	return &runtime.PullImageResponse{ImageRef: imageID}, nil
+}
+func (c *CriService) registryHosts(ctx context.Context, auth *runtime.AuthConfig, updateClientFn config.UpdateClientFunc) docker.RegistryHosts {
+	paths := filepath.SplitList(c.config.Registry.ConfigPath)
+	if len(paths) > 0 {
+		hostOptions := config.HostOptions{
+			UpdateClient: updateClientFn,
+		}
+		hostOptions.Credentials = func(host string) (string, string, error) {
+			hostauth := auth
+			if hostauth == nil {
+				config := c.config.Registry.Configs[host]
+				if config.Auth != nil {
+					hostauth = toRuntimeAuthConfig(*config.Auth)
+				}
+			}
+			return ParseAuth(hostauth, host)
+		}
+		hostOptions.HostDir = hostDirFromRoots(paths)
+
+		return config.ConfigureHosts(ctx, hostOptions)
+	}
+
+	return func(host string) ([]docker.RegistryHost, error) {
+		var registries []docker.RegistryHost
+
+		endpoints, err := c.registryEndpoints(host)
+		if err != nil {
+			return nil, fmt.Errorf("get registry endpoints: %w", err)
+		}
+		for _, e := range endpoints {
+			u, err := url.Parse(e)
+			if err != nil {
+				return nil, fmt.Errorf("parse registry endpoint %q from mirrors: %w", e, err)
+			}
+
+			var (
+				transport = newTransport()
+				client    = &http.Client{Transport: transport}
+				config    = c.config.Registry.Configs[u.Host]
+			)
+
+			if config.TLS != nil {
+				transport.TLSClientConfig, err = c.getTLSConfig(*config.TLS)
+				if err != nil {
+					return nil, fmt.Errorf("get TLSConfig for registry %q: %w", e, err)
+				}
+			} else if docker.IsLocalhost(host) && u.Scheme == "http" {
+				// Skipping TLS verification for localhost
+				transport.TLSClientConfig = &tls.Config{
+					InsecureSkipVerify: true,
+				}
+			}
+
+			// Make a copy of `auth`, so that different authorizers would not reference
+			// the same auth variable.
+			auth := auth
+			if auth == nil && config.Auth != nil {
+				auth = toRuntimeAuthConfig(*config.Auth)
+			}
+
+			if updateClientFn != nil {
+				if err := updateClientFn(client); err != nil {
+					return nil, fmt.Errorf("failed to update http client: %w", err)
+				}
+			}
+
+			authorizer := docker.NewDockerAuthorizer(
+				docker.WithAuthClient(client),
+				docker.WithAuthCreds(func(host string) (string, string, error) {
+					return ParseAuth(auth, host)
+				}))
+
+			if u.Path == "" {
+				u.Path = "/v2"
+			}
+
+			registries = append(registries, docker.RegistryHost{
+				Client:       client,
+				Authorizer:   authorizer,
+				Host:         u.Host,
+				Scheme:       u.Scheme,
+				Path:         u.Path,
+				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull,
+			})
+		}
+		return registries, nil
+	}
+}
+
+// ParseAuth parses AuthConfig and returns username and password/secret required by containerd.
+func ParseAuth(auth *runtime.AuthConfig, host string) (string, string, error) {
+	if auth == nil {
+		return "", "", nil
+	}
+	if auth.ServerAddress != "" {
+		// Do not return the auth info when server address doesn't match.
+		u, err := url.Parse(auth.ServerAddress)
+		if err != nil {
+			return "", "", fmt.Errorf("parse server address: %w", err)
+		}
+		if host != u.Host {
+			return "", "", nil
+		}
+	}
+	if auth.Username != "" {
+		return auth.Username, auth.Password, nil
+	}
+	if auth.IdentityToken != "" {
+		return "", auth.IdentityToken, nil
+	}
+	if auth.Auth != "" {
+		decLen := base64.StdEncoding.DecodedLen(len(auth.Auth))
+		decoded := make([]byte, decLen)
+		_, err := base64.StdEncoding.Decode(decoded, []byte(auth.Auth))
+		if err != nil {
+			return "", "", err
+		}
+		user, passwd, ok := strings.Cut(string(decoded), ":")
+		if !ok {
+			return "", "", fmt.Errorf("invalid decoded auth: %q", decoded)
+		}
+		return user, strings.Trim(passwd, "\x00"), nil
+	}
+	// TODO(random-liu): Support RegistryToken.
+	// An empty auth config is valid for anonymous registry
+	return "", "", nil
 }

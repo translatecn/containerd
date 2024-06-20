@@ -7,7 +7,7 @@ import (
 	runtime "demo/over/api/cri/v1"
 )
 
-func (c *criService) PodSandboxStats(
+func (c *CriService) PodSandboxStats(
 	ctx context.Context,
 	r *runtime.PodSandboxStatsRequest,
 ) (*runtime.PodSandboxStatsResponse, error) {

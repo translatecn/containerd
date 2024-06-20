@@ -37,7 +37,7 @@ import (
 // tolerant tasks being created or started, we prefer that not to happen.
 
 // recover recovers system state from containerd and status checkpoint.
-func (c *criService) recover(ctx context.Context) error {
+func (c *CriService) recover(ctx context.Context) error {
 	// Recover all sandboxes.
 	sandboxes, err := c.client.Containers(ctx, filterLabel(containerKindLabel, containerKindSandbox))
 	if err != nil {
@@ -211,7 +211,7 @@ func (c *criService) recover(ctx context.Context) error {
 const loadContainerTimeout = 10 * time.Second
 
 // loadContainer loads container from containerd and status checkpoint.
-func (c *criService) loadContainer(ctx context.Context, cntr containerd.Container) (containerstore.Container, error) {
+func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Container) (containerstore.Container, error) {
 	ctx, cancel := context.WithTimeout(ctx, loadContainerTimeout)
 	defer cancel()
 	id := cntr.ID()
@@ -397,7 +397,7 @@ func getNetNS(meta *sandboxstore.Metadata) *netns.NetNS {
 }
 
 // loadImages loads images from containerd.
-func (c *criService) loadImages(ctx context.Context, cImages []containerd.Image) {
+func (c *CriService) loadImages(ctx context.Context, cImages []containerd.Image) {
 	snapshotter := c.config.ContainerdConfig.Snapshotter
 	var wg sync.WaitGroup
 	for _, i := range cImages {

@@ -17,7 +17,7 @@ import (
 )
 
 // UpdateContainerResources updates ContainerConfig of the container.
-func (c *criService) UpdateContainerResources(ctx context.Context, r *runtime.UpdateContainerResourcesRequest) (retRes *runtime.UpdateContainerResourcesResponse, retErr error) {
+func (c *CriService) UpdateContainerResources(ctx context.Context, r *runtime.UpdateContainerResourcesRequest) (retRes *runtime.UpdateContainerResourcesResponse, retErr error) {
 	container, err := c.containerStore.Get(r.GetContainerId())
 	if err != nil {
 		return nil, fmt.Errorf("failed to find container: %w", err)
@@ -54,7 +54,7 @@ func (c *criService) UpdateContainerResources(ctx context.Context, r *runtime.Up
 	return &runtime.UpdateContainerResourcesResponse{}, nil
 }
 
-func (c *criService) updateContainerResources(ctx context.Context,
+func (c *CriService) updateContainerResources(ctx context.Context,
 	cntr containerstore.Container,
 	r *runtime.UpdateContainerResourcesRequest,
 	status containerstore.Status) (newStatus containerstore.Status, retErr error) {

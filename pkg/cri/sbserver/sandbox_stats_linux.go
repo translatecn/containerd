@@ -16,7 +16,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func (c *criService) podSandboxStats(
+func (c *CriService) podSandboxStats(
 	ctx context.Context,
 	sandbox sandboxstore.Sandbox) (*runtime.PodSandboxStats, error) {
 	meta := sandbox.Metadata

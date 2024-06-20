@@ -39,7 +39,7 @@ const (
 
 // eventMonitor monitors containerd event and updates internal state correspondingly.
 type eventMonitor struct {
-	c       *criService
+	c       *CriService
 	ch      <-chan *events.Envelope
 	errCh   <-chan error
 	ctx     context.Context
@@ -70,7 +70,7 @@ type backOffQueue struct {
 
 // Create new event monitor. New event monitor will start subscribing containerd event. All events
 // happen after it should be monitored.
-func newEventMonitor(c *criService) *eventMonitor {
+func newEventMonitor(c *CriService) *eventMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &eventMonitor{
 		c:       c,
@@ -131,57 +131,6 @@ func (em *eventMonitor) startSandboxExitMonitor(ctx context.Context, id string, 
 			}()
 			if err != nil {
 				logrus.WithError(err).Errorf("failed to handle sandbox TaskExit event %+v", e)
-				em.backOff.enBackOff(id, e)
-			}
-			return
-		case <-ctx.Done():
-		}
-	}()
-	return stopCh
-}
-
-// startContainerExitMonitor starts an exit monitor for a given container.
-func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string, pid uint32, exitCh <-chan containerd.ExitStatus) <-chan struct{} {
-	stopCh := make(chan struct{})
-	go func() {
-		defer close(stopCh)
-		select {
-		case exitRes := <-exitCh:
-			exitStatus, exitedAt, err := exitRes.Result()
-			if err != nil {
-				logrus.WithError(err).Errorf("failed to get task exit status for %q", id)
-				exitStatus = unknownExitCode
-				exitedAt = time.Now()
-			}
-
-			e := &eventtypes.TaskExit{
-				ContainerID: id,
-				ID:          id,
-				Pid:         pid,
-				ExitStatus:  exitStatus,
-				ExitedAt:    protobuf.ToTimestamp(exitedAt),
-			}
-
-			logrus.Debugf("received exit event %+v", e)
-
-			err = func() error {
-				dctx := ctrdutil.NamespacedContext()
-				dctx, dcancel := context.WithTimeout(dctx, handleEventTimeout)
-				defer dcancel()
-
-				cntr, err := em.c.containerStore.Get(e.ID)
-				if err == nil {
-					if err := handleContainerExit(dctx, e, cntr, cntr.SandboxID, em.c); err != nil {
-						return err
-					}
-					return nil
-				} else if !errdefs.IsNotFound(err) {
-					return fmt.Errorf("failed to get container %s: %w", e.ID, err)
-				}
-				return nil
-			}()
-			if err != nil {
-				logrus.WithError(err).Errorf("failed to handle container TaskExit event %+v", e)
 				em.backOff.enBackOff(id, e)
 			}
 			return
@@ -359,107 +308,8 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 	return nil
 }
 
-// handleContainerExit handles TaskExit event for container.
-func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr containerstore.Container, sandboxID string, c *criService) error {
-	// Attach container IO so that `Delete` could cleanup the stream properly.
-	task, err := cntr.Container.Task(ctx,
-		func(*containerdio.FIFOSet) (containerdio.IO, error) {
-			// We can't directly return cntr.IO here, because
-			// even if cntr.IO is nil, the cio.IO interface
-			// is not.
-			// See https://tour.golang.org/methods/12:
-			//   Note that an interface value that holds a nil
-			//   concrete value is itself non-nil.
-			if cntr.IO != nil {
-				return cntr.IO, nil
-			}
-			return nil, nil
-		},
-	)
-	if err != nil {
-		if !errdefs.IsNotFound(err) && !errdefs.IsUnavailable(err) {
-			return fmt.Errorf("failed to load task for container: %w", err)
-		}
-	} else {
-		// TODO(random-liu): [P1] This may block the loop, we may want to spawn a worker
-		if _, err = task.Delete(ctx, c.nri.WithContainerExit(&cntr), containerd.WithProcessKill); err != nil {
-			if !errdefs.IsNotFound(err) {
-				return fmt.Errorf("failed to stop container: %w", err)
-			}
-			// Move on to make sure container status is updated.
-		}
-	}
-
-	// NOTE: Both sb.Container.Task and task.Delete interface always ensures
-	// that the status of target task. However, the interfaces return
-	// ErrNotFound, which doesn't mean that the shim instance doesn't exist.
-	//
-	// There are two caches for task in containerd:
-	//
-	//   1. io.containerd.service.v1.tasks-service
-	//   2. io.containerd.runtime.v2.task
-	//
-	// First one is to maintain the shim connection and shutdown the shim
-	// in Delete API. And the second one is to maintain the lifecycle of
-	// task in shim server.
-	//
-	// So, if the shim instance is running and task has been deleted in shim
-	// server, the sb.Container.Task and task.Delete will receive the
-	// ErrNotFound. If we don't delete the shim instance in io.containerd.service.v1.tasks-service,
-	// shim will be leaky.
-	//
-	// Based on containerd/containerd#7496 issue, when host is under IO
-	// pressure, the umount2 syscall will take more than 10 seconds so that
-	// the CRI plugin will cancel this task.Delete call. However, the shim
-	// server isn't aware about this. After return from umount2 syscall, the
-	// shim server continue delete the task record. And then CRI plugin
-	// retries to delete task and retrieves ErrNotFound and marks it as
-	// stopped. Therefore, The shim is leaky.
-	//
-	// It's hard to handle the connection lost or request canceled cases in
-	// shim server. We should call Delete API to io.containerd.service.v1.tasks-service
-	// to ensure that shim instance is shutdown.
-	//
-	// REF:
-	// 1. https://github.com/containerd/issues/7496#issuecomment-1671100968
-	// 2. https://github.com/containerd/issues/8931
-	if errdefs.IsNotFound(err) {
-		_, err = c.client.TaskService().Delete(ctx, &apitasks.DeleteTaskRequest{ContainerID: cntr.Container.ID()})
-		if err != nil {
-			err = errdefs.FromGRPC(err)
-			if !errdefs.IsNotFound(err) {
-				return fmt.Errorf("failed to cleanup container %s in task-service: %w", cntr.Container.ID(), err)
-			}
-		}
-		logrus.Infof("Ensure that container %s in task-service has been cleanup successfully", cntr.Container.ID())
-	}
-
-	err = cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
-		if status.FinishedAt == 0 {
-			status.Pid = 0
-			status.FinishedAt = protobuf.FromTimestamp(e.ExitedAt).UnixNano()
-			status.ExitCode = int32(e.ExitStatus)
-		}
-
-		// Unknown state can only transit to EXITED state, so we need
-		// to handle unknown state here.
-		if status.Unknown {
-			logrus.Debugf("Container %q transited from UNKNOWN to EXITED", cntr.ID)
-			status.Unknown = false
-		}
-		return status, nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update container state: %w", err)
-	}
-	// Using channel to propagate the information of container stop
-	cntr.Stop()
-	c.generateAndSendContainerEvent(ctx, cntr.ID, sandboxID, runtime.ContainerEventType_CONTAINER_STOPPED_EVENT)
-	return nil
-}
-
 // handleSandboxExit handles sandbox exit event.
-func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, exitStatus uint32, exitTime time.Time, c *criService) error {
+func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, exitStatus uint32, exitTime time.Time, c *CriService) error {
 	if err := sb.Status.Update(func(status sandboxstore.Status) (sandboxstore.Status, error) {
 		status.State = sandboxstore.StateNotReady
 		status.Pid = 0
@@ -570,4 +420,117 @@ func newBackOffQueue(events []interface{}, init time.Duration, c clock.Clock) *b
 func (q *backOffQueue) isExpire() bool {
 	// return time.Now >= expireTime
 	return !q.clock.Now().Before(q.expireTime)
+}
+
+func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string, pid uint32, exitCh <-chan containerd.ExitStatus) <-chan struct{} {
+	stopCh := make(chan struct{})
+	go func() {
+		defer close(stopCh)
+		select {
+		case exitRes := <-exitCh:
+			exitStatus, exitedAt, err := exitRes.Result()
+			if err != nil {
+				logrus.WithError(err).Errorf("failed to get task exit status for %q", id)
+				exitStatus = unknownExitCode
+				exitedAt = time.Now()
+			}
+
+			e := &eventtypes.TaskExit{
+				ContainerID: id,
+				ID:          id,
+				Pid:         pid,
+				ExitStatus:  exitStatus,
+				ExitedAt:    protobuf.ToTimestamp(exitedAt),
+			}
+
+			logrus.Debugf("received exit event %+v", e)
+
+			err = func() error {
+				dctx := ctrdutil.NamespacedContext()
+				dctx, dcancel := context.WithTimeout(dctx, handleEventTimeout)
+				defer dcancel()
+
+				cntr, err := em.c.containerStore.Get(e.ID)
+				if err == nil {
+					if err := handleContainerExit(dctx, e, cntr, cntr.SandboxID, em.c); err != nil {
+						return err
+					}
+					return nil
+				} else if !errdefs.IsNotFound(err) {
+					return fmt.Errorf("failed to get container %s: %w", e.ID, err)
+				}
+				return nil
+			}()
+			if err != nil {
+				logrus.WithError(err).Errorf("failed to handle container TaskExit event %+v", e)
+				em.backOff.enBackOff(id, e)
+			}
+			return
+		case <-ctx.Done():
+		}
+	}()
+	return stopCh
+}
+func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr containerstore.Container, sandboxID string, c *CriService) error {
+	// Attach container IO so that `Delete` could cleanup the stream properly.
+	task, err := cntr.Container.Task(ctx,
+		func(*containerdio.FIFOSet) (containerdio.IO, error) {
+			// We can't directly return cntr.IO here, because
+			// even if cntr.IO is nil, the cio.IO interface
+			// is not.
+			// See https://tour.golang.org/methods/12:
+			//   Note that an interface value that holds a nil
+			//   concrete value is itself non-nil.
+			if cntr.IO != nil {
+				return cntr.IO, nil
+			}
+			return nil, nil
+		},
+	)
+	if err != nil {
+		if !errdefs.IsNotFound(err) && !errdefs.IsUnavailable(err) {
+			return fmt.Errorf("failed to load task for container: %w", err)
+		}
+	} else {
+		// TODO(random-liu): [P1] This may block the loop, we may want to spawn a worker
+		if _, err = task.Delete(ctx, c.nri.WithContainerExit(&cntr), containerd.WithProcessKill); err != nil {
+			if !errdefs.IsNotFound(err) {
+				return fmt.Errorf("failed to stop container: %w", err)
+			}
+			// Move on to make sure container status is updated.
+		}
+	}
+	if errdefs.IsNotFound(err) {
+		_, err = c.client.TaskService().Delete(ctx, &apitasks.DeleteTaskRequest{ContainerID: cntr.Container.ID()})
+		if err != nil {
+			err = errdefs.FromGRPC(err)
+			if !errdefs.IsNotFound(err) {
+				return fmt.Errorf("failed to cleanup container %s in task-service: %w", cntr.Container.ID(), err)
+			}
+		}
+		logrus.Infof("Ensure that container %s in task-service has been cleanup successfully", cntr.Container.ID())
+	}
+
+	err = cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+		if status.FinishedAt == 0 {
+			status.Pid = 0
+			status.FinishedAt = protobuf.FromTimestamp(e.ExitedAt).UnixNano()
+			status.ExitCode = int32(e.ExitStatus)
+		}
+
+		// Unknown state can only transit to EXITED state, so we need
+		// to handle unknown state here.
+		if status.Unknown {
+			logrus.Debugf("Container %q transited from UNKNOWN to EXITED", cntr.ID)
+			status.Unknown = false
+		}
+		return status, nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update container state: %w", err)
+	}
+	// Using channel to propagate the information of container stop
+	cntr.Stop()
+	c.generateAndSendContainerEvent(ctx, cntr.ID, sandboxID, runtime.ContainerEventType_CONTAINER_STOPPED_EVENT)
+	return nil
 }

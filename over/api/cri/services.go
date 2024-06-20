@@ -67,8 +67,6 @@ type ContainerManager interface {
 // PodSandboxManager contains methods for operating on PodSandboxes. The methods
 // are thread-safe.
 type PodSandboxManager interface {
-	// RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
-	// the sandbox is in ready state.
 	RunPodSandbox(ctx context.Context, config *runtimeapi.PodSandboxConfig, runtimeHandler string) (string, error)
 	// StopPodSandbox stops the sandbox. If there are any running containers in the
 	// sandbox, they should be force terminated.

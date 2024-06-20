@@ -21,7 +21,6 @@ import (
 
 	"demo/containerd"
 	runtime "demo/over/api/cri/v1"
-	"demo/pkg/cri/instrument"
 	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver/podsandbox"
 	"demo/pkg/cri/streaming"
@@ -53,8 +52,8 @@ type CRIService interface {
 	Register(*grpc.Server) error
 }
 
-// criService implements CRIService.
-type criService struct {
+// CriService implements CRIService.
+type CriService struct {
 	// config contains all configurations.
 	config criconfig.Config
 	// imageFSPath is the path to image filesystem.
@@ -62,7 +61,7 @@ type criService struct {
 	// os is an interface for all required os operations.
 	os osinterface.OS
 	// sandboxStore stores all resources associated with sandboxes.
-	sandboxStore *sandboxstore.Store
+	sandboxStore *sandboxstore.Store // ✅
 	// sandboxNameIndex stores all sandbox names and make sure each name
 	// is unique.
 	sandboxNameIndex *registrar.Registrar
@@ -113,7 +112,7 @@ type criService struct {
 func NewCRIService(config criconfig.Config, client *containerd.Client, nri *nri.API, warn warning.Service) (CRIService, error) {
 	var err error
 	labels := label.NewStore()
-	c := &criService{
+	c := &CriService{
 		config:                      config,
 		client:                      client,
 		os:                          osinterface.RealOS{},
@@ -186,18 +185,18 @@ func NewCRIService(config criconfig.Config, client *containerd.Client, nri *nri.
 
 // BackOffEvent is a temporary workaround to call eventMonitor from controller.Stop.
 // TODO: get rid of this.
-func (c *criService) BackOffEvent(id string, event interface{}) {
+func (c *CriService) BackOffEvent(id string, event interface{}) {
 	c.eventMonitor.backOff.enBackOff(id, event)
 }
 
 // Register registers all required services onto a specific grpc server.
 // This is used by containerd cri plugin.
-func (c *criService) Register(s *grpc.Server) error {
+func (c *CriService) Register(s *grpc.Server) error {
 	return c.register(s)
 }
 
 // Run starts the CRI service.
-func (c *criService) Run(ready func()) error {
+func (c *CriService) Run(ready func()) error {
 	logrus.Info("Start subscribing containerd event")
 	c.eventMonitor.subscribe(c.client)
 
@@ -296,7 +295,7 @@ func (c *criService) Run(ready func()) error {
 
 // Close stops the CRI service.
 // TODO(random-liu): Make close synchronous.
-func (c *criService) Close() error {
+func (c *CriService) Close() error {
 	logrus.Info("Stop CRI service")
 	for name, h := range c.cniNetConfMonitor {
 		if err := h.stop(); err != nil {
@@ -311,15 +310,14 @@ func (c *criService) Close() error {
 }
 
 // IsInitialized indicates whether CRI service has finished initialization.
-func (c *criService) IsInitialized() bool {
+func (c *CriService) IsInitialized() bool {
 	return c.initialized.IsSet()
 }
 
-func (c *criService) register(s *grpc.Server) error {
-	instrumented := instrument.NewService(c)
+func (c *CriService) register(s *grpc.Server) error {
+	instrumented := NewService(c)
 	runtime.RegisterRuntimeServiceServer(s, instrumented)
 	runtime.RegisterImageServiceServer(s, instrumented)
-
 	return nil
 }
 

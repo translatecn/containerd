@@ -10,7 +10,7 @@ import (
 )
 
 // PodSandboxStatus returns the status of the PodSandbox.
-func (c *criService) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (*runtime.PodSandboxStatusResponse, error) {
+func (c *CriService) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (*runtime.PodSandboxStatusResponse, error) {
 	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred when try to find sandbox: %w", err)
@@ -47,7 +47,7 @@ func (c *criService) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	}, nil
 }
 
-func (c *criService) getIPs(sandbox sandboxstore.Sandbox) (string, []string, error) {
+func (c *CriService) getIPs(sandbox sandboxstore.Sandbox) (string, []string, error) {
 	config := sandbox.Config
 
 	// For sandboxes using the node network we are not

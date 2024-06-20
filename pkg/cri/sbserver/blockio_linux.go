@@ -8,9 +8,7 @@ import (
 	"demo/over/blockio"
 )
 
-// blockIOClassFromAnnotations examines container and pod annotations of a
-// container and returns its effective blockio class.
-func (c *criService) blockIOClassFromAnnotations(containerName string, containerAnnotations, podAnnotations map[string]string) (string, error) {
+func (c *CriService) blockIOClassFromAnnotations(containerName string, containerAnnotations, podAnnotations map[string]string) (string, error) {
 	cls, err := blockio.ContainerClassFromAnnotations(containerName, containerAnnotations, podAnnotations)
 	if err != nil {
 		return "", err

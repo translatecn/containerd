@@ -40,9 +40,7 @@ type Metadata struct {
 	// ImageRef is the reference of image used by the container.
 	ImageRef string
 	// LogPath is the container log path.
-	LogPath string
-	// StopSignal is the system call signal that will be sent to the container to exit.
-	// TODO(random-liu): Add integration test for stop signal.
+	LogPath    string
 	StopSignal string
 	// ProcessLabel is the SELinux process label for the container
 	ProcessLabel string

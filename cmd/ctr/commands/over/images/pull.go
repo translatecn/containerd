@@ -2,6 +2,7 @@ package images
 
 import (
 	"context"
+	"demo/cmd/ctr/commands/over/content"
 	"demo/over/log"
 	"fmt"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/cmd/ctr/commands/content"
 	"demo/containerd"
 	"demo/over/images"
 	"demo/over/platforms"

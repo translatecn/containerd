@@ -35,7 +35,6 @@ type RuntimeOpts struct {
 
 // Store is a storage interface for sandbox metadata objects
 type Store interface {
-	// Create a sandbox record in the store
 	Create(ctx context.Context, sandbox Sandbox) (Sandbox, error)
 
 	// Update the sandbox with the provided sandbox object and fields

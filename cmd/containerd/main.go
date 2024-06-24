@@ -10,7 +10,7 @@ import (
 	"demo/cmd/containerd/command"
 	//nolint:staticcheck // Global math/rand seed is deprecated, but still used by external dependencies
 
-	_ "demo/plugins/containerd"
+	_ "demo/over/plugins/containerd"
 )
 
 func init() {

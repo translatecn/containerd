@@ -3,13 +3,13 @@ pkill -9 containerd_bin
 pkill -9 ctr_bin
 
 
-rm -rf /var/lib/containers/*
-rm -rf /var/lib/containerd/*
-rm -rf /run/containerd/*
-rm -rf /etc/kubernetes/*
-rm -rf /etc/containers/*
-rm -rf /etc/cni/net.d/*
-rm -rf /var/lib/cni/*
+#rm -rf /var/lib/containers/*
+#rm -rf /var/lib/containerd/*
+#rm -rf /run/containerd/*
+#rm -rf /etc/kubernetes/*
+#rm -rf /etc/containers/*
+#rm -rf /etc/cni/net.d/*
+#rm -rf /var/lib/cni/*
 
 
 mkdir -p /etc/cni/net.d

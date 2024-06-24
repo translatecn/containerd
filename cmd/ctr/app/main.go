@@ -2,6 +2,7 @@ package app
 
 import (
 	"demo/cmd/ctr/commands/containers"
+	"demo/cmd/ctr/commands/over/content"
 	"demo/cmd/ctr/commands/over/events"
 	"demo/cmd/ctr/commands/over/images"
 	"demo/cmd/ctr/commands/over/info"
@@ -10,9 +11,10 @@ import (
 	namespacesCmd "demo/cmd/ctr/commands/over/namespaces"
 	"demo/cmd/ctr/commands/over/oci"
 	"demo/cmd/ctr/commands/over/plugins"
+	"demo/cmd/ctr/commands/over/pprof"
+	"demo/cmd/ctr/commands/over/sandboxes"
 	"demo/cmd/ctr/commands/over/snapshots"
 	versionCmd "demo/cmd/ctr/commands/over/version"
-	"demo/cmd/ctr/commands/pprof"
 	"demo/cmd/ctr/commands/run"
 	"demo/cmd/ctr/commands/tasks"
 	"demo/over/namespaces"
@@ -20,8 +22,6 @@ import (
 	"fmt"
 	"io"
 
-	"demo/cmd/ctr/commands/content"
-	"demo/cmd/ctr/commands/sandboxes"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/grpclog"

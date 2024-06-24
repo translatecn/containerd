@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"demo/over/log"
-	"demo/plugins/containerd/content"
+	"demo/over/plugins/containerd/content"
 	"os"
 	"path/filepath"
 

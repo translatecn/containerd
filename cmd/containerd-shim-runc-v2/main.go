@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	_ "demo/over/plugins/shim/pause"
+	"demo/over/plugins/shim/shim"
+	_ "demo/over/plugins/shim/task"
 	"demo/over/runtime/v2/runc/manager"
-	_ "demo/plugins/shim/pause"
-	"demo/plugins/shim/shim"
-	_ "demo/plugins/shim/task"
 )
 
 func main() {

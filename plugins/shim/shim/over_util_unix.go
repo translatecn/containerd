@@ -2,10 +2,8 @@ package shim
 
 import (
 	"context"
-	"crypto/sha256"
 	"demo/over/defaults"
 	"demo/over/my_mk"
-	"demo/over/namespaces"
 	"demo/over/sys"
 	"fmt"
 	"net"
@@ -48,13 +46,13 @@ const socketRoot = defaults.DefaultStateDir
 
 // SocketAddress returns a socket address
 func SocketAddress(ctx context.Context, socketPath, id string) (string, error) {
-	ns, err := namespaces.NamespaceRequired(ctx)
-	if err != nil {
-		return "", err
-	}
-	d := sha256.Sum256([]byte(filepath.Join(socketPath, ns, id)))
+	//ns, err := namespaces.NamespaceRequired(ctx)
+	//if err != nil {
+	//	return "", err
+	//}
+	//d := sha256.Sum256([]byte(filepath.Join(socketPath, ns, id)))
 	// //run/containerd/s/1c2bf84c6529ba17d8234a68f92557fb5c1e4214eb17b724580e60b640e4f68a
-	return fmt.Sprintf("unix://%s/%x", filepath.Join(socketRoot, "s"), d), nil
+	return fmt.Sprintf("unix://%s/%s", filepath.Join(socketRoot, "s"), id), nil
 }
 
 // AnonDialer returns a dialer for a socket

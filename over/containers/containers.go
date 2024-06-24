@@ -59,6 +59,7 @@ type Container struct {
 
 	// Extensions stores client-specified metadata
 	Extensions map[string]typeurl.Any
+	Others     map[string]interface{}
 
 	// SandboxID is an identifier of sandbox this container belongs to.
 	//

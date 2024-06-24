@@ -52,6 +52,25 @@ type shutdownService struct {
 	timeout    time.Duration
 }
 
+func (s *shutdownService) Done() <-chan struct{} {
+	return s.doneC
+}
+
+func (s *shutdownService) Err() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.err
+}
+
+func (s *shutdownService) RegisterCallback(fn func(context.Context) error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.callbacks == nil {
+		s.callbacks = []func(context.Context) error{}
+	}
+	s.callbacks = append(s.callbacks, fn)
+}
+
 func (s *shutdownService) Shutdown() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -77,23 +96,4 @@ func (s *shutdownService) Shutdown() {
 		close(s.doneC)
 		s.mu.Unlock()
 	}(s.callbacks)
-}
-
-func (s *shutdownService) Done() <-chan struct{} {
-	return s.doneC
-}
-
-func (s *shutdownService) Err() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.err
-}
-
-func (s *shutdownService) RegisterCallback(fn func(context.Context) error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.callbacks == nil {
-		s.callbacks = []func(context.Context) error{}
-	}
-	s.callbacks = append(s.callbacks, fn)
 }

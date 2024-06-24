@@ -9,7 +9,7 @@ import (
 	"demo/over/registrar"
 	"demo/pkg/oci"
 	"demo/pkg/sandbox"
-	"demo/plugins/containerd/over/warning"
+	"demo/plugins/containerd/warning"
 	"encoding/json"
 	"fmt"
 	"io"

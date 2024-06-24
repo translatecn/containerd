@@ -7,7 +7,7 @@ import (
 	"demo/over/protobuf"
 	ptypes "demo/over/protobuf/types"
 	"demo/plugins"
-	"demo/plugins/containerd/over/warning"
+	"demo/plugins/containerd/warning"
 	"errors"
 	"os"
 	"path/filepath"

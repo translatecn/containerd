@@ -376,7 +376,7 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 	}
 	_ = shimapi.TaskService.Checkpoint
 	_ = sandboxapi.TTRPCSandboxService.CreateSandbox
-	if err := serve(ctx, server, signals, sd.Shutdown); err != nil {
+	if err := serve(ctx, server, signals, sd.Shutdown); err != nil { // 第二次作为子进程启动
 		if err != shutdown.ErrShutdown {
 			return err
 		}

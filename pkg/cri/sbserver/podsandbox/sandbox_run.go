@@ -3,8 +3,8 @@ package podsandbox
 import (
 	"context"
 	criconfig "demo/config/cri"
-	"demo/others/nri_extend"
-	v1 "demo/others/nri_extend/types/v1"
+	"demo/others/over/nri_extend"
+	v1 "demo/others/over/nri_extend/types/v1"
 	runtime "demo/over/api/cri/v1"
 	"demo/over/log"
 	"demo/over/snapshots"

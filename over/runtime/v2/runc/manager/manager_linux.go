@@ -135,11 +135,11 @@ func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddre
 	if debug {
 		args = append(args, "-debug")
 	}
-	x := []string{"--listen=:32345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
+	//x := []string{"--listen=:32345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
 	//  /Users/acejilam/Desktop/containerd/containerd-shim-runc-v2 -namespace k8s.io
 	//  -address /run/containerd/containerd.sock -id f56fc531a7713ebd6a0ecea8024a55e895094f7138cc2344b0fc341ddb43b6cf
-	cmd := exec.Command("dlv", append(x, args...)...)
-	//cmd := exec.Command(self, args...)
+	//cmd := exec.Command("dlv", append(x, args...)...)
+	cmd := exec.Command(self, args...)
 	cmd.Dir = cwd
 	cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -158,7 +158,7 @@ func (manager) Start(ctx context.Context, id string, opts shim.StartOpts) (_ str
 	if err != nil {
 		return "", err
 	}
-	grouping := id
+	grouping := id // 容器ID
 	spec, err := readSpec()
 	if err != nil {
 		return "", err

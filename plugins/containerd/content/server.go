@@ -16,7 +16,7 @@ import (
 	ssproxy "demo/over/snapshots/proxy"
 	"demo/over/sys"
 	"demo/over/timeout"
-	"demo/plugins/containerd/over/warning"
+	"demo/plugins/containerd/warning"
 	"encoding/json"
 	"errors"
 	"expvar"

@@ -153,8 +153,7 @@ func parseStartResponse(ctx context.Context, response []byte) (shim.BootstrapPar
 	var rs []byte
 	if strings.Contains(string(response), `API server listening at`) {
 		x := strings.Split(string(response), "\n")
-		d := strings.Join(x[3:], "\n")
-		rs = []byte(d)
+		rs = []byte(x[len(x)-1])
 	} else {
 		rs = response
 	}

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -49,13 +50,26 @@ func Command(ctx context.Context, config *CommandConfig) (*exec.Cmd, error) {
 		"-publish-binary", self,
 	}
 	args = append(args, config.Args...)
-	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", config.Runtime, "--"}
-	//cmd := exec.Command("dlv", append(x, args...)...)
+	count := 0
+	// 读取目录
+	files, _ := ioutil.ReadDir("/run/containerd/io.containerd.runtime.v2.task/k8s.io")
+	for _, file := range files {
+		if file.IsDir() {
+			count += 1
+		}
+	}
+
 	// /Users/acejilam/Desktop/containerd/containerd-shim-runc-v2 -- -namespace k8s.io
 	// -address /run/containerd/containerd.sock -publish-binary /Users/acejilam/Desktop/con/Users/acejilam/Desktop/containerd/containerd-shim-runc-v2
 	// -- -namespace k8s.io -address /run/containerd/containerd.sock -publish-binary /Users/acejilam/Desktop/ctainerd/containerd_bin
 	// -id f56fc531a7713ebd6a0ecea8024a55e895094f7138cc2344b0fc341ddb43b6cf start
-	cmd := exec.CommandContext(ctx, config.Runtime, args...) // container-shim-runc-v2
+	var cmd *exec.Cmd
+	//if count > 1 {
+	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", config.Runtime, "--"}
+	//cmd = exec.Command("dlv", append(x, args...)...)
+	//} else {
+	cmd = exec.CommandContext(ctx, config.Runtime, args...) // container-shim-runc-v2
+	//}
 	cmd.Dir = config.Path
 	cmd.Env = append(
 		os.Environ(),

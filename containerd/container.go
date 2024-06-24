@@ -58,14 +58,6 @@ type Container interface {
 	Checkpoint(context.Context, string, ...CheckpointOpts) (Image, error)
 }
 
-func containerFromRecord(client *Client, c containers.Container) *container {
-	return &container{
-		client:   client,
-		id:       c.ID,
-		metadata: c,
-	}
-}
-
 var _ = (Container)(&container{})
 
 type container struct {
@@ -436,4 +428,11 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	}
 	t.pid = response.Pid
 	return t, nil
+}
+func containerFromRecord(client *Client, c containers.Container) *container {
+	return &container{
+		client:   client,
+		id:       c.ID,
+		metadata: c,
+	}
 }

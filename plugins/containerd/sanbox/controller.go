@@ -6,7 +6,7 @@ import (
 	"demo/over/plugin"
 	"demo/over/runtime"
 	"demo/pkg/sandbox"
-	v2 "demo/plugins/containerd/over/task"
+	v2 "demo/plugins/containerd/task"
 	"fmt"
 	"time"
 

@@ -5,18 +5,107 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a0a5fafa-c684-4e3a-b7ba-d5c11f33ec98" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/case/dis/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/case/exit/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plugins/containerd/builtins.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crictl.sh" beforeDir="false" afterPath="$PROJECT_DIR$/crictl.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug.sh" beforeDir="false" afterPath="$PROJECT_DIR$/debug.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case/demo.go" beforeDir="false" afterPath="$PROJECT_DIR$/case/exit_singal/demo.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/containerd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/containerd/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/containerd/plugin.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/containerd/plugin.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/containerd/container.go" beforeDir="false" afterPath="$PROJECT_DIR$/containerd/container.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/RELEASES.md" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/RELEASES.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/adaptation/adaptation.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/adaptation/adaptation.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/adaptation/api.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/adaptation/api.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/adaptation/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/adaptation/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/adaptation/plugin_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/adaptation/plugin_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/adaptation/result.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/adaptation/result.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/adjustment.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/adjustment.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/api.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/api.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/api.proto" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/api.proto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/api_ttrpc.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/api_ttrpc.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/device.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/device.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/doc.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/doc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/env.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/env.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/event.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/event.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/helpers.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/helpers.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/hooks.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/hooks.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/mount.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/mount.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/namespace.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/namespace.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/optional.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/optional.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/resources.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/api/update.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/api/update.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/log/log.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/log/log.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/net/conn.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/net/conn.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/net/multiplex/mux.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/net/multiplex/mux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/net/multiplex/ttrpc.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/net/multiplex/ttrpc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/net/socketpair.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/net/socketpair.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/net/socketpair_cloexec_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/net/socketpair_cloexec_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/runtime-tools/generate/generate.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/runtime-tools/generate/generate.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/pkg/runtime-tools/generate/helpers_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/pkg/runtime-tools/generate/helpers_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/others/nri_extend/types/v1/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/others/over/nri_extend/types/v1/types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/over/containers/containers.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/containers/containers.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/over/runtime/v2/over_shim.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/runtime/v2/over_shim.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/over/runtime/v2/runc/task/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/runtime/v2/runc/task/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/over/shutdown/shutdown.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/shutdown/shutdown.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/nri/nri_api_x.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/nri/nri_api_x.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/opts.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/opts.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/container.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/container.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/container_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/container_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/domain.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/domain.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/nri.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/nri.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/over_sandbox_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/over_sandbox_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/nri/sandbox.go" beforeDir="false" afterPath="$PROJECT_DIR$/over/nri/sandbox.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/A_builtins/builtins.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/content/over_contentserver/contentserver.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/content/contentserver/contentserver.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/content/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/content/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/content/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/content/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/cri/cri.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/cri/cri.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/containerd/linux/bundle.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/linux/bundle.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/shim/pause/sandbox.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/pause/sandbox.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/nri/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/nri/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/cgroups/cgroups.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/cgroups/cgroups.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/event/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/event/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/gc_scheduler/metrics.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/gc_scheduler/metrics.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/gc_scheduler/scheduler.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/gc_scheduler/scheduler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/healthcheck/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/healthcheck/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/lease/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/lease/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/lease/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/lease/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/metadata/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/metadata/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/monitor/change.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/monitor/change.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/monitor/monitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/monitor/monitor.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/opt/path_unix.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/opt/path_unix.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/opt/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/opt/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/overlayfs/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/overlayfs/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/snapshots/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/snapshots/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/snapshots/snapshotters.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/snapshots/snapshotters.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/streaming/manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/streaming/manager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/streaming/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/streaming/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/task/manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/task/manager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/task/shim_load.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/task/shim_load.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/tracing/otlp.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/tracing/otlp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/transfer/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/transfer/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/transfer/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/transfer/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/version/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/version/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/walking/plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/walking/plugin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/over/warning/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/warning/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/sanbox/controller.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/sanbox/controller.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/sanbox/over_store.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/sanbox/store.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/introspection/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/introspection/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/introspection/over_pidns_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/introspection/pidns_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over/namespaces/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/namespaces/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over/namespaces/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/namespaces/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over_ContainersService.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/ContainersService.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over_ContentService.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/ContentService.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over_DiffService.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/DiffService.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/over_ImagesService.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/ImagesService.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/containerd/service/tasks/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/containerd/service/tasks/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/shim/shim/over_util.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/shim/over_util.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/shim/shim/over_util_unix.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/shim/over_util_unix.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/shim/shim/shim.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/shim/shim.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/shim/shim/shim_unix.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/shim/over_shim_unix.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/shim/shim/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/shim/shim/util.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,6 +116,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Go File" />
+        <option value="Go Application" />
       </list>
     </option>
   </component>
@@ -47,7 +137,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
+    "DefaultGoTemplateProperty": "Go Application",
     "Go Build.crictl info.executor": "Debug",
     "Go Build.crictl inpsect.executor": "Debug",
     "Go Build.crictl inspect.executor": "Debug",
@@ -55,6 +145,7 @@
     "Go Build.crictl stats.executor": "Debug",
     "Go Build.crictl statsp.executor": "Debug",
     "Go Build.go build demo.go.executor": "Run",
+    "Go Build.go build demo/case/dis.executor": "Run",
     "Go Build.go build main.go.executor": "Debug",
     "Go Remote.containerd.executor": "Debug",
     "Go Remote.shim (1).executor": "Debug",
@@ -66,7 +157,7 @@
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/Users/acejilam/Desktop/todo/containerd/pkg/netns",
+    "last_opened_file_path": "/Users/acejilam/Desktop/todo/containerd/bin",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
@@ -76,18 +167,21 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/bin" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/case" />
       <recent name="$PROJECT_DIR$/pkg/netns" />
       <recent name="$PROJECT_DIR$/pkg/cri/sbserver" />
-      <recent name="$PROJECT_DIR$/pkg/cri/server" />
-      <recent name="$PROJECT_DIR$/over/api/cri" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/pkg/cri/sbserver" />
-      <recent name="$PROJECT_DIR$/pkg/cri/over" />
-      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/plugins/containerd/service" />
+      <recent name="$PROJECT_DIR$/plugins/containerd" />
+      <recent name="$PROJECT_DIR$/plugins/containerd/over" />
+      <recent name="$PROJECT_DIR$/over" />
+      <recent name="$PROJECT_DIR$/others/over" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Remote.shim (1)">
+  <component name="RunManager" selected="Go Remote.containerd">
     <configuration name="crictl info" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="containerd" />
       <working_directory value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools" />
@@ -128,6 +222,15 @@
       <filePath value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/main.go" />
       <method v="2" />
     </configuration>
+    <configuration name="go build demo/case/dis" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="containerd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="demo/case/dis" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/case/dis/main.go" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build demo.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="containerd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -157,6 +260,7 @@
       <item itemvalue="Go Build.crictl statsp" />
       <item itemvalue="Go Build.crictl pods" />
       <item itemvalue="Go Build.crictl inspect" />
+      <item itemvalue="Go Build.go build demo/case/dis" />
       <item itemvalue="Go Build.go build demo.go" />
       <item itemvalue="Go Remote.containerd" />
       <item itemvalue="Go Remote.shim" />
@@ -164,6 +268,7 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build demo/case/dis" />
         <item itemvalue="Go Build.go build demo.go" />
       </list>
     </recent_temporary>
@@ -171,14 +276,25 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-33c477a475b1-e0158606a674-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-241.17890.21" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-GO-241.17890.21" />
+        <option value="bundled-gosdk-33c477a475b1-e0158606a674-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-241.17011.92" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-GO-241.17011.92" />
       </set>
     </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
@@ -242,17 +358,17 @@
           <option name="timeStamp" value="58" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
           <line>176</line>
           <option name="timeStamp" value="60" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
           <line>177</line>
           <option name="timeStamp" value="61" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
           <line>77</line>
           <option name="timeStamp" value="66" />
         </line-breakpoint>
@@ -352,11 +468,6 @@
           <option name="timeStamp" value="205" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/plugins/containerd/over/task/manager.go</url>
-          <line>486</line>
-          <option name="timeStamp" value="228" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/plugins/shim/shim/util.go</url>
           <line>61</line>
           <option name="timeStamp" value="249" />
@@ -365,6 +476,226 @@
           <url>file://$PROJECT_DIR$/plugins/shim/shim/over_shim_unix.go</url>
           <line>41</line>
           <option name="timeStamp" value="271" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>156</line>
+          <option name="timeStamp" value="285" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>157</line>
+          <option name="timeStamp" value="286" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>230</line>
+          <option name="timeStamp" value="288" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>226</line>
+          <option name="timeStamp" value="289" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>233</line>
+          <option name="timeStamp" value="290" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>240</line>
+          <option name="timeStamp" value="291" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>200</line>
+          <option name="timeStamp" value="293" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>207</line>
+          <option name="timeStamp" value="294" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>193</line>
+          <option name="timeStamp" value="295" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>196</line>
+          <option name="timeStamp" value="296" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>183</line>
+          <option name="timeStamp" value="300" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>184</line>
+          <option name="timeStamp" value="301" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>185</line>
+          <option name="timeStamp" value="302" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>186</line>
+          <option name="timeStamp" value="303" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>187</line>
+          <option name="timeStamp" value="304" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>188</line>
+          <option name="timeStamp" value="305" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>189</line>
+          <option name="timeStamp" value="306" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>192</line>
+          <option name="timeStamp" value="307" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>195</line>
+          <option name="timeStamp" value="308" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>194</line>
+          <option name="timeStamp" value="309" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>197</line>
+          <option name="timeStamp" value="310" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>198</line>
+          <option name="timeStamp" value="311" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>199</line>
+          <option name="timeStamp" value="312" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>202</line>
+          <option name="timeStamp" value="313" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>203</line>
+          <option name="timeStamp" value="314" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>204</line>
+          <option name="timeStamp" value="315" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>201</line>
+          <option name="timeStamp" value="316" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>211</line>
+          <option name="timeStamp" value="317" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>208</line>
+          <option name="timeStamp" value="318" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>209</line>
+          <option name="timeStamp" value="319" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>178</line>
+          <option name="timeStamp" value="320" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>171</line>
+          <option name="timeStamp" value="321" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/containerd/sandbox.go</url>
+          <line>54</line>
+          <option name="timeStamp" value="325" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/over_binary.go</url>
+          <line>58</line>
+          <option name="timeStamp" value="326" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>131</line>
+          <option name="timeStamp" value="327" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/plugins/containerd/linux/bundle.go</url>
+          <line>217</line>
+          <option name="timeStamp" value="328" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/plugins/shim/shim/over_util_unix.go</url>
+          <line>54</line>
+          <option name="timeStamp" value="329" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/runtime/v2/runc/manager/manager_linux.go</url>
+          <line>176</line>
+          <option name="timeStamp" value="330" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/over/metadata/containers.go</url>
+          <line>103</line>
+          <option name="timeStamp" value="332" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run.go</url>
+          <line>125</line>
+          <option name="timeStamp" value="333" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/podsandbox/sandbox_run.go</url>
+          <line>126</line>
+          <option name="timeStamp" value="334" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/plugins/containerd/service/over_ContainersService.go</url>
+          <line>102</line>
+          <option name="timeStamp" value="340" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/plugins/containerd/service/over_ContainersService.go</url>
+          <line>104</line>
+          <option name="timeStamp" value="341" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/plugins/shim/task/plugin_linux.go</url>
+          <line>18</line>
+          <option name="timeStamp" value="344" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -19,7 +19,7 @@ import (
 	"demo/over/typeurl/v2"
 	"demo/pkg/write"
 	"demo/plugins"
-	"demo/plugins/containerd/over/warning"
+	"demo/plugins/containerd/warning"
 	"fmt"
 	"io"
 	"os"

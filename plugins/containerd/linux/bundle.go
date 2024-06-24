@@ -2,7 +2,6 @@ package linux
 
 import (
 	"context"
-	"crypto/sha256"
 	"demo/over/api/runctypes"
 	"demo/over/events/exchange"
 	"encoding/json"
@@ -215,8 +214,8 @@ func atomicDelete(path string) error {
 	return os.RemoveAll(atomicPath)
 }
 func (b *bundle) shimAddress(namespace, socketPath string) string {
-	d := sha256.Sum256([]byte(filepath.Join(socketPath, namespace, b.id)))
-	return fmt.Sprintf("unix://%s/%x", filepath.Join(socketRoot, "s"), d)
+	//d := sha256.Sum256([]byte(filepath.Join(socketPath, namespace, b.id)))
+	return fmt.Sprintf("unix://%s/%s", filepath.Join(socketRoot, "s"), b.id)
 }
 func ShimRemote(c *Config, daemonAddress, cgroup string, exitHandler func()) ShimOpt {
 	return func(b *bundle, ns string, ropts *runctypes.RuncOptions) (shim.Config, client.Opt) {

@@ -3,8 +3,8 @@ package podsandbox
 import (
 	"context"
 	"demo/containerd"
-	"demo/others/nri_extend"
-	v1 "demo/others/nri_extend/types/v1"
+	"demo/others/over/nri_extend"
+	v1 "demo/others/over/nri_extend/types/v1"
 	"demo/over/log"
 )
 

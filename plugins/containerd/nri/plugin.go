@@ -1,8 +1,8 @@
 package nri
 
 import (
+	"demo/over/nri"
 	"demo/over/plugin"
-	"demo/pkg/nri"
 )
 
 func init() {

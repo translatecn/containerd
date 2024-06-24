@@ -3,7 +3,7 @@ package content
 import (
 	"demo/over/plugin"
 	"demo/plugins"
-	contentserver "demo/plugins/containerd/content/over_contentserver"
+	"demo/plugins/containerd/content/contentserver"
 	"errors"
 
 	"demo/over/content"

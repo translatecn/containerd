@@ -5,7 +5,7 @@ import (
 	"demo/over/log"
 	"demo/over/platforms"
 	"demo/over/plugin"
-	"demo/plugins/containerd/over/warning"
+	"demo/plugins/containerd/warning"
 	"flag"
 	"fmt"
 	"os"
@@ -15,10 +15,10 @@ import (
 	"k8s.io/klog/v2"
 
 	"demo/containerd"
+	nriservice "demo/over/nri"
 	"demo/pkg/cri/constants"
 	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver"
-	nriservice "demo/pkg/nri"
 )
 
 // Register CRI service plugin

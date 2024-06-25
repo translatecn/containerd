@@ -4,8 +4,8 @@ import (
 	"context"
 	"demo/over/metadata/boltutil"
 	"demo/over/namespaces"
+	api "demo/over/sandbox"
 	"demo/over/typeurl/v2"
-	api "demo/pkg/sandbox"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,16 +29,16 @@ func NewSandboxStore(db *DB) api.Store {
 }
 
 // Create a sandbox record in the store
-func (s *sandboxStore) Create(ctx context.Context, sandbox api.Sandbox) (api.Sandbox, error) {
+func (s *sandboxStore) Create(ctx context.Context, sandbox2 api.Sandbox) (api.Sandbox, error) {
 	ns, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
 		return api.Sandbox{}, err
 	}
 
-	sandbox.CreatedAt = time.Now().UTC()
-	sandbox.UpdatedAt = sandbox.CreatedAt
+	sandbox2.CreatedAt = time.Now().UTC()
+	sandbox2.UpdatedAt = sandbox2.CreatedAt
 
-	if err := s.validate(&sandbox); err != nil {
+	if err := s.validate(&sandbox2); err != nil {
 		return api.Sandbox{}, fmt.Errorf("failed to validate sandbox: %w", err)
 	}
 
@@ -48,7 +48,7 @@ func (s *sandboxStore) Create(ctx context.Context, sandbox api.Sandbox) (api.San
 			return fmt.Errorf("create error: %w", err)
 		}
 
-		if err := s.write(parent, &sandbox, false); err != nil {
+		if err := s.write(parent, &sandbox2, false); err != nil {
 			return fmt.Errorf("write error: %w", err)
 		}
 
@@ -57,7 +57,7 @@ func (s *sandboxStore) Create(ctx context.Context, sandbox api.Sandbox) (api.San
 		return api.Sandbox{}, err
 	}
 
-	return sandbox, nil
+	return sandbox2, nil
 }
 
 // Update the sandbox with the provided sandbox object and fields

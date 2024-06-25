@@ -7,7 +7,9 @@ import (
 	runtime "demo/over/api/cri/v1"
 	"demo/over/log"
 	"demo/over/typeurl/v2"
-	cio "demo/pkg/cri/io"
+	cio "demo/pkg/cri/over/io"
+	container2 "demo/pkg/cri/over/store/container"
+	util2 "demo/pkg/cri/over/util"
 	"errors"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
@@ -25,13 +27,11 @@ import (
 	"demo/over/platforms"
 	customopts "demo/pkg/cri/opts"
 	"demo/pkg/cri/over/annotations"
-	containerstore "demo/pkg/cri/store/container"
-	"demo/pkg/cri/util"
 	"demo/pkg/oci"
 )
 
 func init() {
-	typeurl.Register(&containerstore.Metadata{},
+	typeurl.Register(&container2.Metadata{},
 		"github.com/containerd/cri/pkg/store/container", "Metadata")
 }
 
@@ -51,7 +51,7 @@ func (c *CriService) volumeMounts(platform platforms.Platform, containerRootDir 
 			// the image volume and user mounts.
 			continue
 		}
-		volumeID := util.GenerateID()
+		volumeID := util2.GenerateID()
 		src := filepath.Join(containerRootDir, "volumes", volumeID)
 		// When the platform OS is Linux, ensure dst is a _Linux_ abs path.
 		// We can't use filepath.IsAbs() because, when executing on Windows, it checks for
@@ -76,7 +76,7 @@ func (c *CriService) volumeMounts(platform platforms.Platform, containerRootDir 
 // runtimeSpec returns a default runtime spec used in cri-containerd.
 func (c *CriService) runtimeSpec(id string, platform platforms.Platform, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
-	ctx := util.NamespacedContext()
+	ctx := util2.NamespacedContext()
 	container := &containers.Container{ID: id}
 
 	if baseSpecFile != "" {
@@ -86,7 +86,7 @@ func (c *CriService) runtimeSpec(id string, platform platforms.Platform, baseSpe
 		}
 
 		spec := oci.Spec{}
-		if err := util.DeepCopy(&spec, &baseSpec); err != nil {
+		if err := util2.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 
@@ -759,7 +759,7 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Generate unique id and name for the container and reserve the name.
 	// Reserve the container name to avoid concurrent `CreateContainer` request creating
 	// the same container.
-	id := util.GenerateID()
+	id := util2.GenerateID()
 	metadata := config.GetMetadata()
 	if metadata == nil {
 		return nil, errors.New("container config must include metadata")
@@ -778,7 +778,7 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}()
 
 	// Create initial internal container metadata.
-	meta := containerstore.Metadata{
+	meta := container2.Metadata{
 		ID:        id,
 		Name:      name,
 		SandboxID: sandboxID,
@@ -953,7 +953,7 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	opts = append(opts, c.nri.WithContainerAdjustment())
 	defer func() {
 		if retErr != nil {
-			deferCtx, deferCancel := util.DeferContext()
+			deferCtx, deferCancel := util2.DeferContext()
 			defer deferCancel()
 			c.nri.UndoCreateContainer(deferCtx, &sandbox, id, spec)
 		}
@@ -965,7 +965,7 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}
 	defer func() {
 		if retErr != nil {
-			deferCtx, deferCancel := util.DeferContext()
+			deferCtx, deferCancel := util2.DeferContext()
 			defer deferCancel()
 			if err := cntr.Delete(deferCtx, containerd.WithSnapshotCleanup); err != nil {
 				log.G(ctx).WithError(err).Errorf("Failed to delete containerd container %q", id)
@@ -973,12 +973,12 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		}
 	}()
 
-	status := containerstore.Status{CreatedAt: time.Now().UnixNano()}
+	status := container2.Status{CreatedAt: time.Now().UnixNano()}
 	status = copyResourcesToStatus(spec, status)
-	container, err := containerstore.NewContainer(meta,
-		containerstore.WithStatus(status, containerRootDir),
-		containerstore.WithContainer(cntr),
-		containerstore.WithContainerIO(containerIO),
+	container, err := container2.NewContainer(meta,
+		container2.WithStatus(status, containerRootDir),
+		container2.WithContainer(cntr),
+		container2.WithContainerIO(containerIO),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internal container object for %q: %w", id, err)

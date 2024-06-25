@@ -2,9 +2,9 @@ package oci
 
 import (
 	"context"
+	cap2 "demo/over/cap"
 
 	"demo/over/containers"
-	"demo/pkg/cap"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -47,7 +47,7 @@ func WithDevices(devicePath, containerPath, permissions string) SpecOpts {
 // WithAllCurrentCapabilities propagates the effective capabilities of the caller process to the container process.
 // The capability set may differ from WithAllKnownCapabilities when running in a container.
 var WithAllCurrentCapabilities = func(ctx context.Context, client Client, c *containers.Container, s *Spec) error {
-	caps, err := cap.Current()
+	caps, err := cap2.Current()
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ var WithAllCurrentCapabilities = func(ctx context.Context, client Client, c *con
 
 // WithAllKnownCapabilities sets all the known linux capabilities for the container process
 var _ = func(ctx context.Context, client Client, c *containers.Container, s *Spec) error {
-	caps := cap.Known()
+	caps := cap2.Known()
 	return WithCapabilities(caps)(ctx, client, c, s)
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	api "demo/over/api/services/sandbox/v1"
 	"demo/over/errdefs"
-	"demo/pkg/sandbox"
+	"demo/over/sandbox"
 )
 
 // remoteSandboxStore is a low-level containerd client to manage sandbox environments metadata

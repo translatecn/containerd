@@ -6,14 +6,14 @@ import (
 	runtime "demo/over/api/cri/v1"
 	"demo/over/log"
 	"demo/over/typeurl/v2"
+	container2 "demo/pkg/cri/over/store/container"
+	ctrdutil "demo/pkg/cri/over/util"
 	"fmt"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 
 	"demo/containerd"
 	"demo/over/containers"
 	"demo/over/errdefs"
-	containerstore "demo/pkg/cri/store/container"
-	ctrdutil "demo/pkg/cri/util"
 )
 
 // UpdateContainerResources updates ContainerConfig of the container.
@@ -40,7 +40,7 @@ func (c *CriService) UpdateContainerResources(ctx context.Context, r *runtime.Up
 	// Update resources in status update transaction, so that:
 	// 1) There won't be race condition with container start.
 	// 2) There won't be concurrent resource update to the same container.
-	if err := container.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+	if err := container.Status.UpdateSync(func(status container2.Status) (container2.Status, error) {
 		return c.updateContainerResources(ctx, container, r, status)
 	}); err != nil {
 		return nil, fmt.Errorf("failed to update resources: %w", err)
@@ -55,9 +55,9 @@ func (c *CriService) UpdateContainerResources(ctx context.Context, r *runtime.Up
 }
 
 func (c *CriService) updateContainerResources(ctx context.Context,
-	cntr containerstore.Container,
+	cntr container2.Container,
 	r *runtime.UpdateContainerResourcesRequest,
-	status containerstore.Status) (newStatus containerstore.Status, retErr error) {
+	status container2.Status) (newStatus container2.Status, retErr error) {
 
 	newStatus = status
 	id := cntr.ID

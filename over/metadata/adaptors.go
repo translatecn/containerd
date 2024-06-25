@@ -2,8 +2,8 @@ package metadata
 
 import (
 	"demo/over/leases"
+	"demo/over/sandbox"
 	"demo/over/snapshots"
-	"demo/pkg/sandbox"
 	"strings"
 
 	"demo/over/containers"

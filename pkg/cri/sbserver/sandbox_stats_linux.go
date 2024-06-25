@@ -4,6 +4,7 @@ import (
 	"context"
 	"demo/others/cgroups/v3"
 	"demo/over/log"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
 	"fmt"
 	"time"
 
@@ -11,17 +12,16 @@ import (
 	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
-	sandboxstore "demo/pkg/cri/store/sandbox"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/vishvananda/netlink"
 )
 
 func (c *CriService) podSandboxStats(
 	ctx context.Context,
-	sandbox sandboxstore.Sandbox) (*runtime.PodSandboxStats, error) {
+	sandbox sandbox2.Sandbox) (*runtime.PodSandboxStats, error) {
 	meta := sandbox.Metadata
 
-	if sandbox.Status.Get().State != sandboxstore.StateReady {
+	if sandbox.Status.Get().State != sandbox2.StateReady {
 		return nil, fmt.Errorf("failed to get pod sandbox stats since sandbox container %q is not in ready state: %w", meta.ID, errdefs.ErrUnavailable)
 	}
 
@@ -128,7 +128,7 @@ func getContainerNetIO(ctx context.Context, netNsPath string) (rxBytes, rxErrors
 	return rxBytes, rxErrors, txBytes, txErrors
 }
 
-func metricsForSandbox(sandbox sandboxstore.Sandbox) (interface{}, error) {
+func metricsForSandbox(sandbox sandbox2.Sandbox) (interface{}, error) {
 	cgroupPath := sandbox.Config.GetLinux().GetCgroupParent()
 
 	if cgroupPath == "" {

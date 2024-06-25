@@ -3,18 +3,17 @@ package podsandbox
 import (
 	"context"
 	"demo/over/log"
+	"demo/over/netns"
 	"demo/over/typeurl/v2"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"fmt"
 	goruntime "runtime"
 	"time"
 
-	runtime "demo/over/api/cri/v1"
-	"demo/pkg/netns"
-
 	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 )
 
 // loadContainerTimeout is the default timeout for loading a container/sandbox.
@@ -30,10 +29,10 @@ import (
 // * Event monitor: We should set a timeout for each container/sandbox event handling.
 const loadContainerTimeout = 10 * time.Second
 
-func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Container) (sandboxstore.Sandbox, error) {
+func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Container) (sandbox2.Sandbox, error) {
 	ctx, cancel := context.WithTimeout(ctx, loadContainerTimeout)
 	defer cancel()
-	var sandbox sandboxstore.Sandbox
+	var sandbox sandbox2.Sandbox
 	// Load sandbox metadata.
 	exts, err := cntr.Extensions(ctx)
 	if err != nil {
@@ -47,11 +46,11 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 	if err != nil {
 		return sandbox, fmt.Errorf("failed to unmarshal metadata extension %q: %w", ext, err)
 	}
-	meta := data.(*sandboxstore.Metadata)
+	meta := data.(*sandbox2.Metadata)
 
-	s, err := func() (sandboxstore.Status, error) {
-		status := sandboxstore.Status{
-			State: sandboxstore.StateUnknown,
+	s, err := func() (sandbox2.Status, error) {
+		status := sandbox2.Status{
+			State: sandbox2.StateUnknown,
 		}
 		// Load sandbox created timestamp.
 		info, err := cntr.Info(ctx)
@@ -83,7 +82,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 		}
 		if notFound {
 			// Task does not exist, set sandbox state as NOTREADY.
-			status.State = sandboxstore.StateNotReady
+			status.State = sandbox2.StateNotReady
 		} else {
 			if taskStatus.Status == containerd.Running {
 				// Wait for the task for sandbox monitor.
@@ -93,10 +92,10 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 					if !errdefs.IsNotFound(err) {
 						return status, fmt.Errorf("failed to wait for task: %w", err)
 					}
-					status.State = sandboxstore.StateNotReady
+					status.State = sandbox2.StateNotReady
 				} else {
 					// Task is running, set sandbox state as READY.
-					status.State = sandboxstore.StateReady
+					status.State = sandbox2.StateReady
 					status.Pid = t.Pid()
 
 					go func() {
@@ -108,7 +107,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 				if _, err := t.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 					return status, fmt.Errorf("failed to delete task: %w", err)
 				}
-				status.State = sandboxstore.StateNotReady
+				status.State = sandbox2.StateNotReady
 			}
 		}
 		return status, nil
@@ -117,7 +116,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 		log.G(ctx).WithError(err).Errorf("Failed to load sandbox status for %q", cntr.ID())
 	}
 
-	sandbox = sandboxstore.NewSandbox(*meta, s)
+	sandbox = sandbox2.NewSandbox(*meta, s)
 	sandbox.Container = cntr
 
 	// Load network namespace.
@@ -129,7 +128,7 @@ func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Conta
 	return sandbox, nil
 }
 
-func getNetNS(meta *sandboxstore.Metadata) *netns.NetNS {
+func getNetNS(meta *sandbox2.Metadata) *netns.NetNS {
 	// Don't need to load netns for host network sandbox.
 	if hostNetwork(meta.Config) {
 		return nil

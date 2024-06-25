@@ -8,8 +8,8 @@ import (
 	"demo/over/plugin"
 	srv "demo/over/plugins"
 	"demo/over/plugins/containerd/service/introspection"
+	sandbox2 "demo/over/sandbox"
 	"demo/over/snapshots"
-	"demo/pkg/sandbox"
 	"fmt"
 
 	containersapi "demo/over/api/services/containers/v1"
@@ -32,8 +32,8 @@ type services struct {
 	eventService         EventService
 	leasesService        leases.Manager
 	introspectionService introspection.Service
-	sandboxStore         sandbox.Store
-	sandboxController    sandbox.Controller
+	sandboxStore         sandbox2.Store
+	sandboxController    sandbox2.Controller
 }
 
 // ServicesOpt allows callers to set options on the services
@@ -115,14 +115,14 @@ func WithIntrospectionClient(in introspectionapi.IntrospectionClient) ServicesOp
 }
 
 // WithSandboxStore sets the sandbox store.
-func WithSandboxStore(client sandbox.Store) ServicesOpt {
+func WithSandboxStore(client sandbox2.Store) ServicesOpt {
 	return func(s *services) {
 		s.sandboxStore = client
 	}
 }
 
 // WithSandboxController sets the sandbox controller.
-func WithSandboxController(client sandbox.Controller) ServicesOpt {
+func WithSandboxController(client sandbox2.Controller) ServicesOpt {
 	return func(s *services) {
 		s.sandboxController = client
 	}
@@ -140,10 +140,10 @@ func WithInMemoryServices(ic *plugin.InitContext) ClientOpt {
 				return WithLeasesService(i.(leases.Manager))
 			},
 			plugin.SandboxStorePlugin: func(i interface{}) ServicesOpt {
-				return WithSandboxStore(i.(sandbox.Store))
+				return WithSandboxStore(i.(sandbox2.Store))
 			},
 			plugin.SandboxControllerPlugin: func(i interface{}) ServicesOpt {
-				return WithSandboxController(i.(sandbox.Controller))
+				return WithSandboxController(i.(sandbox2.Controller))
 			},
 		} {
 			i, err := ic.Get(t)

@@ -31,10 +31,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// newNS creates a new persistent (bind-mounted) network namespace and returns the
-// path to the network namespace.
-// If pid is not 0, returns the netns from that pid persistently mounted. Otherwise,
-// a new netns is created.
 func newNS(baseDir string, pid uint32) (nsPath string, err error) {
 	b := make([]byte, 16)
 

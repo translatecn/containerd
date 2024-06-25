@@ -2,11 +2,10 @@ package sbserver
 
 import (
 	"context"
+	"demo/pkg/cri/over/store/sandbox"
 	"time"
 
 	runtime "demo/over/api/cri/v1"
-
-	sandboxstore "demo/pkg/cri/store/sandbox"
 )
 
 // ListPodSandbox returns a list of Sandbox.
@@ -29,10 +28,10 @@ func (c *CriService) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 }
 
 // toCRISandbox converts sandbox metadata into CRI pod sandbox.
-func toCRISandbox(meta sandboxstore.Metadata, status sandboxstore.Status) *runtime.PodSandbox {
+func toCRISandbox(meta sandbox.Metadata, status sandbox.Status) *runtime.PodSandbox {
 	// Set sandbox state to NOTREADY by default.
 	state := runtime.PodSandboxState_SANDBOX_NOTREADY
-	if status.State == sandboxstore.StateReady {
+	if status.State == sandbox.StateReady {
 		state = runtime.PodSandboxState_SANDBOX_READY
 	}
 	return &runtime.PodSandbox{

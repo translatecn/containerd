@@ -4,7 +4,12 @@ import (
 	"context"
 	criconfig "demo/config/cri"
 	"demo/over/log"
+	"demo/over/netns"
 	"demo/over/typeurl/v2"
+	cio "demo/pkg/cri/over/io"
+	container2 "demo/pkg/cri/over/store/container"
+	"demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,13 +23,7 @@ import (
 	containerdimages "demo/over/images"
 	"demo/over/platforms"
 	"demo/pkg/cri/sbserver/podsandbox"
-	"demo/pkg/netns"
 	"golang.org/x/sync/errgroup"
-
-	cio "demo/pkg/cri/io"
-	containerstore "demo/pkg/cri/store/container"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 )
 
 // NOTE: The recovery logic has following assumption: when the cri plugin is down:
@@ -87,14 +86,14 @@ func (c *CriService) recover(ctx context.Context) error {
 			continue
 		}
 
-		metadata := sandboxstore.Metadata{}
+		metadata := sandbox.Metadata{}
 		err := sbx.GetExtension(podsandbox.MetadataKey, &metadata)
 		if err != nil {
 			return fmt.Errorf("failed to get metadata for stored sandbox %q: %w", sbx.ID, err)
 		}
 
 		var (
-			state      = sandboxstore.StateUnknown
+			state      = sandbox.StateUnknown
 			controller = c.sandboxControllers[criconfig.ModeShim]
 		)
 
@@ -102,19 +101,19 @@ func (c *CriService) recover(ctx context.Context) error {
 		if err != nil {
 			log.G(ctx).WithError(err).Error("failed to recover sandbox state")
 			if errdefs.IsNotFound(err) {
-				state = sandboxstore.StateNotReady
+				state = sandbox.StateNotReady
 			}
 		} else {
 			if code, ok := runtime.PodSandboxState_value[status.State]; ok {
 				if code == int32(runtime.PodSandboxState_SANDBOX_READY) {
-					state = sandboxstore.StateReady
+					state = sandbox.StateReady
 				} else if code == int32(runtime.PodSandboxState_SANDBOX_NOTREADY) {
-					state = sandboxstore.StateNotReady
+					state = sandbox.StateNotReady
 				}
 			}
 		}
 
-		sb := sandboxstore.NewSandbox(metadata, sandboxstore.Status{State: state})
+		sb := sandbox.NewSandbox(metadata, sandbox.Status{State: state})
 
 		// Load network namespace.
 		sb.NetNS = getNetNS(&metadata)
@@ -211,13 +210,13 @@ func (c *CriService) recover(ctx context.Context) error {
 const loadContainerTimeout = 10 * time.Second
 
 // loadContainer loads container from containerd and status checkpoint.
-func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Container) (containerstore.Container, error) {
+func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Container) (container2.Container, error) {
 	ctx, cancel := context.WithTimeout(ctx, loadContainerTimeout)
 	defer cancel()
 	id := cntr.ID()
 	containerDir := c.getContainerRootDir(id)
 	volatileContainerDir := c.getVolatileContainerRootDir(id)
-	var container containerstore.Container
+	var container container2.Container
 	// Load container metadata.
 	exts, err := cntr.Extensions(ctx)
 	if err != nil {
@@ -231,10 +230,10 @@ func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Containe
 	if err != nil {
 		return container, fmt.Errorf("failed to unmarshal metadata extension %q: %w", ext, err)
 	}
-	meta := data.(*containerstore.Metadata)
+	meta := data.(*container2.Metadata)
 
 	// Load status from checkpoint.
-	status, err := containerstore.LoadStatus(containerDir, id)
+	status, err := container2.LoadStatus(containerDir, id)
 	if err != nil {
 		log.G(ctx).WithError(err).Warnf("Failed to load container status for %q", id)
 		status = unknownContainerStatus()
@@ -371,24 +370,24 @@ func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Containe
 		// contain useful information loaded from the checkpoint.
 		status.Unknown = true
 	}
-	opts := []containerstore.Opts{
-		containerstore.WithStatus(status, containerDir),
-		containerstore.WithContainer(cntr),
+	opts := []container2.Opts{
+		container2.WithStatus(status, containerDir),
+		container2.WithContainer(cntr),
 	}
 	// containerIO could be nil for container in unknown state.
 	if containerIO != nil {
-		opts = append(opts, containerstore.WithContainerIO(containerIO))
+		opts = append(opts, container2.WithContainerIO(containerIO))
 	}
-	return containerstore.NewContainer(*meta, opts...)
+	return container2.NewContainer(*meta, opts...)
 }
 
 // podSandboxRecover is an additional interface implemented by podsandbox/ controller to handle
 // Pod sandbox containers recovery.
 type podSandboxRecover interface {
-	RecoverContainer(ctx context.Context, cntr containerd.Container) (sandboxstore.Sandbox, error)
+	RecoverContainer(ctx context.Context, cntr containerd.Container) (sandbox.Sandbox, error)
 }
 
-func getNetNS(meta *sandboxstore.Metadata) *netns.NetNS {
+func getNetNS(meta *sandbox.Metadata) *netns.NetNS {
 	// Don't need to load netns for host network sandbox.
 	if hostNetwork(meta.Config) {
 		return nil

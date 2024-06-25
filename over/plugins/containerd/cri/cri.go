@@ -6,6 +6,8 @@ import (
 	"demo/over/platforms"
 	"demo/over/plugin"
 	"demo/over/plugins/containerd/warning"
+	"demo/pkg/cri/over/constants"
+	"demo/pkg/cri/over/nri"
 	"flag"
 	"fmt"
 	"os"
@@ -16,8 +18,6 @@ import (
 
 	"demo/containerd"
 	nriservice "demo/over/nri"
-	"demo/pkg/cri/constants"
-	"demo/pkg/cri/nri"
 	"demo/pkg/cri/sbserver"
 )
 

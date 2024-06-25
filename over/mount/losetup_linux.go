@@ -1,6 +1,7 @@
 package mount
 
 import (
+	kernel "demo/over/contrib/seccomp/kernelversion"
 	"demo/over/randutil"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	kernel "demo/pkg/contrib/seccomp/kernelversion"
 	"golang.org/x/sys/unix"
 )
 

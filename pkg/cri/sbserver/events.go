@@ -4,6 +4,10 @@ import (
 	"context"
 	"demo/over/protobuf"
 	"demo/over/typeurl/v2"
+	"demo/pkg/cri/over/constants"
+	"demo/pkg/cri/over/store/container"
+	"demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"errors"
 	"fmt"
 	"sync"
@@ -16,10 +20,6 @@ import (
 	containerdio "demo/over/cio"
 	"demo/over/errdefs"
 	"demo/over/events"
-	"demo/pkg/cri/constants"
-	containerstore "demo/pkg/cri/store/container"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/clock"
 )
@@ -287,7 +287,7 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 			}
 			return nil
 		}
-		err = cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+		err = cntr.Status.UpdateSync(func(status container.Status) (container.Status, error) {
 			status.Reason = oomExitReason
 			return status, nil
 		})
@@ -309,9 +309,9 @@ func (em *eventMonitor) handleEvent(any interface{}) error {
 }
 
 // handleSandboxExit handles sandbox exit event.
-func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, exitStatus uint32, exitTime time.Time, c *CriService) error {
-	if err := sb.Status.Update(func(status sandboxstore.Status) (sandboxstore.Status, error) {
-		status.State = sandboxstore.StateNotReady
+func handleSandboxExit(ctx context.Context, sb sandbox.Sandbox, exitStatus uint32, exitTime time.Time, c *CriService) error {
+	if err := sb.Status.Update(func(status sandbox.Status) (sandbox.Status, error) {
+		status.State = sandbox.StateNotReady
 		status.Pid = 0
 		status.ExitStatus = exitStatus
 		status.ExitedAt = exitTime
@@ -471,7 +471,7 @@ func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string
 	}()
 	return stopCh
 }
-func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr containerstore.Container, sandboxID string, c *CriService) error {
+func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr container.Container, sandboxID string, c *CriService) error {
 	// Attach container IO so that `Delete` could cleanup the stream properly.
 	task, err := cntr.Container.Task(ctx,
 		func(*containerdio.FIFOSet) (containerdio.IO, error) {
@@ -511,7 +511,7 @@ func handleContainerExit(ctx context.Context, e *eventtypes.TaskExit, cntr conta
 		logrus.Infof("Ensure that container %s in task-service has been cleanup successfully", cntr.Container.ID())
 	}
 
-	err = cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+	err = cntr.Status.UpdateSync(func(status container.Status) (container.Status, error) {
 		if status.FinishedAt == 0 {
 			status.Pid = 0
 			status.FinishedAt = protobuf.FromTimestamp(e.ExitedAt).UnixNano()

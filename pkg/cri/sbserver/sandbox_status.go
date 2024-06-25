@@ -2,11 +2,11 @@ package sbserver
 
 import (
 	"context"
+	"demo/pkg/cri/over/store/sandbox"
 	"fmt"
 	"time"
 
 	runtime "demo/over/api/cri/v1"
-	sandboxstore "demo/pkg/cri/store/sandbox"
 )
 
 // PodSandboxStatus returns the status of the PodSandbox.
@@ -47,7 +47,7 @@ func (c *CriService) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	}, nil
 }
 
-func (c *CriService) getIPs(sandbox sandboxstore.Sandbox) (string, []string, error) {
+func (c *CriService) getIPs(sandbox sandbox.Sandbox) (string, []string, error) {
 	config := sandbox.Config
 
 	// For sandboxes using the node network we are not
@@ -66,7 +66,7 @@ func (c *CriService) getIPs(sandbox sandboxstore.Sandbox) (string, []string, err
 }
 
 // toCRISandboxStatus converts sandbox metadata into CRI pod sandbox status.
-func toCRISandboxStatus(meta sandboxstore.Metadata, status string, createdAt time.Time, ip string, additionalIPs []string) *runtime.PodSandboxStatus {
+func toCRISandboxStatus(meta sandbox.Metadata, status string, createdAt time.Time, ip string, additionalIPs []string) *runtime.PodSandboxStatus {
 	// Set sandbox state to NOTREADY by default.
 	state := runtime.PodSandboxState_SANDBOX_NOTREADY
 	if value, ok := runtime.PodSandboxState_value[status]; ok {

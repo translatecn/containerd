@@ -1,11 +1,11 @@
 package seccomp
 
 import (
+	"demo/over/contrib/seccomp/kernelversion"
 	"runtime"
 
 	"golang.org/x/sys/unix"
 
-	"demo/pkg/contrib/seccomp/kernelversion"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 

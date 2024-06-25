@@ -3,6 +3,7 @@ package sbserver
 import (
 	"context"
 	"demo/over/log"
+	container2 "demo/pkg/cri/over/store/container"
 	"errors"
 	"fmt"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"demo/containerd"
 	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
-	containerstore "demo/pkg/cri/store/container"
 	"github.com/sirupsen/logrus"
 )
 
@@ -119,8 +119,8 @@ func (c *CriService) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 // setContainerRemoving sets the container into removing state. In removing state, the
 // container will not be started or removed again.
-func setContainerRemoving(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+func setContainerRemoving(container container2.Container) error {
+	return container.Status.Update(func(status container2.Status) (container2.Status, error) {
 		// Do not remove container if it's still running or unknown.
 		if status.State() == runtime.ContainerState_CONTAINER_RUNNING {
 			return status, errors.New("container is still running, to stop first")
@@ -141,8 +141,8 @@ func setContainerRemoving(container containerstore.Container) error {
 
 // resetContainerRemoving resets the container removing state on remove failure. So
 // that we could remove the container again.
-func resetContainerRemoving(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+func resetContainerRemoving(container container2.Container) error {
+	return container.Status.Update(func(status container2.Status) (container2.Status, error) {
 		status.Removing = false
 		return status, nil
 	})

@@ -4,6 +4,7 @@ import (
 	"context"
 	"demo/others/cgroups/v3"
 	"demo/over/log"
+	ctrdutil "demo/pkg/cri/over/util"
 	"errors"
 	"fmt"
 	"os"
@@ -18,18 +19,14 @@ import (
 	"tags.cncf.io/container-device-interface/pkg/cdi"
 
 	"demo/over/containers"
-	ctrdutil "demo/pkg/cri/util"
 	"demo/pkg/oci"
 )
-
-// Linux dependent OCI spec opts.
 
 var (
 	swapControllerAvailability     bool
 	swapControllerAvailabilityOnce sync.Once
 )
 
-// SwapControllerAvailable returns true if the swap controller is available
 func SwapControllerAvailable() bool {
 	swapControllerAvailabilityOnce.Do(func() {
 		const warn = "Failed to detect the availability of the swap controller, assuming not available"

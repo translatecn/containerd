@@ -4,7 +4,10 @@ import (
 	"context"
 	criconfig "demo/config/cri"
 	"demo/over/protobuf"
-	"demo/pkg/sandbox"
+	"demo/over/sandbox"
+	imagestore "demo/pkg/cri/over/store/image"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"fmt"
 	"time"
 
@@ -16,9 +19,6 @@ import (
 	"demo/over/errdefs"
 	osinterface "demo/over/os"
 	"demo/over/platforms"
-	imagestore "demo/pkg/cri/store/image"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 	"demo/pkg/oci"
 )
 
@@ -37,7 +37,7 @@ type Controller struct {
 	// client is an instance of the containerd client
 	client *containerd.Client
 	// sandboxStore stores all resources associated with sandboxes.
-	sandboxStore *sandboxstore.Store
+	sandboxStore *sandbox2.Store
 	// os is an interface for all required os operations.
 	os osinterface.OS
 	// cri is CRI service that provides missing gaps needed by controller.
@@ -51,7 +51,7 @@ type Controller struct {
 func New(
 	config criconfig.Config,
 	client *containerd.Client,
-	sandboxStore *sandboxstore.Store,
+	sandboxStore *sandbox2.Store,
 	os osinterface.OS,
 	cri CRIService,
 	baseOCISpecs map[string]*oci.Spec,
@@ -130,7 +130,7 @@ func (c *Controller) waitSandboxExit(ctx context.Context, id string, exitCh <-ch
 
 // handleSandboxExit handles TaskExit event for sandbox.
 // TODO https://github.com/containerd/issues/7548
-func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, e *eventtypes.TaskExit) error {
+func handleSandboxExit(ctx context.Context, sb sandbox2.Sandbox, e *eventtypes.TaskExit) error {
 	// No stream attached to sandbox container.
 	task, err := sb.Container.Task(ctx, nil)
 	if err != nil {
@@ -146,8 +146,8 @@ func handleSandboxExit(ctx context.Context, sb sandboxstore.Sandbox, e *eventtyp
 			// Move on to make sure container status is updated.
 		}
 	}
-	sb.Status.Update(func(status sandboxstore.Status) (sandboxstore.Status, error) {
-		status.State = sandboxstore.StateNotReady
+	sb.Status.Update(func(status sandbox2.Status) (sandbox2.Status, error) {
+		status.State = sandbox2.StateNotReady
 		status.Pid = 0
 		status.ExitStatus = e.ExitStatus
 		status.ExitedAt = e.ExitedAt.AsTime()

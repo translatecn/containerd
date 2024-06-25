@@ -11,11 +11,11 @@ import (
 	"demo/over/plugin"
 	"demo/over/plugins/containerd/service/introspection"
 	ptypes "demo/over/protobuf/types"
+	sandbox2 "demo/over/sandbox"
+	proxy2 "demo/over/sandbox/proxy"
 	"demo/over/snapshots"
 	snproxy "demo/over/snapshots/proxy"
 	"demo/over/typeurl/v2"
-	"demo/pkg/sandbox"
-	"demo/pkg/sandbox/proxy"
 	"encoding/json"
 	"fmt"
 	"runtime"
@@ -677,23 +677,23 @@ func (c *Client) EventService() EventService {
 }
 
 // SandboxStore returns the underlying sandbox store client
-func (c *Client) SandboxStore() sandbox.Store {
+func (c *Client) SandboxStore() sandbox2.Store {
 	if c.sandboxStore != nil {
 		return c.sandboxStore
 	}
 	c.connMu.Lock()
 	defer c.connMu.Unlock()
-	return proxy.NewSandboxStore(sandboxsapi.NewStoreClient(c.conn))
+	return proxy2.NewSandboxStore(sandboxsapi.NewStoreClient(c.conn))
 }
 
 // SandboxController returns the underlying sandbox controller client
-func (c *Client) SandboxController() sandbox.Controller {
+func (c *Client) SandboxController() sandbox2.Controller {
 	if c.sandboxController != nil {
 		return c.sandboxController
 	}
 	c.connMu.Lock()
 	defer c.connMu.Unlock()
-	return proxy.NewSandboxController(sandboxsapi.NewControllerClient(c.conn))
+	return proxy2.NewSandboxController(sandboxsapi.NewControllerClient(c.conn))
 }
 
 // VersionService returns the underlying VersionClient

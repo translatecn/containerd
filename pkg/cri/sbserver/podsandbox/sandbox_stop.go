@@ -4,7 +4,9 @@ import (
 	"context"
 	"demo/over/errdefs"
 	"demo/over/protobuf"
-	"demo/pkg/sandbox"
+	"demo/over/sandbox"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"fmt"
 	"syscall"
 	"time"
@@ -12,8 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	eventtypes "demo/over/api/events"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
 )
 
 func (c *Controller) Stop(ctx context.Context, sandboxID string, _ ...sandbox.StopOpt) error {
@@ -30,7 +30,7 @@ func (c *Controller) Stop(ctx context.Context, sandboxID string, _ ...sandbox.St
 	// TODO: The Controller maintains its own Status instead of CRI's sandboxStore.
 	// Only stop sandbox container when it's running or unknown.
 	state := sandbox.Status.Get().State
-	if (state == sandboxstore.StateReady || state == sandboxstore.StateUnknown) && sandbox.Container != nil {
+	if (state == sandbox2.StateReady || state == sandbox2.StateUnknown) && sandbox.Container != nil {
 		if err := c.stopSandboxContainer(ctx, sandbox); err != nil {
 			return fmt.Errorf("failed to stop sandbox container %q in %q state: %w", sandboxID, state, err)
 		}
@@ -41,7 +41,7 @@ func (c *Controller) Stop(ctx context.Context, sandboxID string, _ ...sandbox.St
 // stopSandboxContainer kills the sandbox container.
 // `task.Delete` is not called here because it will be called when
 // the event monitor handles the `TaskExit` event.
-func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxstore.Sandbox) error {
+func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandbox2.Sandbox) error {
 	id := sandbox.ID
 	container := sandbox.Container
 	state := sandbox.Status.Get().State
@@ -51,7 +51,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 			return fmt.Errorf("failed to get sandbox container: %w", err)
 		}
 		// Don't return for unknown state, some cleanup needs to be done.
-		if state == sandboxstore.StateUnknown {
+		if state == sandbox2.StateUnknown {
 			return cleanupUnknownSandbox(ctx, id, sandbox)
 		}
 		return nil
@@ -59,7 +59,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 
 	// Handle unknown state.
 	// The cleanup logic is the same with container unknown state.
-	if state == sandboxstore.StateUnknown {
+	if state == sandbox2.StateUnknown {
 		// Start an exit handler for containers in unknown state.
 		waitCtx, waitCancel := context.WithCancel(ctrdutil.NamespacedContext())
 		defer waitCancel()
@@ -106,7 +106,7 @@ func (c *Controller) stopSandboxContainer(ctx context.Context, sandbox sandboxst
 
 // waitSandboxStop waits for sandbox to be stopped until context is cancelled or
 // the context deadline is exceeded.
-func (c *Controller) waitSandboxStop(ctx context.Context, sandbox sandboxstore.Sandbox) error {
+func (c *Controller) waitSandboxStop(ctx context.Context, sandbox sandbox2.Sandbox) error {
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("wait sandbox container %q: %w", sandbox.ID, ctx.Err())
@@ -116,7 +116,7 @@ func (c *Controller) waitSandboxStop(ctx context.Context, sandbox sandboxstore.S
 }
 
 // cleanupUnknownSandbox cleanup stopped sandbox in unknown state.
-func cleanupUnknownSandbox(ctx context.Context, id string, sandbox sandboxstore.Sandbox) error {
+func cleanupUnknownSandbox(ctx context.Context, id string, sandbox sandbox2.Sandbox) error {
 	// Reuse handleSandboxExit to do the cleanup.
 	return handleSandboxExit(ctx, sandbox, &eventtypes.TaskExit{ExitStatus: unknownExitCode, ExitedAt: protobuf.ToTimestamp(time.Now())})
 }

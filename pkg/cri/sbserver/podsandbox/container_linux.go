@@ -3,13 +3,13 @@
 package podsandbox
 
 import (
+	"demo/over/contrib/seccomp"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	runtime "demo/over/api/cri/v1"
-	"demo/pkg/contrib/seccomp"
 	"demo/pkg/oci"
 )
 

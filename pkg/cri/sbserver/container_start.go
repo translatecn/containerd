@@ -8,22 +8,21 @@ import (
 	"demo/over/errdefs"
 	cioutil "demo/over/ioutil"
 	"demo/over/log"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
+	io2 "demo/pkg/cri/over/io"
+	container2 "demo/pkg/cri/over/store/container"
+	sandboxstore "demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
 	"time"
-
-	cio "demo/pkg/cri/io"
-	containerstore "demo/pkg/cri/store/container"
 )
 
 // resetContainerStarting resets the container starting state on start failure. So
 // that we could remove the container later.
-func resetContainerStarting(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+func resetContainerStarting(container container2.Container) error {
+	return container.Status.Update(func(status container2.Status) (container2.Status, error) {
 		status.Starting = false
 		return status, nil
 	})
@@ -44,10 +43,10 @@ func (c *CriService) createContainerLoggers(logPath string, tty bool) (stdout io
 		}()
 		var stdoutCh, stderrCh <-chan struct{}
 		wc := cioutil.NewSerialWriteCloser(f)
-		stdout, stdoutCh = cio.NewCRILogger(logPath, wc, cio.Stdout, c.config.MaxContainerLogLineSize)
+		stdout, stdoutCh = io2.NewCRILogger(logPath, wc, io2.Stdout, c.config.MaxContainerLogLineSize)
 		// Only redirect stderr when there is no tty.
 		if !tty {
-			stderr, stderrCh = cio.NewCRILogger(logPath, wc, cio.Stderr, c.config.MaxContainerLogLineSize)
+			stderr, stderrCh = io2.NewCRILogger(logPath, wc, io2.Stderr, c.config.MaxContainerLogLineSize)
 		}
 		go func() {
 			if stdoutCh != nil {
@@ -60,14 +59,14 @@ func (c *CriService) createContainerLoggers(logPath string, tty bool) (stdout io
 			f.Close()
 		}()
 	} else {
-		stdout = cio.NewDiscardLogger()
-		stderr = cio.NewDiscardLogger()
+		stdout = io2.NewDiscardLogger()
+		stderr = io2.NewDiscardLogger()
 	}
 	return
 }
 
-func setContainerStarting(container containerstore.Container) error {
-	return container.Status.Update(func(status containerstore.Status) (containerstore.Status, error) {
+func setContainerStarting(container container2.Container) error {
+	return container.Status.Update(func(status container2.Status) (container2.Status, error) {
 		// Return error if container is not in created state.
 		if status.State() != runtime.ContainerState_CONTAINER_CREATED {
 			return status, fmt.Errorf("container is in %s state", criContainerStateToString(status.State()))
@@ -109,7 +108,7 @@ func (c *CriService) StartContainer(ctx context.Context, r *runtime.StartContain
 	defer func() {
 		if retErr != nil {
 			// Set container to exited if fail to start.
-			if err := cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+			if err := cntr.Status.UpdateSync(func(status container2.Status) (container2.Status, error) {
 				status.Pid = 0
 				status.FinishedAt = time.Now().UnixNano()
 				status.ExitCode = errorStartExitCode
@@ -208,7 +207,7 @@ func (c *CriService) StartContainer(ctx context.Context, r *runtime.StartContain
 	}
 
 	// Update container start timestamp.
-	if err := cntr.Status.UpdateSync(func(status containerstore.Status) (containerstore.Status, error) {
+	if err := cntr.Status.UpdateSync(func(status container2.Status) (container2.Status, error) {
 		status.Pid = task.Pid()
 		status.StartedAt = time.Now().UnixNano()
 		return status, nil

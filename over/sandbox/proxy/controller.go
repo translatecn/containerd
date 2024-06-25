@@ -2,11 +2,10 @@ package proxy
 
 import (
 	"context"
-	"demo/pkg/sandbox"
-
 	api "demo/over/api/services/sandbox/v1"
 	"demo/over/errdefs"
 	"demo/over/platforms"
+	"demo/over/sandbox"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

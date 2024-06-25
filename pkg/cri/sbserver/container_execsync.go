@@ -5,6 +5,8 @@ import (
 	"context"
 	cioutil "demo/over/ioutil"
 	"demo/over/log"
+	io2 "demo/pkg/cri/over/io"
+	util2 "demo/pkg/cri/over/util"
 	"fmt"
 	"io"
 	"syscall"
@@ -16,9 +18,6 @@ import (
 	"demo/over/errdefs"
 	"demo/pkg/oci"
 	"k8s.io/client-go/tools/remotecommand"
-
-	cio "demo/pkg/cri/io"
-	"demo/pkg/cri/util"
 )
 
 type cappedWriter struct {
@@ -132,19 +131,19 @@ func (c *CriService) execInternal(ctx context.Context, container containerd.Cont
 	pspec.Args = opts.cmd
 
 	if opts.stdout == nil {
-		opts.stdout = cio.NewDiscardLogger()
+		opts.stdout = io2.NewDiscardLogger()
 	}
 	if opts.stderr == nil {
-		opts.stderr = cio.NewDiscardLogger()
+		opts.stderr = io2.NewDiscardLogger()
 	}
-	execID := util.GenerateID()
+	execID := util2.GenerateID()
 	log.G(ctx).Debugf("Generated exec id %q for container %q", execID, id)
 	volatileRootDir := c.getVolatileContainerRootDir(id)
-	var execIO *cio.ExecIO
+	var execIO *io2.ExecIO
 	process, err := task.Exec(ctx, execID, pspec,
 		func(id string) (containerdio.IO, error) {
 			var err error
-			execIO, err = cio.NewExecIO(id, volatileRootDir, opts.tty, opts.stdin != nil)
+			execIO, err = io2.NewExecIO(id, volatileRootDir, opts.tty, opts.stdin != nil)
 			return execIO, err
 		},
 	)
@@ -152,7 +151,7 @@ func (c *CriService) execInternal(ctx context.Context, container containerd.Cont
 		return nil, fmt.Errorf("failed to create exec %q: %w", execID, err)
 	}
 	defer func() {
-		deferCtx, deferCancel := util.DeferContext()
+		deferCtx, deferCancel := util2.DeferContext()
 		defer deferCancel()
 		if _, err := process.Delete(deferCtx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
 			log.G(ctx).WithError(err).Errorf("Failed to delete exec process %q for container %q", execID, id)
@@ -173,7 +172,7 @@ func (c *CriService) execInternal(ctx context.Context, container containerd.Cont
 		}
 	})
 
-	attachDone := execIO.Attach(cio.AttachOptions{
+	attachDone := execIO.Attach(io2.AttachOptions{
 		Stdin:     opts.stdin,
 		Stdout:    opts.stdout,
 		Stderr:    opts.stderr,

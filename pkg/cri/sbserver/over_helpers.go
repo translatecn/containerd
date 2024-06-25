@@ -10,6 +10,8 @@ import (
 	"demo/over/plugin"
 	"demo/over/reference/docker"
 	"demo/over/typeurl/v2"
+	"demo/pkg/cri/over/store/container"
+	imagestore "demo/pkg/cri/over/store/image"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -26,8 +28,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 	"demo/over/containers"
 	"demo/over/errdefs"
-	containerstore "demo/pkg/cri/store/container"
-	imagestore "demo/pkg/cri/store/image"
 	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"
 	imagedigest "github.com/opencontainers/go-digest"
 	"github.com/pelletier/go-toml"
@@ -260,21 +260,21 @@ func (c *CriService) EnsureImageExists(ctx context.Context, ref string, config *
 // target for a container using PID NamespaceMode_TARGET.
 // The target container must be in the same sandbox and must be running.
 // Returns the target container for convenience.
-func (c *CriService) validateTargetContainer(sandboxID, targetContainerID string) (containerstore.Container, error) {
+func (c *CriService) validateTargetContainer(sandboxID, targetContainerID string) (container.Container, error) {
 	targetContainer, err := c.containerStore.Get(targetContainerID)
 	if err != nil {
-		return containerstore.Container{}, fmt.Errorf("container %q does not exist: %w", targetContainerID, err)
+		return container.Container{}, fmt.Errorf("container %q does not exist: %w", targetContainerID, err)
 	}
 
 	targetSandboxID := targetContainer.Metadata.SandboxID
 	if targetSandboxID != sandboxID {
-		return containerstore.Container{},
+		return container.Container{},
 			fmt.Errorf("container %q (sandbox %s) does not belong to sandbox %s", targetContainerID, targetSandboxID, sandboxID)
 	}
 
 	status := targetContainer.Status.Get()
 	if state := status.State(); state != runtime.ContainerState_CONTAINER_RUNNING {
-		return containerstore.Container{}, fmt.Errorf("container %q is not running - in state %s", targetContainerID, state)
+		return container.Container{}, fmt.Errorf("container %q is not running - in state %s", targetContainerID, state)
 	}
 
 	return targetContainer, nil
@@ -416,8 +416,8 @@ const (
 )
 
 // unknownContainerStatus returns the default container status when its status is unknown.
-func unknownContainerStatus() containerstore.Status {
-	return containerstore.Status{
+func unknownContainerStatus() container.Status {
+	return container.Status{
 		CreatedAt:  0,
 		StartedAt:  0,
 		FinishedAt: 0,
@@ -449,7 +449,7 @@ func getPassthroughAnnotations(podAnnotations map[string]string,
 // copyResourcesToStatus copys container resource contraints from spec to
 // container status.
 // This will need updates when new fields are added to ContainerResources.
-func copyResourcesToStatus(spec *runtimespec.Spec, status containerstore.Status) containerstore.Status {
+func copyResourcesToStatus(spec *runtimespec.Spec, status container.Status) container.Status {
 	status.Resources = &runtime.ContainerResources{}
 	if spec.Linux != nil {
 		status.Resources.Linux = &runtime.LinuxContainerResources{}

@@ -19,7 +19,6 @@ type ExecIO struct {
 
 var _ cio.IO = &ExecIO{}
 
-// NewExecIO creates exec io.
 func NewExecIO(id, root string, tty, stdin bool) (*ExecIO, error) {
 	fifos, err := newFifos(root, id, tty, stdin)
 	if err != nil {

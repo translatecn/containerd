@@ -2,6 +2,8 @@ package sbserver
 
 import (
 	"bufio"
+	"demo/over/contrib/apparmor"
+	"demo/over/contrib/seccomp"
 	"demo/over/snapshots"
 	"errors"
 	"fmt"
@@ -13,8 +15,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"demo/pkg/contrib/apparmor"
-	"demo/pkg/contrib/seccomp"
 	customopts "demo/pkg/cri/opts"
 	"demo/pkg/oci"
 )

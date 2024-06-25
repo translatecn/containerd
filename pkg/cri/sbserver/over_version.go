@@ -3,10 +3,9 @@ package sbserver
 import (
 	"context"
 	"demo/over/version"
+	"demo/pkg/cri/over/constants"
 
 	runtime "demo/over/api/cri/v1"
-
-	"demo/pkg/cri/constants"
 )
 
 const (

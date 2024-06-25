@@ -1,17 +1,16 @@
 package container
 
 import (
+	cio "demo/pkg/cri/over/io"
+	"demo/pkg/cri/over/store"
+	"demo/pkg/cri/over/store/label"
+	"demo/pkg/cri/over/store/stats"
 	"sync"
 
 	"demo/containerd"
+	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
 	"demo/over/truncindex"
-	cio "demo/pkg/cri/io"
-	"demo/pkg/cri/store"
-	"demo/pkg/cri/store/label"
-	"demo/pkg/cri/store/stats"
-
-	runtime "demo/over/api/cri/v1"
 )
 
 // Container contains all resources associated with the container. All methods to

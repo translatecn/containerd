@@ -3,8 +3,9 @@ package podsandbox
 import (
 	"context"
 	"demo/others/go-cni"
+	"demo/over/sandbox"
 	"demo/over/typeurl/v2"
-	"demo/pkg/sandbox"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
 	"encoding/json"
 	"fmt"
 
@@ -12,7 +13,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 	"demo/over/containers"
 	"demo/over/errdefs"
-	sandboxstore "demo/pkg/cri/store/sandbox"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -33,9 +33,9 @@ type SandboxInfo struct {
 	RuntimeOptions interface{}               `json:"runtimeOptions"`
 	Config         *runtime.PodSandboxConfig `json:"config"`
 	// Note: RuntimeSpec may not be populated if the sandbox has not been fully created.
-	RuntimeSpec *runtimespec.Spec      `json:"runtimeSpec"`
-	CNIResult   *cni.Result            `json:"cniResult"`
-	Metadata    *sandboxstore.Metadata `json:"sandboxMetadata"`
+	RuntimeSpec *runtimespec.Spec  `json:"runtimeSpec"`
+	CNIResult   *cni.Result        `json:"cniResult"`
+	Metadata    *sandbox2.Metadata `json:"sandboxMetadata"`
 }
 
 func (c *Controller) Status(ctx context.Context, sandboxID string, verbose bool) (sandbox.ControllerStatus, error) {
@@ -71,7 +71,7 @@ func (c *Controller) Status(ctx context.Context, sandboxID string, verbose bool)
 }
 
 // toCRISandboxInfo converts internal container object information to CRI sandbox status response info map.
-func toCRISandboxInfo(ctx context.Context, sandbox sandboxstore.Sandbox) (map[string]string, error) {
+func toCRISandboxInfo(ctx context.Context, sandbox sandbox2.Sandbox) (map[string]string, error) {
 	si := &SandboxInfo{
 		Pid:            sandbox.Status.Get().Pid,
 		Config:         sandbox.Config,

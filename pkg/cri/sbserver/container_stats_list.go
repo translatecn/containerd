@@ -5,6 +5,8 @@ import (
 	"demo/over/log"
 	"demo/over/protobuf"
 	"demo/over/typeurl/v2"
+	"demo/pkg/cri/over/store/container"
+	"demo/pkg/cri/over/store/stats"
 	"errors"
 	"fmt"
 	"reflect"
@@ -16,10 +18,7 @@ import (
 	"demo/over/api/services/tasks/v1"
 	"demo/over/api/types"
 	"demo/over/errdefs"
-	"demo/pkg/cri/store/stats"
 	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
-
-	containerstore "demo/pkg/cri/store/container"
 )
 
 // ListContainerStats returns stats of all running containers.
@@ -42,7 +41,7 @@ func (c *CriService) ListContainerStats(
 	return criStats, nil
 }
 
-type metricsHandler func(containerstore.Metadata, *types.Metric) (*runtime.ContainerStats, error)
+type metricsHandler func(container.Metadata, *types.Metric) (*runtime.ContainerStats, error)
 
 // Returns a function to be used for transforming container metrics into the right format.
 // Uses the platform the given sandbox advertises to implement its logic. If the platform is
@@ -78,7 +77,7 @@ func (c *CriService) getMetricsHandler(ctx context.Context, sandboxID string) (m
 func (c *CriService) toCRIContainerStats(
 	ctx context.Context,
 	stats []*types.Metric,
-	containers []containerstore.Container,
+	containers []container.Container,
 ) (*runtime.ListContainerStatsResponse, error) {
 	statsMap := make(map[string]*types.Metric)
 	for _, stat := range stats {
@@ -211,13 +210,13 @@ func (c *CriService) normalizeContainerStatsFilter(filter *runtime.ContainerStat
 // the information in the stats request and the containerStore
 func (c *CriService) buildTaskMetricsRequest(
 	r *runtime.ListContainerStatsRequest,
-) (*tasks.MetricsRequest, []containerstore.Container, error) {
+) (*tasks.MetricsRequest, []container.Container, error) {
 	req := &tasks.MetricsRequest{}
 	if r.GetFilter() == nil {
 		return req, c.containerStore.List(), nil
 	}
 	c.normalizeContainerStatsFilter(r.GetFilter())
-	var containers []containerstore.Container
+	var containers []container.Container
 	for _, cntr := range c.containerStore.List() {
 		if r.GetFilter().GetId() != "" && cntr.ID != r.GetFilter().GetId() {
 			continue
@@ -249,7 +248,7 @@ func matchLabelSelector(selector, labels map[string]string) bool {
 }
 
 func (c *CriService) windowsContainerMetrics(
-	meta containerstore.Metadata,
+	meta container.Metadata,
 	stats *types.Metric,
 ) (*runtime.ContainerStats, error) {
 	var cs runtime.ContainerStats
@@ -304,7 +303,7 @@ func (c *CriService) windowsContainerMetrics(
 }
 
 func (c *CriService) linuxContainerMetrics(
-	meta containerstore.Metadata,
+	meta container.Metadata,
 	stats *types.Metric,
 ) (*runtime.ContainerStats, error) {
 	var cs runtime.ContainerStats

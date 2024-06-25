@@ -5,7 +5,7 @@ import (
 	"demo/over/log"
 	"demo/over/plugin"
 	"demo/over/protobuf"
-	"demo/pkg/sandbox"
+	"demo/over/sandbox"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/anypb"
 

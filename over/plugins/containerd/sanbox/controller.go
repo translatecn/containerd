@@ -6,7 +6,7 @@ import (
 	"demo/over/plugin"
 	v2 "demo/over/plugins/containerd/task"
 	"demo/over/runtime"
-	"demo/pkg/sandbox"
+	sandbox2 "demo/over/sandbox"
 	"fmt"
 	"time"
 
@@ -46,7 +46,7 @@ func init() {
 			var (
 				shims     = shimPlugin.(*v2.ShimManager)
 				publisher = exchangePlugin.(*exchange.Exchange)
-				store     = sbPlugin.(sandbox.Store)
+				store     = sbPlugin.(sandbox2.Store)
 			)
 
 			return &controllerLocal{
@@ -60,11 +60,11 @@ func init() {
 
 type controllerLocal struct {
 	shims     *v2.ShimManager
-	store     sandbox.Store
+	store     sandbox2.Store
 	publisher events.Publisher
 }
 
-var _ sandbox.Controller = (*controllerLocal)(nil)
+var _ sandbox2.Controller = (*controllerLocal)(nil)
 
 func (c *controllerLocal) cleanupShim(ctx context.Context, sandboxID string, svc runtimeAPI.TTRPCSandboxService) {
 	// Let the shim exit, then we can clean up the bundle after.
@@ -85,8 +85,8 @@ func (c *controllerLocal) cleanupShim(ctx context.Context, sandboxID string, svc
 	}
 }
 
-func (c *controllerLocal) Create(ctx context.Context, sandboxID string, opts ...sandbox.CreateOpt) error {
-	var coptions sandbox.CreateOptions
+func (c *controllerLocal) Create(ctx context.Context, sandboxID string, opts ...sandbox2.CreateOpt) error {
+	var coptions sandbox2.CreateOptions
 	for _, opt := range opts {
 		opt(&coptions)
 	}
@@ -110,7 +110,7 @@ func (c *controllerLocal) Create(ctx context.Context, sandboxID string, opts ...
 		return fmt.Errorf("failed to start new shim for sandbox %s: %w", sandboxID, err)
 	}
 
-	svc, err := sandbox.NewClient(shim.Client())
+	svc, err := sandbox2.NewClient(shim.Client())
 	if err != nil {
 		return err
 	}
@@ -137,24 +137,24 @@ func (c *controllerLocal) Create(ctx context.Context, sandboxID string, opts ...
 	return nil
 }
 
-func (c *controllerLocal) Start(ctx context.Context, sandboxID string) (sandbox.ControllerInstance, error) {
+func (c *controllerLocal) Start(ctx context.Context, sandboxID string) (sandbox2.ControllerInstance, error) {
 	shim, err := c.shims.Get(ctx, sandboxID)
 	if err != nil {
-		return sandbox.ControllerInstance{}, fmt.Errorf("unable to find sandbox %q", sandboxID)
+		return sandbox2.ControllerInstance{}, fmt.Errorf("unable to find sandbox %q", sandboxID)
 	}
 
-	svc, err := sandbox.NewClient(shim.Client())
+	svc, err := sandbox2.NewClient(shim.Client())
 	if err != nil {
-		return sandbox.ControllerInstance{}, err
+		return sandbox2.ControllerInstance{}, err
 	}
 
 	resp, err := svc.StartSandbox(ctx, &runtimeAPI.StartSandboxRequest{SandboxID: sandboxID})
 	if err != nil {
 		c.cleanupShim(ctx, sandboxID, svc)
-		return sandbox.ControllerInstance{}, fmt.Errorf("failed to start sandbox %s: %w", sandboxID, errdefs.FromGRPC(err))
+		return sandbox2.ControllerInstance{}, fmt.Errorf("failed to start sandbox %s: %w", sandboxID, errdefs.FromGRPC(err))
 	}
 
-	return sandbox.ControllerInstance{
+	return sandbox2.ControllerInstance{
 		SandboxID: sandboxID,
 		Pid:       resp.GetPid(),
 		CreatedAt: resp.GetCreatedAt().AsTime(),
@@ -181,8 +181,8 @@ func (c *controllerLocal) Platform(ctx context.Context, sandboxID string) (platf
 	return platform, nil
 }
 
-func (c *controllerLocal) Stop(ctx context.Context, sandboxID string, opts ...sandbox.StopOpt) error {
-	var soptions sandbox.StopOptions
+func (c *controllerLocal) Stop(ctx context.Context, sandboxID string, opts ...sandbox2.StopOpt) error {
+	var soptions sandbox2.StopOptions
 	for _, opt := range opts {
 		opt(&soptions)
 	}
@@ -221,10 +221,10 @@ func (c *controllerLocal) Shutdown(ctx context.Context, sandboxID string) error 
 	return nil
 }
 
-func (c *controllerLocal) Wait(ctx context.Context, sandboxID string) (sandbox.ExitStatus, error) {
+func (c *controllerLocal) Wait(ctx context.Context, sandboxID string) (sandbox2.ExitStatus, error) {
 	svc, err := c.getSandbox(ctx, sandboxID)
 	if err != nil {
-		return sandbox.ExitStatus{}, err
+		return sandbox2.ExitStatus{}, err
 	}
 
 	resp, err := svc.WaitSandbox(ctx, &runtimeAPI.WaitSandboxRequest{
@@ -232,25 +232,25 @@ func (c *controllerLocal) Wait(ctx context.Context, sandboxID string) (sandbox.E
 	})
 
 	if err != nil {
-		return sandbox.ExitStatus{}, fmt.Errorf("failed to wait sandbox %s: %w", sandboxID, errdefs.FromGRPC(err))
+		return sandbox2.ExitStatus{}, fmt.Errorf("failed to wait sandbox %s: %w", sandboxID, errdefs.FromGRPC(err))
 	}
 
-	return sandbox.ExitStatus{
+	return sandbox2.ExitStatus{
 		ExitStatus: resp.GetExitStatus(),
 		ExitedAt:   resp.GetExitedAt().AsTime(),
 	}, nil
 }
 
-func (c *controllerLocal) Status(ctx context.Context, sandboxID string, verbose bool) (sandbox.ControllerStatus, error) {
+func (c *controllerLocal) Status(ctx context.Context, sandboxID string, verbose bool) (sandbox2.ControllerStatus, error) {
 	svc, err := c.getSandbox(ctx, sandboxID)
 	if errdefs.IsNotFound(err) {
-		return sandbox.ControllerStatus{
+		return sandbox2.ControllerStatus{
 			SandboxID: sandboxID,
 			ExitedAt:  time.Now(),
 		}, nil
 	}
 	if err != nil {
-		return sandbox.ControllerStatus{}, err
+		return sandbox2.ControllerStatus{}, err
 	}
 
 	resp, err := svc.SandboxStatus(ctx, &runtimeAPI.SandboxStatusRequest{
@@ -258,10 +258,10 @@ func (c *controllerLocal) Status(ctx context.Context, sandboxID string, verbose 
 		Verbose:   verbose,
 	})
 	if err != nil {
-		return sandbox.ControllerStatus{}, fmt.Errorf("failed to query sandbox %s status: %w", sandboxID, err)
+		return sandbox2.ControllerStatus{}, fmt.Errorf("failed to query sandbox %s status: %w", sandboxID, err)
 	}
 
-	return sandbox.ControllerStatus{
+	return sandbox2.ControllerStatus{
 		SandboxID: resp.GetSandboxID(),
 		Pid:       resp.GetPid(),
 		State:     resp.GetState(),
@@ -278,5 +278,5 @@ func (c *controllerLocal) getSandbox(ctx context.Context, id string) (runtimeAPI
 		return nil, err
 	}
 
-	return sandbox.NewClient(shim.Client())
+	return sandbox2.NewClient(shim.Client())
 }

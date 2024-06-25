@@ -3,13 +3,13 @@ package image
 import (
 	"context"
 	"demo/over/reference/docker"
+	"demo/pkg/cri/over/util"
 	"fmt"
 	"sync"
 
 	"demo/containerd"
 	"demo/over/errdefs"
 	"demo/pkg/cri/over/labels"
-	"demo/pkg/cri/util"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	imagedigest "github.com/opencontainers/go-digest"

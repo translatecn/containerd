@@ -6,9 +6,8 @@ import (
 	tracing "demo/over/ctr_tracing"
 	"demo/over/errdefs"
 	"demo/over/log"
+	ctrdutil "demo/pkg/cri/over/util"
 	"errors"
-
-	ctrdutil "demo/pkg/cri/util"
 )
 
 const (

@@ -2,6 +2,7 @@ package io
 
 import (
 	"demo/over/ioutil"
+	"demo/pkg/cri/over/util"
 	"errors"
 	"io"
 	"strings"
@@ -9,8 +10,6 @@ import (
 
 	"demo/over/cio"
 	"github.com/sirupsen/logrus"
-
-	"demo/pkg/cri/util"
 )
 
 // streamKey generates a key for the stream.

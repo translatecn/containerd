@@ -2,8 +2,8 @@ package sbserver
 
 import (
 	criconfig "demo/config/cri"
-	cstore "demo/pkg/cri/store/container"
-	sstore "demo/pkg/cri/store/sandbox"
+	cstore "demo/pkg/cri/over/store/container"
+	sstore "demo/pkg/cri/over/store/sandbox"
 )
 
 type criImplementation struct {

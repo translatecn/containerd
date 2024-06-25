@@ -9,11 +9,11 @@ import (
 	"demo/over/errdefs"
 	"demo/over/log"
 	"demo/over/typeurl/v2"
-	"demo/pkg/cri/constants"
 	"demo/pkg/cri/over/annotations"
-	cstore "demo/pkg/cri/store/container"
-	sstore "demo/pkg/cri/store/sandbox"
-	ctrdutil "demo/pkg/cri/util"
+	"demo/pkg/cri/over/constants"
+	"demo/pkg/cri/over/store/container"
+	"demo/pkg/cri/over/store/sandbox"
+	ctrdutil "demo/pkg/cri/over/util"
 	"encoding/json"
 	"fmt"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -53,7 +53,7 @@ func (a *API) Register(cri CRIImplementation) error {
 	return a.nri.Start()
 }
 
-func (a *API) StopPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
+func (a *API) StopPodSandbox(ctx context.Context, criPod *sandbox.Sandbox) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (a *API) StopPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error 
 	return err
 }
 
-func (a *API) RemovePodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
+func (a *API) RemovePodSandbox(ctx context.Context, criPod *sandbox.Sandbox) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -91,7 +91,7 @@ func (a *API) CreateContainer(ctx context.Context, ctrs *containers.Container, s
 	return adjust, err
 }
 
-func (a *API) PostCreateContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) PostCreateContainer(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -104,7 +104,7 @@ func (a *API) PostCreateContainer(ctx context.Context, criPod *sstore.Sandbox, c
 	return err
 }
 
-func (a *API) StartContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) StartContainer(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -117,7 +117,7 @@ func (a *API) StartContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr
 	return err
 }
 
-func (a *API) PostStartContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) PostStartContainer(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (a *API) PostStartContainer(ctx context.Context, criPod *sstore.Sandbox, cr
 	return err
 }
 
-func (a *API) UpdateContainerResources(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container, req *cri.LinuxContainerResources) (*cri.LinuxContainerResources, error) {
+func (a *API) UpdateContainerResources(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container, req *cri.LinuxContainerResources) (*cri.LinuxContainerResources, error) {
 	if a.IsDisabled() {
 		return nil, nil
 	}
@@ -148,7 +148,7 @@ func (a *API) UpdateContainerResources(ctx context.Context, criPod *sstore.Sandb
 	return r.ToCRI(noOomAdj), nil
 }
 
-func (a *API) PostUpdateContainerResources(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) PostUpdateContainerResources(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -161,7 +161,7 @@ func (a *API) PostUpdateContainerResources(ctx context.Context, criPod *sstore.S
 	return err
 }
 
-func (a *API) StopContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) StopContainer(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -169,8 +169,8 @@ func (a *API) StopContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr 
 	ctr := a.nriContainer(criCtr, nil)
 
 	if criPod == nil || criPod.ID == "" {
-		criPod = &sstore.Sandbox{
-			Metadata: sstore.Metadata{
+		criPod = &sandbox.Sandbox{
+			Metadata: sandbox.Metadata{
 				ID: ctr.GetPodSandboxID(),
 			},
 		}
@@ -182,7 +182,7 @@ func (a *API) StopContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr 
 	return err
 }
 
-func (a *API) NotifyContainerExit(ctx context.Context, criCtr *cstore.Container) {
+func (a *API) NotifyContainerExit(ctx context.Context, criCtr *container.Container) {
 	if a.IsDisabled() {
 		return
 	}
@@ -191,8 +191,8 @@ func (a *API) NotifyContainerExit(ctx context.Context, criCtr *cstore.Container)
 
 	criPod, _ := a.cri.SandboxStore().Get(ctr.GetPodSandboxID())
 	if criPod.ID == "" {
-		criPod = sstore.Sandbox{
-			Metadata: sstore.Metadata{
+		criPod = sandbox.Sandbox{
+			Metadata: sandbox.Metadata{
 				ID: ctr.GetPodSandboxID(),
 			},
 		}
@@ -202,7 +202,7 @@ func (a *API) NotifyContainerExit(ctx context.Context, criCtr *cstore.Container)
 	a.nri.NotifyContainerExit(ctx, pod, ctr)
 }
 
-func (a *API) RemoveContainer(ctx context.Context, criPod *sstore.Sandbox, criCtr *cstore.Container) error {
+func (a *API) RemoveContainer(ctx context.Context, criPod *sandbox.Sandbox, criCtr *container.Container) error {
 	if a.IsDisabled() {
 		return nil
 	}
@@ -215,7 +215,7 @@ func (a *API) RemoveContainer(ctx context.Context, criPod *sstore.Sandbox, criCt
 	return err
 }
 
-func (a *API) UndoCreateContainer(ctx context.Context, criPod *sstore.Sandbox, id string, spec *specs.Spec) {
+func (a *API) UndoCreateContainer(ctx context.Context, criPod *sandbox.Sandbox, id string, spec *specs.Spec) {
 	if a.IsDisabled() {
 		return
 	}
@@ -305,7 +305,7 @@ func (a *API) WithContainerAdjustment() containerd.NewContainerOpts {
 	}
 }
 
-func (a *API) WithContainerExit(criCtr *cstore.Container) containerd.ProcessDeleteOpts {
+func (a *API) WithContainerExit(criCtr *container.Container) containerd.ProcessDeleteOpts {
 	if a.IsDisabled() {
 		return func(_ context.Context, _ containerd.Process) error {
 			return nil
@@ -337,7 +337,7 @@ func (a *API) GetName() string {
 func (a *API) ListPodSandboxes() []nri.PodSandbox {
 	pods := []nri.PodSandbox{}
 	for _, pod := range a.cri.SandboxStore().List() {
-		if pod.Status.Get().State != sstore.StateUnknown {
+		if pod.Status.Get().State != sandbox.StateUnknown {
 			pod := pod
 			pods = append(pods, a.nriPodSandbox(&pod))
 		}
@@ -385,7 +385,7 @@ func (a *API) UpdateContainer(ctx context.Context, u *api.ContainerUpdate) error
 	}
 
 	err = ctr.Status.UpdateSync(
-		func(status cstore.Status) (cstore.Status, error) {
+		func(status container.Status) (container.Status, error) {
 			criReq := &cri.UpdateContainerResourcesRequest{
 				ContainerId: u.ContainerId,
 				Linux:       u.GetLinux().GetResources().ToCRI(0),
@@ -421,7 +421,7 @@ func (a *API) EvictContainer(ctx context.Context, e *api.ContainerEviction) erro
 //
 
 type criPodSandbox struct {
-	*sstore.Sandbox
+	*sandbox.Sandbox
 	spec *specs.Spec
 	pid  uint32
 }
@@ -569,13 +569,13 @@ type criContainer struct {
 	api  *API
 	ctrs *containers.Container
 	spec *specs.Spec
-	meta *cstore.Metadata
+	meta *container.Metadata
 	pid  uint32
 }
 
 func (a *API) nriContainer(ctr interface{}, spec *specs.Spec) *criContainer {
 	switch c := ctr.(type) {
-	case *cstore.Container:
+	case *container.Container:
 		ctx := ctrdutil.NamespacedContext()
 		pid := uint32(0)
 		ctrd := c.Container
@@ -607,7 +607,7 @@ func (a *API) nriContainer(ctr interface{}, spec *specs.Spec) *criContainer {
 
 	case *containers.Container:
 		ctrs := c
-		meta := &cstore.Metadata{}
+		meta := &container.Metadata{}
 		if ext := ctrs.Extensions[a.cri.ContainerMetadataExtensionKey()]; ext != nil {
 			err := typeurl.UnmarshalTo(ext, meta)
 			if err != nil {
@@ -626,7 +626,7 @@ func (a *API) nriContainer(ctr interface{}, spec *specs.Spec) *criContainer {
 	log.L.Errorf("can't wrap %T as NRI container", ctr)
 	return &criContainer{
 		api:  a,
-		meta: &cstore.Metadata{},
+		meta: &container.Metadata{},
 		spec: &specs.Spec{},
 	}
 }
@@ -766,7 +766,7 @@ func (c *criContainer) GetPid() uint32 {
 	return c.pid
 }
 
-func (a *API) nriPodSandbox(pod *sstore.Sandbox) *criPodSandbox {
+func (a *API) nriPodSandbox(pod *sandbox.Sandbox) *criPodSandbox {
 	criPod := &criPodSandbox{
 		Sandbox: pod,
 		spec:    &specs.Spec{},
@@ -801,7 +801,7 @@ func (a *API) nriPodSandbox(pod *sstore.Sandbox) *criPodSandbox {
 	return criPod
 }
 
-func (a *API) RunPodSandbox(ctx context.Context, criPod *sstore.Sandbox) error {
+func (a *API) RunPodSandbox(ctx context.Context, criPod *sandbox.Sandbox) error {
 	if a.IsDisabled() {
 		return nil
 	}

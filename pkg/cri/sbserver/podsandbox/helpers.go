@@ -5,6 +5,8 @@ import (
 	criconfig "demo/config/cri"
 	clabels "demo/over/labels"
 	"demo/over/log"
+	imagestore "demo/pkg/cri/over/store/image"
+	"demo/pkg/cri/over/util"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -12,8 +14,6 @@ import (
 
 	"demo/containerd"
 	"demo/over/containers"
-	imagestore "demo/pkg/cri/store/image"
-	ctrdutil "demo/pkg/cri/util"
 	"demo/pkg/oci"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
@@ -110,7 +110,7 @@ func getPassthroughAnnotations(podAnnotations map[string]string,
 // runtimeSpec returns a default runtime spec used in cri-containerd.
 func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.SpecOpts) (*runtimespec.Spec, error) {
 	// GenerateSpec needs namespace.
-	ctx := ctrdutil.NamespacedContext()
+	ctx := util.NamespacedContext()
 	container := &containers.Container{ID: id}
 
 	if baseSpecFile != "" {
@@ -120,7 +120,7 @@ func (c *Controller) runtimeSpec(id string, baseSpecFile string, opts ...oci.Spe
 		}
 
 		spec := oci.Spec{}
-		if err := ctrdutil.DeepCopy(&spec, &baseSpec); err != nil {
+		if err := util.DeepCopy(&spec, &baseSpec); err != nil {
 			return nil, fmt.Errorf("failed to clone OCI spec: %w", err)
 		}
 

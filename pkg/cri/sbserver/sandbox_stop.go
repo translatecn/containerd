@@ -3,13 +3,12 @@ package sbserver
 import (
 	"context"
 	"demo/over/log"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
 	"errors"
 	"fmt"
 	"time"
 
 	runtime "demo/over/api/cri/v1"
-
-	sandboxstore "demo/pkg/cri/store/sandbox"
 )
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
@@ -28,7 +27,7 @@ func (c *CriService) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	return &runtime.StopPodSandboxResponse{}, nil
 }
 
-func (c *CriService) stopPodSandbox(ctx context.Context, sandbox sandboxstore.Sandbox) error {
+func (c *CriService) stopPodSandbox(ctx context.Context, sandbox sandbox2.Sandbox) error {
 	// Use the full sandbox id.
 	id := sandbox.ID
 
@@ -50,7 +49,7 @@ func (c *CriService) stopPodSandbox(ctx context.Context, sandbox sandboxstore.Sa
 
 	// Only stop sandbox container when it's running or unknown.
 	state := sandbox.Status.Get().State
-	if state == sandboxstore.StateReady || state == sandboxstore.StateUnknown {
+	if state == sandbox2.StateReady || state == sandbox2.StateUnknown {
 		// Use sandbox controller to stop sandbox
 		controller, err := c.getSandboxController(sandbox.Config, sandbox.RuntimeHandler)
 		if err != nil {
@@ -95,7 +94,7 @@ func (c *CriService) stopPodSandbox(ctx context.Context, sandbox sandboxstore.Sa
 
 // waitSandboxStop waits for sandbox to be stopped until context is cancelled or
 // the context deadline is exceeded.
-func (c *CriService) waitSandboxStop(ctx context.Context, sandbox sandboxstore.Sandbox) error {
+func (c *CriService) waitSandboxStop(ctx context.Context, sandbox sandbox2.Sandbox) error {
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("wait sandbox container %q: %w", sandbox.ID, ctx.Err())
@@ -105,7 +104,7 @@ func (c *CriService) waitSandboxStop(ctx context.Context, sandbox sandboxstore.S
 }
 
 // teardownPodNetwork removes the network from the pod
-func (c *CriService) teardownPodNetwork(ctx context.Context, sandbox sandboxstore.Sandbox) error {
+func (c *CriService) teardownPodNetwork(ctx context.Context, sandbox sandbox2.Sandbox) error {
 	netPlugin := c.getNetworkPlugin(sandbox.RuntimeHandler)
 	if netPlugin == nil {
 		return errors.New("cni config not initialized")

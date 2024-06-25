@@ -1,15 +1,15 @@
 package sandbox
 
 import (
+	"demo/over/netns"
+	"demo/pkg/cri/over/store"
+	"demo/pkg/cri/over/store/label"
+	"demo/pkg/cri/over/store/stats"
 	"sync"
 
 	"demo/containerd"
 	"demo/over/errdefs"
 	"demo/over/truncindex"
-	"demo/pkg/cri/store"
-	"demo/pkg/cri/store/label"
-	"demo/pkg/cri/store/stats"
-	"demo/pkg/netns"
 )
 
 // Sandbox contains all resources associated with the sandbox. All methods to

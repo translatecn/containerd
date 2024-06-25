@@ -1,6 +1,7 @@
 package overlayutils
 
 import (
+	kernel "demo/over/contrib/seccomp/kernelversion"
 	"demo/over/log"
 	"demo/over/my_mk"
 	"demo/over/userns"
@@ -10,7 +11,6 @@ import (
 	"syscall"
 
 	"demo/over/mount"
-	kernel "demo/pkg/contrib/seccomp/kernelversion"
 )
 
 const (

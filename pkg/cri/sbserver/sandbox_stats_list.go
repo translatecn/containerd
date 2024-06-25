@@ -5,7 +5,7 @@ import (
 	runtime "demo/over/api/cri/v1"
 	"demo/over/errdefs"
 	"demo/over/log"
-	sandboxstore "demo/pkg/cri/store/sandbox"
+	sandbox2 "demo/pkg/cri/over/store/sandbox"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
 )
@@ -34,7 +34,7 @@ func (c *CriService) ListPodSandboxStats(
 	return podSandboxStats, errs.ErrorOrNil()
 }
 
-func (c *CriService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSandboxStatsRequest) []sandboxstore.Sandbox {
+func (c *CriService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSandboxStatsRequest) []sandbox2.Sandbox {
 	sandboxesInStore := c.sandboxStore.List()
 
 	if r.GetFilter() == nil {
@@ -43,7 +43,7 @@ func (c *CriService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSa
 
 	c.normalizePodSandboxStatsFilter(r.GetFilter())
 
-	var sandboxes []sandboxstore.Sandbox
+	var sandboxes []sandbox2.Sandbox
 	for _, sandbox := range sandboxesInStore {
 		if r.GetFilter().GetId() != "" && sandbox.ID != r.GetFilter().GetId() {
 			continue
@@ -55,7 +55,7 @@ func (c *CriService) sandboxesForListPodSandboxStatsRequest(r *runtime.ListPodSa
 		}
 
 		// We can't obtain metrics for sandboxes that aren't in ready state
-		if sandbox.Status.Get().State != sandboxstore.StateReady {
+		if sandbox.Status.Get().State != sandbox2.StateReady {
 			continue
 		}
 

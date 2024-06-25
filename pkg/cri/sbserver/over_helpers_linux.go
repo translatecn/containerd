@@ -3,6 +3,7 @@ package sbserver
 import (
 	"context"
 	"demo/others/cgroups/v3"
+	"demo/over/apparmor"
 	"demo/over/log"
 	"demo/over/my_mk"
 	"demo/over/seccomp"
@@ -17,7 +18,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"demo/over/mount"
-	"demo/pkg/apparmor"
 )
 
 // apparmorEnabled returns true if apparmor is enabled, supported by the host,

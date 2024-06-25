@@ -5,9 +5,12 @@ import (
 	criconfig "demo/config/cri"
 	"demo/others/go-cni"
 	"demo/over/log"
+	"demo/over/netns"
+	sandbox2 "demo/over/sandbox"
 	"demo/over/typeurl/v2"
-	sb "demo/pkg/sandbox"
-	"demo/pkg/write"
+	"demo/over/write"
+	sandbox3 "demo/pkg/cri/over/store/sandbox"
+	util2 "demo/pkg/cri/over/util"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,13 +27,10 @@ import (
 	"demo/pkg/cri/over/annotations"
 	"demo/pkg/cri/sbserver/over_bandwidth"
 	"demo/pkg/cri/sbserver/podsandbox"
-	sandboxstore "demo/pkg/cri/store/sandbox"
-	"demo/pkg/cri/util"
-	"demo/pkg/netns"
 )
 
 func init() {
-	typeurl.Register(&sandboxstore.Metadata{},
+	typeurl.Register(&sandbox3.Metadata{},
 		"github.com/containerd/cri/pkg/store/sandbox", "Metadata")
 }
 
@@ -42,7 +42,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	log.G(ctx).Debugf("Sandbox config %+v", config)
 
 	// Generate unique id and name for the sandbox and reserve the name.
-	id := util.GenerateID()
+	id := util2.GenerateID()
 	write.WriteFile(fmt.Sprintf("%s-RunPodSandbox-req.json", id), config)
 	metadata := config.GetMetadata()
 	if metadata == nil {
@@ -72,7 +72,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	var (
 		err         error
-		sandboxInfo = sb.Sandbox{ID: id}
+		sandboxInfo = sandbox2.Sandbox{ID: id}
 	)
 
 	ociRuntime, err := c.getSandboxRuntime(config, r.GetRuntimeHandler())
@@ -99,15 +99,15 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	sandboxInfo.AddLabel("name", name)
 
 	// Create initial internal sandbox object.
-	sandbox := sandboxstore.NewSandbox(
-		sandboxstore.Metadata{
+	sandbox := sandbox3.NewSandbox(
+		sandbox3.Metadata{
 			ID:             id,
 			Name:           name,
 			Config:         config,
 			RuntimeHandler: r.GetRuntimeHandler(),
 		},
-		sandboxstore.Status{
-			State:     sandboxstore.StateUnknown,
+		sandbox3.Status{
+			State:     sandbox3.StateUnknown,
 			CreatedAt: time.Now().UTC(),
 		},
 	)
@@ -172,7 +172,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		defer func() {
 			// Remove the network namespace only if all the resource cleanup is done.
 			if retErr != nil && cleanupErr == nil {
-				deferCtx, deferCancel := util.DeferContext()
+				deferCtx, deferCancel := util2.DeferContext()
 				defer deferCancel()
 				// Teardown network if an error is returned.
 				if cleanupErr = c.teardownPodNetwork(deferCtx, sandbox); cleanupErr != nil {
@@ -212,7 +212,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	runtimeStart := time.Now()
 
-	if err := controller.Create(ctx, id, sb.WithOptions(config), sb.WithNetNSPath(sandbox.NetNSPath)); err != nil {
+	if err := controller.Create(ctx, id, sandbox2.WithOptions(config), sandbox2.WithNetNSPath(sandbox.NetNSPath)); err != nil {
 		return nil, fmt.Errorf("failed to create sandbox %q: %w", id, err)
 	}
 
@@ -256,16 +256,16 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	defer func() {
 		if retErr != nil {
-			deferCtx, deferCancel := util.DeferContext()
+			deferCtx, deferCancel := util2.DeferContext()
 			defer deferCancel()
 			c.nri.RemovePodSandbox(deferCtx, &sandbox)
 		}
 	}()
 
-	if err := sandbox.Status.Update(func(status sandboxstore.Status) (sandboxstore.Status, error) {
+	if err := sandbox.Status.Update(func(status sandbox3.Status) (sandbox3.Status, error) {
 		// Set the pod sandbox as ready after successfully start sandbox container.
 		status.Pid = ctrl.Pid
-		status.State = sandboxstore.StateReady
+		status.State = sandbox3.StateReady
 		status.CreatedAt = ctrl.CreatedAt
 		return status, nil
 	}); err != nil {
@@ -287,7 +287,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	go func() {
 		defer close(exitCh)
 
-		ctx := util.NamespacedContext()
+		ctx := util2.NamespacedContext()
 		resp, err := controller.Wait(ctx, id)
 		if err != nil {
 			log.G(ctx).WithError(err).Error("failed to wait for sandbox exit")
@@ -329,7 +329,7 @@ func (c *CriService) getNetworkPlugin(runtimeClass string) cni.CNI {
 }
 
 // setupPodNetwork setups up the network for a pod
-func (c *CriService) setupPodNetwork(ctx context.Context, sandbox *sandboxstore.Sandbox) error {
+func (c *CriService) setupPodNetwork(ctx context.Context, sandbox *sandbox3.Sandbox) error {
 	var (
 		id        = sandbox.ID
 		config    = sandbox.Config
@@ -567,7 +567,7 @@ func (c *CriService) getSandboxRuntime(config *runtime.PodSandboxConfig, runtime
 
 // getSandboxController returns the sandbox controller configuration for sandbox.
 // If absent in legacy case, it will return the default controller.
-func (c *CriService) getSandboxController(config *runtime.PodSandboxConfig, runtimeHandler string) (sb.Controller, error) {
+func (c *CriService) getSandboxController(config *runtime.PodSandboxConfig, runtimeHandler string) (sandbox2.Controller, error) {
 	ociRuntime, err := c.getSandboxRuntime(config, runtimeHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sandbox runtime: %w", err)

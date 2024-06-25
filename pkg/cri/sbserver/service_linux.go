@@ -2,10 +2,10 @@ package sbserver
 
 import (
 	"demo/others/go-cni"
+	cap2 "demo/over/cap"
 	"demo/over/userns"
 	"fmt"
 
-	"demo/pkg/cap"
 	"github.com/opencontainers/selinux/go-selinux"
 	"github.com/sirupsen/logrus"
 	"tags.cncf.io/container-device-interface/pkg/cdi"
@@ -63,7 +63,7 @@ func (c *CriService) initPlatform() (err error) {
 	}
 
 	if c.allCaps == nil {
-		c.allCaps, err = cap.Current()
+		c.allCaps, err = cap2.Current()
 		if err != nil {
 			return fmt.Errorf("failed to get caps: %w", err)
 		}

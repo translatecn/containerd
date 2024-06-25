@@ -4,7 +4,7 @@ import (
 	"context"
 	"demo/over/log"
 	"demo/over/plugin"
-	"demo/pkg/sandbox"
+	sandbox2 "demo/over/sandbox"
 	"google.golang.org/grpc"
 
 	api "demo/over/api/services/sandbox/v1"
@@ -25,13 +25,13 @@ func init() {
 				return nil, err
 			}
 
-			return &sandboxService{store: sp.(sandbox.Store)}, nil
+			return &sandboxService{store: sp.(sandbox2.Store)}, nil
 		},
 	})
 }
 
 type sandboxService struct {
-	store sandbox.Store
+	store sandbox2.Store
 	api.UnimplementedStoreServer
 }
 
@@ -44,23 +44,23 @@ func (s *sandboxService) Register(server *grpc.Server) error {
 
 func (s *sandboxService) Create(ctx context.Context, req *api.StoreCreateRequest) (*api.StoreCreateResponse, error) {
 	log.G(ctx).WithField("req", req).Debug("create sandbox")
-	sb, err := s.store.Create(ctx, sandbox.FromProto(req.Sandbox))
+	sb, err := s.store.Create(ctx, sandbox2.FromProto(req.Sandbox))
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
 
-	return &api.StoreCreateResponse{Sandbox: sandbox.ToProto(&sb)}, nil
+	return &api.StoreCreateResponse{Sandbox: sandbox2.ToProto(&sb)}, nil
 }
 
 func (s *sandboxService) Update(ctx context.Context, req *api.StoreUpdateRequest) (*api.StoreUpdateResponse, error) {
 	log.G(ctx).WithField("req", req).Debug("update sandbox")
 
-	sb, err := s.store.Update(ctx, sandbox.FromProto(req.Sandbox), req.Fields...)
+	sb, err := s.store.Update(ctx, sandbox2.FromProto(req.Sandbox), req.Fields...)
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
 
-	return &api.StoreUpdateResponse{Sandbox: sandbox.ToProto(&sb)}, nil
+	return &api.StoreUpdateResponse{Sandbox: sandbox2.ToProto(&sb)}, nil
 }
 
 func (s *sandboxService) List(ctx context.Context, req *api.StoreListRequest) (*api.StoreListResponse, error) {
@@ -73,7 +73,7 @@ func (s *sandboxService) List(ctx context.Context, req *api.StoreListRequest) (*
 
 	list := make([]*types.Sandbox, len(resp))
 	for i := range resp {
-		list[i] = sandbox.ToProto(&resp[i])
+		list[i] = sandbox2.ToProto(&resp[i])
 	}
 
 	return &api.StoreListResponse{List: list}, nil
@@ -86,7 +86,7 @@ func (s *sandboxService) Get(ctx context.Context, req *api.StoreGetRequest) (*ap
 		return nil, errdefs.ToGRPC(err)
 	}
 
-	desc := sandbox.ToProto(&resp)
+	desc := sandbox2.ToProto(&resp)
 	return &api.StoreGetResponse{Sandbox: desc}, nil
 }
 

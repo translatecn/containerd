@@ -5,7 +5,7 @@ import (
 	"demo/over/ctr_tracing"
 	"demo/over/errdefs"
 	"demo/over/log"
-	imagestore "demo/pkg/cri/store/image"
+	imagestore "demo/pkg/cri/over/store/image"
 	"encoding/json"
 	"fmt"
 

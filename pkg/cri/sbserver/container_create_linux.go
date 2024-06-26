@@ -5,6 +5,7 @@ import (
 	"demo/over/contrib/apparmor"
 	"demo/over/contrib/seccomp"
 	"demo/over/snapshots"
+	"demo/pkg/cri/over/opts"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +16,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	customopts "demo/pkg/cri/opts"
 	"demo/pkg/oci"
 )
 
@@ -48,8 +48,8 @@ func (c *CriService) containerSpecOpts(config *runtime.ContainerConfig, imageCon
 	} else if imageConfig.User != "" {
 		userstr, _, _ = strings.Cut(imageConfig.User, ":")
 	}
-	specOpts = append(specOpts, customopts.WithAdditionalGIDs(userstr),
-		customopts.WithSupplementalGroups(securityContext.GetSupplementalGroups()))
+	specOpts = append(specOpts, opts.WithAdditionalGIDs(userstr),
+		opts.WithSupplementalGroups(securityContext.GetSupplementalGroups()))
 
 	asp := securityContext.GetApparmor()
 	if asp == nil {
@@ -89,7 +89,7 @@ func (c *CriService) containerSpecOpts(config *runtime.ContainerConfig, imageCon
 		specOpts = append(specOpts, seccompSpecOpts)
 	}
 	if c.config.EnableCDI {
-		specOpts = append(specOpts, customopts.WithCDI(config.Annotations, config.CDIDevices))
+		specOpts = append(specOpts, opts.WithCDI(config.Annotations, config.CDIDevices))
 	}
 	return specOpts, nil
 }

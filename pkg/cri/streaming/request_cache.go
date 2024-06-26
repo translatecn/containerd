@@ -53,27 +53,6 @@ func newRequestCache() *requestCache {
 	}
 }
 
-// Insert the given request into the cache and returns the token used for fetching it out.
-func (c *requestCache) Insert(req request) (token string, err error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	// Remove expired entries.
-	c.gc()
-	// If the cache is full, reject the request.
-	if c.ll.Len() == maxInFlight {
-		return "", NewErrorTooManyInFlight()
-	}
-	token, err = c.uniqueToken()
-	if err != nil {
-		return "", err
-	}
-	ele := c.ll.PushFront(&cacheEntry{token, req, c.clock.Now().Add(cacheTTL)})
-
-	c.tokens[token] = ele
-	return token, nil
-}
-
 // Consume the token (remove it from the cache) and return the cached request, if found.
 func (c *requestCache) Consume(token string) (req request, found bool) {
 	c.lock.Lock()
@@ -91,6 +70,22 @@ func (c *requestCache) Consume(token string) (req request, found bool) {
 		return nil, false
 	}
 	return entry.req, true
+}
+
+// Must be write-locked prior to calling.
+func (c *requestCache) gc() {
+	now := c.clock.Now()
+	for c.ll.Len() > 0 {
+		oldest := c.ll.Back()
+		entry := oldest.Value.(*cacheEntry)
+		if !now.After(entry.expireTime) {
+			return
+		}
+
+		// Oldest value is expired; remove it.
+		c.ll.Remove(oldest)
+		delete(c.tokens, entry.token)
+	}
 }
 
 // uniqueToken generates a random URL-safe token and ensures uniqueness.
@@ -113,18 +108,23 @@ func (c *requestCache) uniqueToken() (string, error) {
 	return "", fmt.Errorf("failed to generate unique token")
 }
 
-// Must be write-locked prior to calling.
-func (c *requestCache) gc() {
-	now := c.clock.Now()
-	for c.ll.Len() > 0 {
-		oldest := c.ll.Back()
-		entry := oldest.Value.(*cacheEntry)
-		if !now.After(entry.expireTime) {
-			return
-		}
+// Insert the given request into the cache and returns the token used for fetching it out.
+func (c *requestCache) Insert(req request) (token string, err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
-		// Oldest value is expired; remove it.
-		c.ll.Remove(oldest)
-		delete(c.tokens, entry.token)
+	// Remove expired entries.
+	c.gc()
+	// If the cache is full, reject the request.
+	if c.ll.Len() == maxInFlight {
+		return "", NewErrorTooManyInFlight()
 	}
+	token, err = c.uniqueToken()
+	if err != nil {
+		return "", err
+	}
+	ele := c.ll.PushFront(&cacheEntry{token, req, c.clock.Now().Add(cacheTTL)})
+
+	c.tokens[token] = ele
+	return token, nil
 }

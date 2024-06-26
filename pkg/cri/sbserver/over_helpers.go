@@ -592,25 +592,6 @@ func (c *CriService) getContainerStatuses(ctx context.Context, podSandboxID stri
 	return containerStatuses, nil
 }
 
-// hostNetwork handles checking if host networking was requested.
-func hostNetwork(config *runtime.PodSandboxConfig) bool {
-	var hostNet bool
-	switch goruntime.GOOS {
-	case "windows":
-		// Windows HostProcess pods can only run on the host network
-		hostNet = config.GetWindows().GetSecurityContext().GetHostProcess()
-	case "darwin":
-		// No CNI on Darwin yet.
-		hostNet = true
-	default:
-		// Even on other platforms, the logic containerd uses is to check if NamespaceMode == NODE.
-		// So this handles Linux, as well as any other platforms not governed by the cases above
-		// that have special quirks.
-		hostNet = config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
-	}
-	return hostNet
-}
-
 // getCgroupsPath generates container cgroups path.
 func getCgroupsPath(cgroupsParent, id string) string {
 	base := path.Base(cgroupsParent)
@@ -786,4 +767,23 @@ func sameMapping(a, b []runtimespec.LinuxIDMapping) bool {
 		}
 	}
 	return true
+}
+
+// hostNetwork handles checking if host networking was requested.
+func hostNetwork(config *runtime.PodSandboxConfig) bool {
+	var hostNet bool
+	switch goruntime.GOOS {
+	case "windows":
+		// Windows HostProcess pods can only run on the host network
+		hostNet = config.GetWindows().GetSecurityContext().GetHostProcess()
+	case "darwin":
+		// No CNI on Darwin yet.
+		hostNet = true
+	default:
+		// Even on other platforms, the logic containerd uses is to check if NamespaceMode == NODE.
+		// So this handles Linux, as well as any other platforms not governed by the cases above
+		// that have special quirks.
+		hostNet = config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
+	}
+	return hostNet
 }

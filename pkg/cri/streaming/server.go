@@ -243,12 +243,6 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
-func (s *server) buildURL(method, token string) string {
-	return s.config.BaseURL.ResolveReference(&url.URL{
-		Path: path.Join(method, token),
-	}).String()
-}
-
 func (s *server) serveExec(req *restful.Request, resp *restful.Response) {
 	token := req.PathParameter("token")
 	cachedRequest, ok := s.cache.Consume(token)
@@ -366,4 +360,9 @@ func (a *criAdapter) AttachContainer(podName string, podUID types.UID, container
 
 func (a *criAdapter) PortForward(podName string, podUID types.UID, port int32, stream io.ReadWriteCloser) error {
 	return a.Runtime.PortForward(podName, port, stream)
+}
+func (s *server) buildURL(method, token string) string {
+	return s.config.BaseURL.ResolveReference(&url.URL{
+		Path: path.Join(method, token),
+	}).String()
 }

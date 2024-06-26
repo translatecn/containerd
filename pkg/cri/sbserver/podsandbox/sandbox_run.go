@@ -10,6 +10,7 @@ import (
 	"demo/over/sandbox"
 	"demo/over/snapshots"
 	"demo/over/typeurl/v2"
+	customopts "demo/pkg/cri/over/opts"
 	sandboxstore "demo/pkg/cri/over/store/sandbox"
 	ctrdutil "demo/pkg/cri/over/util"
 	"errors"
@@ -21,7 +22,6 @@ import (
 	"demo/containerd"
 	containerdio "demo/over/cio"
 	"demo/over/errdefs"
-	customopts "demo/pkg/cri/opts"
 	"demo/pkg/cri/over/annotations"
 )
 

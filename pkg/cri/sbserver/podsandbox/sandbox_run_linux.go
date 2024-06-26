@@ -3,6 +3,7 @@ package podsandbox
 import (
 	"demo/over/plugin"
 	"demo/over/userns"
+	"demo/pkg/cri/over/opts"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,7 +17,6 @@ import (
 	"github.com/opencontainers/selinux/go-selinux"
 	"golang.org/x/sys/unix"
 
-	customopts "demo/pkg/cri/opts"
 	"demo/pkg/cri/over/annotations"
 )
 
@@ -26,8 +26,8 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 	// TODO(random-liu): [P1] Compare the default settings with docker and containerd default.
 	specOpts := []oci.SpecOpts{
 		oci.WithoutRunMount,
-		customopts.WithoutDefaultSecuritySettings,
-		customopts.WithRelativeRoot(relativeRootfsPath),
+		opts.WithoutDefaultSecuritySettings,
+		opts.WithRelativeRoot(relativeRootfsPath),
 		oci.WithEnv(imageConfig.Env),
 		oci.WithRootFSReadonly(),
 		oci.WithHostname(config.GetHostname()),
@@ -44,7 +44,7 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 
 	// Set cgroups parent.
 	if c.config.DisableCgroup {
-		specOpts = append(specOpts, customopts.WithDisabledCgroups)
+		specOpts = append(specOpts, opts.WithDisabledCgroups)
 	} else {
 		if config.GetLinux().GetCgroupParent() != "" {
 			cgroupsPath := getCgroupsPath(config.GetLinux().GetCgroupParent(), id)
@@ -62,8 +62,8 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 		nsOptions       = securityContext.GetNamespaceOptions()
 	)
 	if nsOptions.GetNetwork() == runtime.NamespaceMode_NODE {
-		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.NetworkNamespace))
-		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.UTSNamespace))
+		specOpts = append(specOpts, opts.WithoutNamespace(runtimespec.NetworkNamespace))
+		specOpts = append(specOpts, opts.WithoutNamespace(runtimespec.UTSNamespace))
 	} else {
 		specOpts = append(specOpts, oci.WithLinuxNamespace(
 			runtimespec.LinuxNamespace{
@@ -72,10 +72,10 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 			}))
 	}
 	if nsOptions.GetPid() == runtime.NamespaceMode_NODE {
-		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.PIDNamespace))
+		specOpts = append(specOpts, opts.WithoutNamespace(runtimespec.PIDNamespace))
 	}
 	if nsOptions.GetIpc() == runtime.NamespaceMode_NODE {
-		specOpts = append(specOpts, customopts.WithoutNamespace(runtimespec.IPCNamespace))
+		specOpts = append(specOpts, opts.WithoutNamespace(runtimespec.IPCNamespace))
 	}
 
 	// It's fine to generate the spec before the sandbox /dev/shm
@@ -117,8 +117,8 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 
 	supplementalGroups := securityContext.GetSupplementalGroups()
 	specOpts = append(specOpts,
-		customopts.WithSelinuxLabels(processLabel, mountLabel),
-		customopts.WithSupplementalGroups(supplementalGroups),
+		opts.WithSelinuxLabels(processLabel, mountLabel),
+		opts.WithSupplementalGroups(supplementalGroups),
 	)
 
 	// Add sysctls
@@ -139,27 +139,27 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 			sysctls["net.ipv4.ping_group_range"] = "0 2147483647"
 		}
 	}
-	specOpts = append(specOpts, customopts.WithSysctls(sysctls))
+	specOpts = append(specOpts, opts.WithSysctls(sysctls))
 
 	// Note: LinuxSandboxSecurityContext does not currently provide an apparmor profile
 
 	if !c.config.DisableCgroup {
-		specOpts = append(specOpts, customopts.WithDefaultSandboxShares)
+		specOpts = append(specOpts, opts.WithDefaultSandboxShares)
 	}
 
 	if res := config.GetLinux().GetResources(); res != nil {
 		specOpts = append(specOpts,
-			customopts.WithAnnotation(annotations.SandboxCPUPeriod, strconv.FormatInt(res.CpuPeriod, 10)),
-			customopts.WithAnnotation(annotations.SandboxCPUQuota, strconv.FormatInt(res.CpuQuota, 10)),
-			customopts.WithAnnotation(annotations.SandboxCPUShares, strconv.FormatInt(res.CpuShares, 10)),
-			customopts.WithAnnotation(annotations.SandboxMem, strconv.FormatInt(res.MemoryLimitInBytes, 10)))
+			opts.WithAnnotation(annotations.SandboxCPUPeriod, strconv.FormatInt(res.CpuPeriod, 10)),
+			opts.WithAnnotation(annotations.SandboxCPUQuota, strconv.FormatInt(res.CpuQuota, 10)),
+			opts.WithAnnotation(annotations.SandboxCPUShares, strconv.FormatInt(res.CpuShares, 10)),
+			opts.WithAnnotation(annotations.SandboxMem, strconv.FormatInt(res.MemoryLimitInBytes, 10)))
 	}
 
-	specOpts = append(specOpts, customopts.WithPodOOMScoreAdj(int(defaultSandboxOOMAdj), c.config.RestrictOOMScoreAdj))
+	specOpts = append(specOpts, opts.WithPodOOMScoreAdj(int(defaultSandboxOOMAdj), c.config.RestrictOOMScoreAdj))
 
 	for pKey, pValue := range getPassthroughAnnotations(config.Annotations,
 		runtimePodAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts.WithAnnotation(pKey, pValue))
 	}
 
 	specOpts = append(specOpts, annotations.DefaultCRIAnnotations(id, "", "", config, true)...)

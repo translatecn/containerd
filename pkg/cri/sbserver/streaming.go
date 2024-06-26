@@ -7,16 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
-	"net"
-	"os"
-	"time"
-
 	k8snet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/remotecommand"
 	k8scert "k8s.io/client-go/util/cert"
 	"k8s.io/utils/exec"
+	"math"
+	"net"
+	"os"
+	"time"
 
 	"demo/pkg/cri/streaming"
 )
@@ -49,55 +48,6 @@ func getStreamListenerMode(c *CriService) (streamListenerMode, error) {
 		return -1, errors.New("X509KeyPairStreaming.TLSKeyFile is set but EnableTLSStreaming is not set")
 	}
 	return withoutTLS, nil
-}
-
-func newStreamServer(c *CriService, addr, port, streamIdleTimeout string) (streaming.Server, error) {
-	if addr == "" {
-		a, err := k8snet.ResolveBindAddress(nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get stream server address: %w", err)
-		}
-		addr = a.String()
-	}
-	config := streaming.DefaultConfig
-	if streamIdleTimeout != "" {
-		var err error
-		config.StreamIdleTimeout, err = time.ParseDuration(streamIdleTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("invalid stream idle timeout: %w", err)
-		}
-	}
-	config.Addr = net.JoinHostPort(addr, port)
-	run := newStreamRuntime(c)
-	tlsMode, err := getStreamListenerMode(c)
-	if err != nil {
-		return nil, fmt.Errorf("invalid stream server configuration: %w", err)
-	}
-	switch tlsMode {
-	case x509KeyPairTLS:
-		tlsCert, err := tls.LoadX509KeyPair(c.config.X509KeyPairStreaming.TLSCertFile, c.config.X509KeyPairStreaming.TLSKeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load x509 key pair for stream server: %w", err)
-		}
-		config.TLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{tlsCert},
-		}
-		return streaming.NewServer(config, run)
-	case selfSignTLS:
-		tlsCert, err := newTLSCert()
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate tls certificate for stream server: %w", err)
-		}
-		config.TLSConfig = &tls.Config{
-			Certificates:       []tls.Certificate{tlsCert},
-			InsecureSkipVerify: true,
-		}
-		return streaming.NewServer(config, run)
-	case withoutTLS:
-		return streaming.NewServer(config, run)
-	default:
-		return nil, errors.New("invalid configuration for the stream listener")
-	}
 }
 
 type streamRuntime struct {
@@ -221,4 +171,53 @@ func newTLSCert() (tls.Certificate, error) {
 	}
 
 	return tlsCert, nil
+}
+
+func newStreamServer(c *CriService, addr, port, streamIdleTimeout string) (streaming.Server, error) {
+	if addr == "" {
+		a, err := k8snet.ResolveBindAddress(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get stream server address: %w", err)
+		}
+		addr = a.String()
+	}
+	config := streaming.DefaultConfig
+	if streamIdleTimeout != "" {
+		var err error
+		config.StreamIdleTimeout, err = time.ParseDuration(streamIdleTimeout)
+		if err != nil {
+			return nil, fmt.Errorf("invalid stream idle timeout: %w", err)
+		}
+	}
+	config.Addr = net.JoinHostPort(addr, port)
+	run := newStreamRuntime(c)
+	tlsMode, err := getStreamListenerMode(c)
+	if err != nil {
+		return nil, fmt.Errorf("invalid stream server configuration: %w", err)
+	}
+	switch tlsMode {
+	case x509KeyPairTLS:
+		tlsCert, err := tls.LoadX509KeyPair(c.config.X509KeyPairStreaming.TLSCertFile, c.config.X509KeyPairStreaming.TLSKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load x509 key pair for stream server: %w", err)
+		}
+		config.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{tlsCert},
+		}
+		return streaming.NewServer(config, run)
+	case selfSignTLS:
+		tlsCert, err := newTLSCert()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate tls certificate for stream server: %w", err)
+		}
+		config.TLSConfig = &tls.Config{
+			Certificates:       []tls.Certificate{tlsCert},
+			InsecureSkipVerify: true,
+		}
+		return streaming.NewServer(config, run)
+	case withoutTLS:
+		return streaming.NewServer(config, run)
+	default:
+		return nil, errors.New("invalid configuration for the stream listener")
+	}
 }

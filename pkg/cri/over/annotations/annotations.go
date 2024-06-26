@@ -2,7 +2,7 @@ package annotations
 
 import (
 	runtime "demo/over/api/cri/v1"
-	customopts "demo/pkg/cri/opts"
+	customopts "demo/pkg/cri/over/opts"
 	"demo/pkg/oci"
 )
 

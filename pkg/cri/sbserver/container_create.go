@@ -8,6 +8,7 @@ import (
 	"demo/over/log"
 	"demo/over/typeurl/v2"
 	cio "demo/pkg/cri/over/io"
+	opts2 "demo/pkg/cri/over/opts"
 	container2 "demo/pkg/cri/over/store/container"
 	util2 "demo/pkg/cri/over/util"
 	"errors"
@@ -25,7 +26,6 @@ import (
 	"demo/over/blockio"
 	"demo/over/containers"
 	"demo/over/platforms"
-	customopts "demo/pkg/cri/opts"
 	"demo/pkg/cri/over/annotations"
 	"demo/pkg/oci"
 )
@@ -314,12 +314,12 @@ func (c *CriService) buildLinuxSpec(
 	// base runtime spec spec.  Admins can use this functionality to define
 	// default ulimits, seccomp, or other default settings.
 	if ociRuntime.BaseRuntimeSpec == "" {
-		specOpts = append(specOpts, customopts.WithoutDefaultSecuritySettings)
+		specOpts = append(specOpts, opts2.WithoutDefaultSecuritySettings)
 	}
 
 	specOpts = append(specOpts,
-		customopts.WithRelativeRoot(relativeRootfsPath),
-		customopts.WithProcessArgs(config, imageConfig),
+		opts2.WithRelativeRoot(relativeRootfsPath),
+		opts2.WithProcessArgs(config, imageConfig),
 		oci.WithDefaultPathEnv,
 		// this will be set based on the security context below
 		oci.WithNewPrivileges,
@@ -380,7 +380,7 @@ func (c *CriService) buildLinuxSpec(
 		}
 	}()
 
-	specOpts = append(specOpts, customopts.WithMounts(c.os, config, extraMounts, mountLabel))
+	specOpts = append(specOpts, opts2.WithMounts(c.os, config, extraMounts, mountLabel))
 
 	if !c.config.DisableProcMount {
 		// Change the default masked/readonly paths to empty slices
@@ -401,8 +401,8 @@ func (c *CriService) buildLinuxSpec(
 		}
 	}
 
-	specOpts = append(specOpts, customopts.WithDevices(c.os, config, c.config.DeviceOwnershipFromSecurityContext),
-		customopts.WithCapabilities(securityContext, c.allCaps))
+	specOpts = append(specOpts, opts2.WithDevices(c.os, config, c.config.DeviceOwnershipFromSecurityContext),
+		opts2.WithCapabilities(securityContext, c.allCaps))
 
 	if securityContext.GetPrivileged() {
 		if !sandboxConfig.GetLinux().GetSecurityContext().GetPrivileged() {
@@ -422,8 +422,8 @@ func (c *CriService) buildLinuxSpec(
 	// See https://github.com/kubernetes/kubernetes/issues/56374
 	// Keep docker's behavior for now.
 	specOpts = append(specOpts,
-		customopts.WithoutAmbientCaps,
-		customopts.WithSelinuxLabels(processLabel, mountLabel),
+		opts2.WithoutAmbientCaps,
+		opts2.WithSelinuxLabels(processLabel, mountLabel),
 	)
 
 	// TODO: Figure out whether we should set no new privilege for sandbox container by default
@@ -436,9 +436,9 @@ func (c *CriService) buildLinuxSpec(
 	}
 
 	if c.config.DisableCgroup {
-		specOpts = append(specOpts, customopts.WithDisabledCgroups)
+		specOpts = append(specOpts, opts2.WithDisabledCgroups)
 	} else {
-		specOpts = append(specOpts, customopts.WithResources(config.GetLinux().GetResources(), c.config.TolerateMissingHugetlbController, c.config.DisableHugetlbController))
+		specOpts = append(specOpts, opts2.WithResources(config.GetLinux().GetResources(), c.config.TolerateMissingHugetlbController, c.config.DisableHugetlbController))
 		if sandboxConfig.GetLinux().GetCgroupParent() != "" {
 			cgroupsPath := getCgroupsPath(sandboxConfig.GetLinux().GetCgroupParent(), id)
 			specOpts = append(specOpts, oci.WithCgroup(cgroupsPath))
@@ -471,12 +471,12 @@ func (c *CriService) buildLinuxSpec(
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
 		ociRuntime.PodAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
 	for pKey, pValue := range getPassthroughAnnotations(config.Annotations,
 		ociRuntime.ContainerAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
 	// Default target PID namespace is the sandbox PID.
@@ -506,9 +506,9 @@ func (c *CriService) buildLinuxSpec(
 	}
 
 	specOpts = append(specOpts,
-		customopts.WithOOMScoreAdj(config, c.config.RestrictOOMScoreAdj),
-		customopts.WithPodNamespaces(securityContext, sandboxPid, targetPid, uids, gids),
-		customopts.WithSupplementalGroups(supplementalGroups),
+		opts2.WithOOMScoreAdj(config, c.config.RestrictOOMScoreAdj),
+		opts2.WithPodNamespaces(securityContext, sandboxPid, targetPid, uids, gids),
+		opts2.WithSupplementalGroups(supplementalGroups),
 	)
 	specOpts = append(
 		specOpts,
@@ -540,7 +540,7 @@ func (c *CriService) buildWindowsSpec(
 	ociRuntime criconfig.Runtime,
 ) (_ []oci.SpecOpts, retErr error) {
 	var specOpts []oci.SpecOpts
-	specOpts = append(specOpts, customopts.WithProcessCommandLineOrArgsForWindows(config, imageConfig))
+	specOpts = append(specOpts, opts2.WithProcessCommandLineOrArgsForWindows(config, imageConfig))
 
 	// All containers in a pod need to have HostProcess set if it was set on the pod,
 	// and vice versa no containers in the pod can be HostProcess if the pods spec
@@ -574,19 +574,19 @@ func (c *CriService) buildWindowsSpec(
 	specOpts = append(specOpts,
 		// Clear the root location since hcsshim expects it.
 		// NOTE: readonly rootfs doesn't work on windows.
-		customopts.WithoutRoot,
+		opts2.WithoutRoot,
 		oci.WithWindowsNetworkNamespace(netNSPath),
 		oci.WithHostname(sandboxConfig.GetHostname()),
 	)
 
-	specOpts = append(specOpts, customopts.WithWindowsMounts(c.os, config, extraMounts), customopts.WithWindowsDevices(config))
+	specOpts = append(specOpts, opts2.WithWindowsMounts(c.os, config, extraMounts), opts2.WithWindowsDevices(config))
 
 	// Start with the image config user and override below if RunAsUsername is not "".
 	username := imageConfig.User
 
 	windowsConfig := config.GetWindows()
 	if windowsConfig != nil {
-		specOpts = append(specOpts, customopts.WithWindowsResources(windowsConfig.GetResources()))
+		specOpts = append(specOpts, opts2.WithWindowsResources(windowsConfig.GetResources()))
 		securityCtx := windowsConfig.GetSecurityContext()
 		if securityCtx != nil {
 			runAsUser := securityCtx.GetRunAsUsername()
@@ -595,7 +595,7 @@ func (c *CriService) buildWindowsSpec(
 			}
 			cs := securityCtx.GetCredentialSpec()
 			if cs != "" {
-				specOpts = append(specOpts, customopts.WithWindowsCredentialSpec(cs))
+				specOpts = append(specOpts, opts2.WithWindowsCredentialSpec(cs))
 			}
 		}
 	}
@@ -608,15 +608,15 @@ func (c *CriService) buildWindowsSpec(
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
 		ociRuntime.PodAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
 	for pKey, pValue := range getPassthroughAnnotations(config.Annotations,
 		ociRuntime.ContainerAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
-	specOpts = append(specOpts, customopts.WithAnnotation(annotations.WindowsHostProcess, strconv.FormatBool(sandboxHpc)))
+	specOpts = append(specOpts, opts2.WithAnnotation(annotations.WindowsHostProcess, strconv.FormatBool(sandboxHpc)))
 	specOpts = append(specOpts,
 		annotations.DefaultCRIAnnotations(sandboxID, containerName, imageName, sandboxConfig, false)...,
 	)
@@ -636,7 +636,7 @@ func (c *CriService) buildDarwinSpec(
 	ociRuntime criconfig.Runtime,
 ) (_ []oci.SpecOpts, retErr error) {
 	specOpts := []oci.SpecOpts{
-		customopts.WithProcessArgs(config, imageConfig),
+		opts2.WithProcessArgs(config, imageConfig),
 	}
 
 	if config.GetWorkingDir() != "" {
@@ -659,12 +659,12 @@ func (c *CriService) buildDarwinSpec(
 
 	for pKey, pValue := range getPassthroughAnnotations(sandboxConfig.Annotations,
 		ociRuntime.PodAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
 	for pKey, pValue := range getPassthroughAnnotations(config.Annotations,
 		ociRuntime.ContainerAnnotations) {
-		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
+		specOpts = append(specOpts, opts2.WithAnnotation(pKey, pValue))
 	}
 
 	specOpts = append(specOpts,
@@ -891,14 +891,14 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		// the runtime (runc) a chance to modify (e.g. to create mount
 		// points corresponding to spec.Mounts) before making the
 		// rootfs readonly (requested by spec.Root.Readonly).
-		customopts.WithNewSnapshot(id, containerdImage, sOpts...),
+		opts2.WithNewSnapshot(id, containerdImage, sOpts...),
 	}
 	if len(volumeMounts) > 0 {
 		mountMap := make(map[string]string)
 		for _, v := range volumeMounts {
 			mountMap[filepath.Clean(v.HostPath)] = v.ContainerPath
 		}
-		opts = append(opts, customopts.WithVolumes(mountMap))
+		opts = append(opts, opts2.WithVolumes(mountMap))
 	}
 	meta.ImageRef = image.ID
 	meta.StopSignal = image.ImageSpec.Config.StopSignal

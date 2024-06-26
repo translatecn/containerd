@@ -9,7 +9,6 @@ import (
 	runtime "demo/over/api/cri/v1"
 )
 
-// PortForward prepares a streaming endpoint to forward ports from a PodSandbox, and returns the address.
 func (c *CriService) PortForward(ctx context.Context, r *runtime.PortForwardRequest) (retRes *runtime.PortForwardResponse, retErr error) {
 	sandbox, err := c.sandboxStore.Get(r.GetPodSandboxId())
 	if err != nil {

@@ -23,12 +23,21 @@ func AppendRunLog(flag string, info interface{}) {
 	switch v := info.(type) {
 	case string:
 		t := map[interface{}]interface{}{}
-		json.Unmarshal([]byte(v), &t)
-		marshal, _ = json.MarshalIndent(t, "  ", "  ")
+		err := json.Unmarshal([]byte(v), &t)
+		if err != nil {
+			marshal = []byte(v)
+		} else {
+			marshal, _ = json.MarshalIndent(t, "  ", "  ")
+		}
 	default:
 		marshal, _ = json.MarshalIndent(info, "  ", "  ")
 	}
-	content := flag + "\n" + string(marshal) + "\n"
+	content := ``
+	if len(marshal) != 0 {
+		content = flag + "\n" + string(marshal) + "\n"
+	} else {
+		content = flag + "\n"
+	}
 	_, err = file.WriteString(content)
 	if err != nil {
 		fmt.Println(err)

@@ -511,7 +511,7 @@ func writeTar(ctx context.Context, tw *tar.Writer, recordsWithEmpty []tarRecord)
 		return records[i].Header.Name < records[j].Header.Name
 	})
 	for _, record := range records {
-		write.AppendRunLog("mount", fmt.Sprintf("export: name:%s size:%d mode:%v\n", record.Header.Name,
+		write.AppendRunLog("", "mount"+fmt.Sprintf("export: name:%s size:%d mode:%v\n", record.Header.Name,
 			record.Header.Size, record.Header.Mode))
 	}
 	var last string

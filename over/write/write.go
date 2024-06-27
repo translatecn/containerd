@@ -12,15 +12,22 @@ func WriteFile(filename string, data interface{}) error {
 }
 
 func AppendRunLog(flag string, info interface{}) {
+
 	// 打开文件，如果文件不存在则创建
 	file, err := os.OpenFile("/tmp/run.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
-
-	// 写入内容
-	marshal, _ := json.MarshalIndent(info, "  ", "  ")
+	var marshal []byte
+	switch v := info.(type) {
+	case string:
+		t := map[interface{}]interface{}{}
+		json.Unmarshal([]byte(v), &t)
+		marshal, _ = json.MarshalIndent(t, "  ", "  ")
+	default:
+		marshal, _ = json.MarshalIndent(info, "  ", "  ")
+	}
 	content := flag + "\n" + string(marshal) + "\n"
 	_, err = file.WriteString(content)
 	if err != nil {

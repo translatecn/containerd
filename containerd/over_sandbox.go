@@ -3,10 +3,10 @@ package containerd
 import (
 	"context"
 	"demo/over/containers"
+	"demo/over/oci"
 	"demo/over/protobuf/types"
 	api "demo/over/sandbox"
 	"demo/over/typeurl/v2"
-	"demo/pkg/oci"
 	"errors"
 	"fmt"
 	"time"
@@ -112,7 +112,7 @@ func (s *sandboxClient) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// LoadSandbox laods existing sandbox metadata object using the id
+// LoadSandbox laods existing sandbox metadata object using the randomId
 func (c *Client) LoadSandbox(ctx context.Context, id string) (Sandbox, error) {
 	sandbox, err := c.SandboxStore().Get(ctx, id)
 	if err != nil {

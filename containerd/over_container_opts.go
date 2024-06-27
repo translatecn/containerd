@@ -15,7 +15,7 @@ import (
 	"demo/over/content"
 	"demo/over/errdefs"
 	"demo/over/images"
-	"demo/pkg/oci"
+	"demo/over/oci"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

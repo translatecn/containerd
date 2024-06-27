@@ -69,7 +69,7 @@ func resolveSnapshotOptions(ctx context.Context, client *Client, snapshotterName
 		return "", fmt.Errorf("Container UID/GID of 0 only supported currently (%d/%d)", ctrUID, ctrGID)
 	}
 
-	// TODO(dgl): length isn't taken into account for the intermediate snapshot id.
+	// TODO(dgl): length isn't taken into account for the intermediate snapshot randomId.
 	usernsID := fmt.Sprintf("%s-%d-%d", parent, hostUID, hostGID)
 	if _, err := snapshotter.Stat(ctx, usernsID); err == nil {
 		return usernsID, nil

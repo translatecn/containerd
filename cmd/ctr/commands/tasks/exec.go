@@ -10,7 +10,7 @@ import (
 	"demo/cmd/ctr/commands"
 	"demo/over/cio"
 	"demo/over/console"
-	"demo/pkg/oci"
+	"demo/over/oci"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

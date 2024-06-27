@@ -4,7 +4,7 @@ import (
 	"context"
 	internalapi "demo/over/api/cri"
 	pb "demo/over/api/cri/v1"
-	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	"demo/over/cri/remote"
 	"errors"
 	"fmt"
 	"github.com/docker/go-units"

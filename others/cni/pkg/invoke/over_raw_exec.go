@@ -18,11 +18,10 @@ import (
 	"bytes"
 	"context"
 	"demo/over/drop"
+	"demo/over/write"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -37,15 +36,16 @@ type RawExec struct {
 func (e *RawExec) ExecPlugin(ctx context.Context, pluginPath string, stdinData []byte, environ []string) ([]byte, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	color.New(color.FgRed).SetWriter(os.Stderr).Println("---------------- ExecPlugin Args ----------------")
-	color.New(color.FgRed).SetWriter(os.Stderr).Println("bin: ", pluginPath)
-	color.New(color.FgRed).SetWriter(os.Stderr).Println("env: ", drop.DropEnv(environ))
-	color.New(color.FgRed).SetWriter(os.Stderr).Println("input: ", string(stdinData))
+	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
+	write.AppendRunLog("", "---------------- ExecPlugin Args ----------------")
+	write.AppendRunLog("bin: ", pluginPath)
+	write.AppendRunLog("env: ", drop.DropEnv(environ))
+	write.AppendRunLog("input: ", string(stdinData))
 	defer func() {
-		color.New(color.FgRed).SetWriter(os.Stderr).Println("---------------- ExecPlugin Result ----------------")
-		color.New(color.FgRed).SetWriter(os.Stderr).Println("stdout: ", stdout.String())
-		color.New(color.FgRed).SetWriter(os.Stderr).Println("stderr: ", stderr.String())
-
+		write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
+		write.AppendRunLog("", "---------------- ExecPlugin Result ----------------")
+		write.AppendRunLog("stdout: ", stdout.String())
+		write.AppendRunLog("stderr: ", stderr.String())
 	}()
 	c := exec.CommandContext(ctx, pluginPath)
 	c.Env = environ

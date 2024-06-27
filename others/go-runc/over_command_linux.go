@@ -3,7 +3,7 @@ package runc
 import (
 	"context"
 	"demo/over/drop"
-	"demo/over/log"
+	"demo/over/write"
 	"os"
 	"os/exec"
 	"strings"
@@ -23,11 +23,13 @@ func (r *Runc) command(context context.Context, args ...string) *exec.Cmd {
 	if r.PdeathSignal != 0 {
 		cmd.SysProcAttr.Pdeathsig = r.PdeathSignal
 	}
-	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc  ENV: ", drop.DropEnv(cmd.Env))
-	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc  Args: ", cmd.Args)
-	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc  Path: ", cmd.Path)
-	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc  Process: ", cmd.Process)
-	log.G(context).WithFields(log.Fields{"type": "runc"}).Errorln("========> runc  Dir: ", cmd.Dir)
+
+	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
+	write.AppendRunLog("========> runc  ENV: ", drop.DropEnv(cmd.Env))
+	write.AppendRunLog("========> runc  Args: ", cmd.Args)
+	write.AppendRunLog("========> runc  Path: ", cmd.Path)
+	write.AppendRunLog("========> runc  Process: ", cmd.Process)
+	write.AppendRunLog("========> runc  Dir: ", cmd.Dir)
 
 	return cmd
 }

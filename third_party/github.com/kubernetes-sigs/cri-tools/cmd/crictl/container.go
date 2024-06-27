@@ -25,7 +25,7 @@ import (
 	"sort"
 	"time"
 
-	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/types"
+	"demo/third_party/over/k8s.io/kubernetes/pkg/kubelet/types"
 
 	internalapi "demo/over/api/cri"
 	pb "demo/over/api/cri/v1"

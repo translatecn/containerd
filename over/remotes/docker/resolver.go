@@ -7,14 +7,13 @@ import (
 	"demo/over/log"
 	"demo/over/reference"
 	"demo/over/version"
+	"demo/over/write"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 
@@ -529,9 +528,7 @@ type request struct {
 
 func (r *request) do(ctx context.Context) (*http.Response, error) {
 	u := r.host.Scheme + "://" + r.host.Host + r.path
-	if os.Getenv("DEBUG") != "" {
-		color.New(color.FgRed).SetWriter(os.Stderr).Println(r.method, u)
-	}
+	write.AppendRunLog(r.method, u)
 
 	req, err := http.NewRequestWithContext(ctx, r.method, u, nil)
 	if err != nil {

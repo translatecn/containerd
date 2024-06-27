@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"demo/over/containers"
-	"demo/pkg/oci"
+	"demo/over/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 

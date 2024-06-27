@@ -10,7 +10,7 @@ container_id=$(./bin/crictl create $sanbox_id ./examples/container-config.yaml .
 ./bin/crictl start $container_id
 ./bin/crictl ps
 
-./bin/crictl exec -i -t $container_id ls
+./bin/crictl exec -i -t $container_id sh
 
 
 # https://zhuanlan.zhihu.com/p/431406216

@@ -51,7 +51,7 @@ func WithDefaultPlatform(platform platforms.MatchComparer) ClientOpt {
 		return nil
 	}
 }
- 
+
 // WithTimeout sets the connection timeout for the client
 func WithTimeout(d time.Duration) ClientOpt {
 	return func(c *clientOpts) error {

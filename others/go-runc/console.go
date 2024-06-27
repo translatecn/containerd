@@ -26,7 +26,7 @@ func NewTempConsoleSocket() (*Socket, error) {
 	if err != nil {
 		return nil, err
 	}
-	addr, err := net.ResolveUnixAddr("unix", abs)
+	addr, err := net.ResolveUnixAddr("unix", abs) // /run/user/0/pty1655915518/pty.sock
 	if err != nil {
 		return nil, err
 	}

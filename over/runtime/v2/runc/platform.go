@@ -5,6 +5,7 @@ import (
 	"demo/over/fifo"
 	"demo/over/namespaces"
 	"demo/over/stdio"
+	"demo/pkg/process"
 	"errors"
 	"fmt"
 	"io"
@@ -14,7 +15,6 @@ import (
 	"syscall"
 
 	"demo/over/console"
-	"demo/over/process"
 )
 
 var bufPool = sync.Pool{

@@ -5,11 +5,10 @@ import (
 	"context"
 	"demo/over/labels"
 	"demo/over/log"
+	"demo/over/write"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
-	"os"
 	"path"
 	"sort"
 	"strings"
@@ -512,11 +511,8 @@ func writeTar(ctx context.Context, tw *tar.Writer, recordsWithEmpty []tarRecord)
 		return records[i].Header.Name < records[j].Header.Name
 	})
 	for _, record := range records {
-		if os.Getenv("DEBUG") != "" {
-			color.New(color.FgGreen).SetWriter(os.Stderr).Printf("export: name:%s size:%d mode:%v\n", record.Header.Name,
-				record.Header.Size, record.Header.Mode,
-			)
-		}
+		write.AppendRunLog("mount", fmt.Sprintf("export: name:%s size:%d mode:%v\n", record.Header.Name,
+			record.Header.Size, record.Header.Mode))
 	}
 	var last string
 	for _, record := range records {

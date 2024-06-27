@@ -17,11 +17,11 @@ import (
 	ssproxy "demo/over/snapshots/proxy"
 	"demo/over/sys"
 	"demo/over/timeout"
+	"demo/over/write"
 	"encoding/json"
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
 	"net"
 	"net/http"
@@ -275,7 +275,7 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	of := reflect.TypeOf(info.Server)
 	path := fmt.Sprintf(`new(%s).`, of.Elem()) + strings.Split(info.FullMethod, "/")[2]
-	color.New(color.FgRed).SetWriter(os.Stderr).Println(info.FullMethod)
+	write.AppendRunLog("", info.FullMethod)
 	resp, err := handler(ctx, req)
 	logGRPCJson(info.FullMethod, req, resp, err, path)
 	return resp, err
@@ -308,10 +308,8 @@ func logGRPCJson(method string, request, reply interface{}, err error, path stri
 	if err != nil {
 		logMessage.Error = err.Error()
 	}
-	if os.Getenv("DEBUG") != "" {
-		color.New(color.FgGreen).SetWriter(os.Stderr).Println(string(msg))
-		color.New(color.FgGreen).SetWriter(os.Stderr).Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅")
-	}
+
+	write.AppendRunLog("", string(msg))
 }
 
 // recordConfigDeprecations attempts to record use of any deprecated config field.  Failures are logged and ignored.

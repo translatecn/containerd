@@ -7,8 +7,8 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/over/containers"
+	"demo/over/oci"
 	"demo/over/platforms"
-	"demo/pkg/oci"
 )
 
 // Command is the parent for all OCI related tools under 'oci'

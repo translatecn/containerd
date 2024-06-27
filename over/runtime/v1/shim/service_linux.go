@@ -21,6 +21,7 @@ import (
 	"demo/over/console"
 	"demo/over/fifo"
 	"demo/over/namespaces"
+	"demo/pkg/process"
 	"errors"
 	"fmt"
 	"io"
@@ -28,8 +29,6 @@ import (
 	"os"
 	"sync"
 	"syscall"
-
-	"demo/over/process"
 )
 
 type linuxPlatform struct {

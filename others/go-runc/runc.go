@@ -114,7 +114,7 @@ func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts
 	if opts.Started != nil {
 		defer close(opts.Started)
 	}
-	f, err := ioutil.TempFile(os.Getenv("XDG_RUNTIME_DIR"), "runc-process")
+	f, err := ioutil.TempFile(os.Getenv("XDG_RUNTIME_DIR"), "runc-process") // /run/user/0/runc-process231728371283
 	if err != nil {
 		return err
 	}

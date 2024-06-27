@@ -7,14 +7,16 @@ import (
 	"demo/others/cgroups/v3/cgroup1"
 	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	runcC "demo/others/go-runc"
+	"demo/over/drop"
 	"demo/over/log"
 	"demo/over/mount"
 	"demo/over/namespaces"
+	"demo/over/oci"
 	"demo/over/plugins/shim/shim"
-	"demo/over/process"
 	"demo/over/runtime/v2/runc"
 	"demo/over/schedcore"
-	"demo/pkg/oci"
+	"demo/over/write"
+	process2 "demo/pkg/process"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/sys/unix"
@@ -89,12 +91,12 @@ func (manager) Stop(ctx context.Context, id string) (shim.StopStatus, error) {
 	if err != nil {
 		return shim.StopStatus{}, err
 	}
-	root := process.RuncRoot
+	root := process2.RuncRoot
 	if opts != nil && opts.Root != "" {
 		root = opts.Root
 	}
 
-	r := process.NewRunc(root, path, ns, runtime, false)
+	r := process2.NewRunc(root, path, ns, runtime, false)
 	if err := r.Delete(ctx, id, &runcC.DeleteOpts{
 		Force: true,
 	}); err != nil {
@@ -103,7 +105,7 @@ func (manager) Stop(ctx context.Context, id string) (shim.StopStatus, error) {
 	if err := mount.UnmountRecursive(filepath.Join(path, "rootfs"), 0); err != nil {
 		log.G(ctx).WithError(err).Warn("failed to cleanup rootfs mount")
 	}
-	pid, err := runcC.ReadPidFile(filepath.Join(path, process.InitPidFile))
+	pid, err := runcC.ReadPidFile(filepath.Join(path, process2.InitPidFile))
 	if err != nil {
 		log.G(ctx).WithError(err).Warn("failed to read init pid file")
 	}
@@ -135,21 +137,23 @@ func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddre
 	if debug {
 		args = append(args, "-debug")
 	}
-	//x := []string{"--listen=:32345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
+	// 第二次
+	x := []string{"--listen=:32345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", self, "--"}
 	//  /Users/acejilam/Desktop/containerd/containerd-shim-runc-v2 -namespace k8s.io
 	//  -address /run/containerd/containerd.sock -id f56fc531a7713ebd6a0ecea8024a55e895094f7138cc2344b0fc341ddb43b6cf
-	//cmd := exec.Command("dlv", append(x, args...)...)
-	cmd := exec.Command(self, args...)
+	cmd := exec.Command("dlv", append(x, args...)...)
+	//cmd := exec.Command(self, args...)
 	cmd.Dir = cwd
 	cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true, // 将一个进程从原来所属的进程组迁移到pgid对应的进程组
 	}
-	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->ENV: ", drop.DropEnv(cmd.Env))
-	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Args: ", cmd.Args)
-	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Path: ", cmd.Path)
-	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Process: ", cmd.Process)
-	//color.New(color.FgRed).SetWriter(os.Stdout).Println("shim: ---------->Dir: ", cmd.Dir)
+	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
+	write.AppendRunLog("shim: ---------->ENV: ", drop.DropEnv(cmd.Env))
+	write.AppendRunLog("shim: ---------->Args: ", cmd.Args)
+	write.AppendRunLog("shim: ---------->Path: ", cmd.Path)
+	write.AppendRunLog("shim: ---------->Process: ", cmd.Process)
+	write.AppendRunLog("shim: ---------->Dir: ", cmd.Dir)
 
 	return cmd, nil
 }

@@ -7,6 +7,10 @@
 
 
 
+- https://blog.csdn.net/shida_csdn/article/details/137683216
+- https://baike.baidu.com/item/mknod/3561210?fr=ge_ala
+
+
 - https://github.com/containerd/nerdctl
 - https://github.com/kubernetes-sigs/cri-tools
 - https://github.com/opencontainers/runc

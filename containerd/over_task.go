@@ -27,7 +27,7 @@ import (
 	"demo/over/errdefs"
 	"demo/over/images"
 	"demo/over/mount"
-	"demo/pkg/oci"
+	"demo/over/oci"
 	digest "github.com/opencontainers/go-digest"
 	is "github.com/opencontainers/image-spec/specs-go"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -145,7 +145,6 @@ type Task interface {
 	Pause(context.Context) error
 	// Resume the execution of the task
 	Resume(context.Context) error
-	// Exec creates a new process inside the task
 	Exec(context.Context, string, *specs.Process, cio.Creator) (Process, error)
 	// Pids returns a list of system specific process ids inside the task
 	Pids(context.Context) ([]ProcessInfo, error)
@@ -191,7 +190,7 @@ func (t *task) ID() string {
 	return t.id
 }
 
-// Pid returns the pid or process id for the task
+// Pid returns the pid or process randomId for the task
 func (t *task) Pid() uint32 {
 	return t.pid
 }
@@ -299,11 +298,11 @@ func (t *task) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitStat
 	return &ExitStatus{code: r.ExitStatus, exitedAt: protobuf.FromTimestamp(r.ExitedAt)}, nil
 }
 
-func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreate cio.Creator) (_ Process, err error) {
-	if id == "" {
-		return nil, fmt.Errorf("exec id must not be empty: %w", errdefs.ErrInvalidArgument)
+func (t *task) Exec(ctx context.Context, randomId string, spec *specs.Process, ioCreate cio.Creator) (_ Process, err error) {
+	if randomId == "" {
+		return nil, fmt.Errorf("exec randomId must not be empty: %w", errdefs.ErrInvalidArgument)
 	}
-	i, err := ioCreate(id)
+	i, err := ioCreate(randomId)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +319,7 @@ func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreat
 	cfg := i.Config()
 	request := &tasks.ExecProcessRequest{
 		ContainerID: t.id,
-		ExecID:      id,
+		ExecID:      randomId,
 		Terminal:    cfg.Terminal,
 		Stdin:       cfg.Stdin,
 		Stdout:      cfg.Stdout,
@@ -334,9 +333,9 @@ func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreat
 		return nil, errdefs.FromGRPC(err)
 	}
 	return &process{
-		id:   id,
-		task: t,
-		io:   i,
+		randomId: randomId,
+		task:     t,
+		io:       i,
 	}, nil
 }
 
@@ -533,9 +532,9 @@ func (t *task) LoadProcess(ctx context.Context, id string, ioAttach cio.Attach) 
 		}
 	}
 	return &process{
-		id:   id,
-		task: t,
-		io:   i,
+		randomId: id,
+		task:     t,
+		io:       i,
 	}, nil
 }
 

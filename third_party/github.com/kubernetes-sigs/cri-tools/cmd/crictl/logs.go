@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"demo/third_party/k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
+	"demo/third_party/over/k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
 	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"

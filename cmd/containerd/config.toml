@@ -31,6 +31,8 @@ grpc_histogram = false
 #      service_name = "containerd"
 
     [plugins."io.containerd.grpc.v1.cri"]
+        enable_cdi = true
+        cdi_spec_dirs = ["/etc/cdi", "/var/run/cdi"]
         sandbox_image = "registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.7"
         max_container_log_line_size = -1
         max_concurrent_downloads = 20

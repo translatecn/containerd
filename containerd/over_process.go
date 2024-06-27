@@ -17,7 +17,7 @@ import (
 type Process interface {
 	// ID of the process
 	ID() string
-	// Pid is the system specific process id
+	// Pid is the system specific process randomId
 	Pid() uint32
 	// Start starts the process executing the user's defined binary
 	Start(context.Context) error
@@ -83,14 +83,14 @@ func (s ExitStatus) Error() error {
 }
 
 type process struct {
-	id   string
-	task *task
-	pid  uint32
-	io   cio.IO
+	randomId string
+	task     *task
+	pid      uint32
+	io       cio.IO
 }
 
 func (p *process) ID() string {
-	return p.id
+	return p.randomId
 }
 
 // Pid returns the pid of the process
@@ -103,7 +103,7 @@ func (p *process) Pid() uint32 {
 func (p *process) Start(ctx context.Context) error {
 	r, err := p.task.client.TaskService().Start(ctx, &tasks.StartRequest{
 		ContainerID: p.task.id,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 	})
 	if err != nil {
 		if p.io != nil {
@@ -127,7 +127,7 @@ func (p *process) Kill(ctx context.Context, s syscall.Signal, opts ...KillOpts) 
 	_, err := p.task.client.TaskService().Kill(ctx, &tasks.KillRequest{
 		Signal:      uint32(s),
 		ContainerID: p.task.id,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 		All:         i.All,
 	})
 	return errdefs.FromGRPC(err)
@@ -139,7 +139,7 @@ func (p *process) Wait(ctx context.Context) (<-chan ExitStatus, error) {
 		defer close(c)
 		r, err := p.task.client.TaskService().Wait(ctx, &tasks.WaitRequest{
 			ContainerID: p.task.id,
-			ExecID:      p.id,
+			ExecID:      p.randomId,
 		})
 		if err != nil {
 			c <- ExitStatus{
@@ -159,7 +159,7 @@ func (p *process) Wait(ctx context.Context) (<-chan ExitStatus, error) {
 func (p *process) CloseIO(ctx context.Context, opts ...IOCloserOpts) error {
 	r := &tasks.CloseIORequest{
 		ContainerID: p.task.id,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 	}
 	var i IOCloseInfo
 	for _, o := range opts {
@@ -179,7 +179,7 @@ func (p *process) Resize(ctx context.Context, w, h uint32) error {
 		ContainerID: p.task.id,
 		Width:       w,
 		Height:      h,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 	})
 	return errdefs.FromGRPC(err)
 }
@@ -200,7 +200,7 @@ func (p *process) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitS
 	}
 	r, err := p.task.client.TaskService().DeleteProcess(ctx, &tasks.DeleteProcessRequest{
 		ContainerID: p.task.id,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 	})
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)
@@ -216,7 +216,7 @@ func (p *process) Delete(ctx context.Context, opts ...ProcessDeleteOpts) (*ExitS
 func (p *process) Status(ctx context.Context) (Status, error) {
 	r, err := p.task.client.TaskService().Get(ctx, &tasks.GetRequest{
 		ContainerID: p.task.id,
-		ExecID:      p.id,
+		ExecID:      p.randomId,
 	})
 	if err != nil {
 		return Status{}, errdefs.FromGRPC(err)

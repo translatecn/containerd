@@ -15,7 +15,7 @@ import (
 	"demo/over/cio"
 	"demo/over/console"
 	"demo/over/containers"
-	"demo/pkg/oci"
+	"demo/over/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

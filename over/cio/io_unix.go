@@ -26,7 +26,7 @@ func NewFIFOSetInDir(root, id string, terminal bool) (*FIFOSet, error) {
 		return os.RemoveAll(dir)
 	}
 	return NewFIFOSet(Config{
-		Stdin:    filepath.Join(dir, id+"-stdin"),
+		Stdin:    filepath.Join(dir, id+"-stdin"), //
 		Stdout:   filepath.Join(dir, id+"-stdout"),
 		Stderr:   filepath.Join(dir, id+"-stderr"),
 		Terminal: terminal,

@@ -2,7 +2,7 @@ package cri
 
 import (
 	"demo/containerd"
-	"demo/pkg/cri/streaming"
+	"demo/over/cri/streaming"
 	"github.com/pelletier/go-toml"
 )
 

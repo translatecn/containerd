@@ -15,6 +15,7 @@ import (
 	stdio2 "demo/over/stdio"
 	"demo/over/sys/reaper"
 	"demo/over/typeurl/v2"
+	process2 "demo/pkg/process"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,7 +23,6 @@ import (
 	"sync"
 
 	eventstypes "demo/over/api/events"
-	"demo/over/process"
 	ptypes "demo/over/protobuf/types"
 	shimapi "demo/over/runtime/v1/shim/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -71,7 +71,7 @@ func NewService(config Config, publisher events.Publisher) (*Service, error) {
 	s := &Service{
 		config:    config,
 		context:   ctx,
-		processes: make(map[string]process.Process),
+		processes: make(map[string]process2.Process),
 		events:    make(chan interface{}, 128),
 		ec:        reaper.Default.Subscribe(),
 	}
@@ -89,7 +89,7 @@ type Service struct {
 
 	config    Config
 	context   context.Context
-	processes map[string]process.Process
+	processes map[string]process2.Process
 	events    chan interface{}
 	platform  stdio2.Platform
 	ec        chan reaper.Exit
@@ -171,7 +171,7 @@ func (s *Service) Exec(ctx context.Context, r *shimapi.ExecProcessRequest) (*pty
 		return nil, errdefs.ToGRPCf(errdefs.ErrFailedPrecondition, "container must be created")
 	}
 
-	process, err := p.(*process.Init).Exec(ctx, s.config.Path, &process.ExecConfig{
+	process, err := p.(*process2.Init).Exec(ctx, s.config.Path, &process2.ExecConfig{
 		ID:       r.ID,
 		Terminal: r.Terminal,
 		Stdin:    r.Stdin,
@@ -253,7 +253,7 @@ func (s *Service) Pause(ctx context.Context, r *ptypes.Empty) (*ptypes.Empty, er
 	if err != nil {
 		return nil, err
 	}
-	if err := p.(*process.Init).Pause(ctx); err != nil {
+	if err := p.(*process2.Init).Pause(ctx); err != nil {
 		return nil, err
 	}
 	return empty, nil
@@ -265,7 +265,7 @@ func (s *Service) Resume(ctx context.Context, r *ptypes.Empty) (*ptypes.Empty, e
 	if err != nil {
 		return nil, err
 	}
-	if err := p.(*process.Init).Resume(ctx); err != nil {
+	if err := p.(*process2.Init).Resume(ctx); err != nil {
 		return nil, err
 	}
 	return empty, nil
@@ -356,7 +356,7 @@ func (s *Service) Checkpoint(ctx context.Context, r *shimapi.CheckpointTaskReque
 		}
 		options = v.(*runctypes.CheckpointOptions)
 	}
-	if err := p.(*process.Init).Checkpoint(ctx, &process.CheckpointConfig{
+	if err := p.(*process2.Init).Checkpoint(ctx, &process2.CheckpointConfig{
 		Path:                     r.Path,
 		Exit:                     options.Exit,
 		AllowOpenTCP:             options.OpenTcp,
@@ -384,7 +384,7 @@ func (s *Service) Update(ctx context.Context, r *shimapi.UpdateTaskRequest) (*pt
 	if err != nil {
 		return nil, err
 	}
-	if err := p.(*process.Init).Update(ctx, r.Resources); err != nil {
+	if err := p.(*process2.Init).Update(ctx, r.Resources); err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
 	return empty, nil
@@ -411,7 +411,7 @@ func (s *Service) processExits() {
 }
 
 func (s *Service) checkProcesses(e reaper.Exit) {
-	var p process.Process
+	var p process2.Process
 	s.mu.Lock()
 	for _, proc := range s.processes {
 		if proc.Pid() == e.Pid {
@@ -424,7 +424,7 @@ func (s *Service) checkProcesses(e reaper.Exit) {
 		log.G(s.context).Debugf("process with id:%d wasn't found", e.Pid)
 		return
 	}
-	if ip, ok := p.(*process.Init); ok {
+	if ip, ok := p.(*process2.Init); ok {
 		// Ensure all children are killed
 		if shouldKillAllOnExit(s.context, s.bundle) {
 			if err := ip.KillAll(s.context); err != nil {
@@ -471,7 +471,7 @@ func (s *Service) getContainerPids(ctx context.Context, id string) ([]uint32, er
 		return nil, err
 	}
 
-	ps, err := p.(*process.Init).Runtime().Ps(ctx, id)
+	ps, err := p.(*process2.Init).Runtime().Ps(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +491,7 @@ func (s *Service) forward(publisher events.Publisher) {
 }
 
 // getInitProcess returns initial process
-func (s *Service) getInitProcess() (process.Process, error) {
+func (s *Service) getInitProcess() (process2.Process, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -503,7 +503,7 @@ func (s *Service) getInitProcess() (process.Process, error) {
 }
 
 // getExecProcess returns exec process
-func (s *Service) getExecProcess(id string) (process.Process, error) {
+func (s *Service) getExecProcess(id string) (process2.Process, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -542,7 +542,7 @@ func getTopic(ctx context.Context, e interface{}) string {
 	return runtime.TaskUnknownTopic
 }
 
-func newInit(ctx context.Context, path, workDir, runtimeRoot, namespace string, systemdCgroup bool, platform stdio2.Platform, r *process.CreateConfig, rootfs string) (*process.Init, error) {
+func newInit(ctx context.Context, path, workDir, runtimeRoot, namespace string, systemdCgroup bool, platform stdio2.Platform, r *process2.CreateConfig, rootfs string) (*process2.Init, error) {
 	options := &runctypes.CreateOptions{}
 	if r.Options != nil {
 		v, err := typeurl.UnmarshalAny(r.Options)
@@ -552,8 +552,8 @@ func newInit(ctx context.Context, path, workDir, runtimeRoot, namespace string, 
 		options = v.(*runctypes.CreateOptions)
 	}
 
-	runtime := process.NewRunc(runtimeRoot, path, namespace, r.Runtime, systemdCgroup)
-	p := process.New(r.ID, runtime, stdio2.Stdio{
+	runtime := process2.NewRunc(runtimeRoot, path, namespace, r.Runtime, systemdCgroup)
+	p := process2.New(r.ID, runtime, stdio2.Stdio{
 		Stdin:    r.Stdin,
 		Stdout:   r.Stdout,
 		Stderr:   r.Stderr,
@@ -576,9 +576,9 @@ func newInit(ctx context.Context, path, workDir, runtimeRoot, namespace string, 
 	return p, nil
 }
 func (s *Service) Create(ctx context.Context, r *shimapi.CreateTaskRequest) (_ *shimapi.CreateTaskResponse, err error) {
-	var pmounts []process.Mount
+	var pmounts []process2.Mount
 	for _, m := range r.Rootfs {
-		pmounts = append(pmounts, process.Mount{
+		pmounts = append(pmounts, process2.Mount{
 			Type:    m.Type,
 			Source:  m.Source,
 			Target:  m.Target,
@@ -594,7 +594,7 @@ func (s *Service) Create(ctx context.Context, r *shimapi.CreateTaskRequest) (_ *
 		}
 	}
 
-	config := &process.CreateConfig{
+	config := &process2.CreateConfig{
 		ID:               r.ID,
 		Bundle:           r.Bundle,
 		Runtime:          r.Runtime,

@@ -16,6 +16,7 @@ import (
 	"demo/over/sys/reaper"
 	"demo/over/typeurl/v2"
 	"demo/over/userns"
+	process2 "demo/pkg/process"
 	"fmt"
 	"os"
 	"sync"
@@ -26,7 +27,6 @@ import (
 	taskAPI "demo/over/api/runtime/task/v2"
 	"demo/over/api/types/task"
 	"demo/over/errdefs"
-	"demo/over/process"
 	"demo/over/runtime/v2/runc"
 	"demo/over/ttrpc"
 	"github.com/sirupsen/logrus"
@@ -417,7 +417,7 @@ type Service struct {
 
 type containerProcess struct {
 	Container *runc.Container
-	Process   process.Process
+	Process   process2.Process
 }
 
 // preStart准备启动一个容器进程并处理它的退出。
@@ -428,7 +428,7 @@ type containerProcess struct {
 //
 // 返回的清理闭包释放用于处理早期退出的资源。
 // 它必须在preStart的调用者返回之前被调用，否则会发生严重的内存泄漏。
-func (s *Service) preStart(c *runc.Container) (handleStarted func(*runc.Container, process.Process), cleanup func()) {
+func (s *Service) preStart(c *runc.Container) (handleStarted func(*runc.Container, process2.Process), cleanup func()) {
 	exits := make(map[int][]reaper.Exit)
 	s.exitSubscribers[&exits] = struct{}{}
 
@@ -449,13 +449,13 @@ func (s *Service) preStart(c *runc.Container) (handleStarted func(*runc.Containe
 		}
 	}
 
-	handleStarted = func(c *runc.Container, p process.Process) {
+	handleStarted = func(c *runc.Container, p process2.Process) {
 		var pid int
 		if p != nil {
 			pid = p.Pid()
 		}
 
-		_, init := p.(*process.Init)
+		_, init := p.(*process2.Init)
 		s.lifecycleMu.Lock()
 
 		var initExits []reaper.Exit
@@ -629,7 +629,7 @@ func (s *Service) processExits() {
 		// process.
 		var cps, skipped []containerProcess
 		for _, cp := range s.running[e.Pid] {
-			_, init := cp.Process.(*process.Init)
+			_, init := cp.Process.(*process2.Init)
 			if init && s.pendingExecs[cp.Container] != 0 {
 				// This exit relates to a container for which we have pending execs. In
 				// order to ensure order between execs and the init process for a given
@@ -654,8 +654,8 @@ func (s *Service) processExits() {
 }
 
 // s.mu must be locked when calling handleProcessExit
-func (s *Service) handleProcessExit(e reaper.Exit, c *runc.Container, p process.Process) {
-	if ip, ok := p.(*process.Init); ok {
+func (s *Service) handleProcessExit(e reaper.Exit, c *runc.Container, p process2.Process) {
+	if ip, ok := p.(*process2.Init); ok {
 		// Ensure all children are killed
 		if runc.ShouldKillAllOnExit(s.context, c.Bundle) {
 			if err := ip.KillAll(s.context); err != nil {
@@ -680,7 +680,7 @@ func (s *Service) getContainerPids(ctx context.Context, container *runc.Containe
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
-	ps, err := p.(*process.Init).Runtime().Ps(ctx, container.ID)
+	ps, err := p.(*process2.Init).Runtime().Ps(ctx, container.ID)
 	if err != nil {
 		return nil, err
 	}

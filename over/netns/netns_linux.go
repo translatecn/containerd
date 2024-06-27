@@ -19,7 +19,9 @@ import (
 	"crypto/rand"
 	"demo/over/my_mk"
 	"demo/over/my_mount"
+	cnins "demo/over/ns"
 	"fmt"
+	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/moby/sys/symlink"
 	"os"
 	"path"
@@ -27,7 +29,6 @@ import (
 	"sync"
 
 	"demo/over/mount"
-	cnins "github.com/containernetworking/plugins/pkg/ns"
 	"golang.org/x/sys/unix"
 )
 
@@ -182,13 +183,13 @@ func (n *NetNS) Remove() error {
 
 // Closed checks whether the network namespace has been closed.
 func (n *NetNS) Closed() (bool, error) {
-	ns, err := cnins.GetNS(n.path)
+	_ns, err := cnins.GetNS(n.path)
 	if err != nil {
-		if _, ok := err.(cnins.NSPathNotExistErr); ok {
+		if _, ok := err.(ns.NSPathNotExistErr); ok {
 			// The network namespace has already been removed.
 			return true, nil
 		}
-		if _, ok := err.(cnins.NSPathNotNSErr); ok {
+		if _, ok := err.(ns.NSPathNotNSErr); ok {
 			// The network namespace is not mounted, remove it.
 			if err := os.RemoveAll(n.path); err != nil {
 				return false, fmt.Errorf("remove netns: %w", err)
@@ -197,7 +198,7 @@ func (n *NetNS) Closed() (bool, error) {
 		}
 		return false, fmt.Errorf("get netns fd: %w", err)
 	}
-	if err := ns.Close(); err != nil {
+	if err := _ns.Close(); err != nil {
 		return false, fmt.Errorf("close netns fd: %w", err)
 	}
 	return false, nil
@@ -210,10 +211,10 @@ func (n *NetNS) GetPath() string {
 
 // Do runs a function in the network namespace.
 func (n *NetNS) Do(f func(cnins.NetNS) error) error {
-	ns, err := cnins.GetNS(n.path)
+	_ns, err := cnins.GetNS(n.path)
 	if err != nil {
 		return fmt.Errorf("get netns fd: %w", err)
 	}
-	defer ns.Close()
-	return ns.Do(f)
+	defer _ns.Close()
+	return _ns.Do(f)
 }

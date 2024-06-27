@@ -11,9 +11,9 @@ import (
 	"demo/over/errdefs"
 	"demo/over/fifo"
 	"demo/over/images"
+	"demo/over/oci"
 	"demo/over/protobuf"
 	"demo/over/typeurl/v2"
-	"demo/pkg/oci"
 	"encoding/json"
 	"fmt"
 	ver "github.com/opencontainers/image-spec/specs-go"
@@ -66,7 +66,7 @@ type container struct {
 	metadata containers.Container
 }
 
-// ID returns the container's unique id
+// ID returns the container's unique randomId
 func (c *container) ID() string {
 	return c.id
 }

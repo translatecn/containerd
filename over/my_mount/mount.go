@@ -1,19 +1,17 @@
 package my_mount
 
 import (
-	"github.com/fatih/color"
+	"demo/over/write"
+	"fmt"
 	"golang.org/x/sys/unix"
-	"os"
 	"strings"
 )
 
 func Mount(source string, target string, fstype string, flags uintptr, data string) (err error) {
-	if os.Getenv("DEBUG") != "" {
-		if fstype == "overlay" {
-			color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), data, target)
-		} else {
-			color.New(color.FgGreen).SetWriter(os.Stderr).Println("mount ", flag2str(fstype, int64(flags)), source, target, data)
-		}
+	if fstype == "overlay" {
+		write.AppendRunLog("mount ", fmt.Sprintf("%v %v %v", flag2str(fstype, int64(flags)), data, target))
+	} else {
+		write.AppendRunLog("mount ", fmt.Sprintf("%v %v %v %v", flag2str(fstype, int64(flags)), source, target, data))
 	}
 
 	return unix.Mount(source, target, fstype, flags, data)

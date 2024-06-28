@@ -1,7 +1,7 @@
 package pprof
 
 import (
-	"demo/over/defaults"
+	"demo/pkg/defaults"
 	"fmt"
 	"io"
 	"net/http"

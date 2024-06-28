@@ -2,20 +2,20 @@ package containerd
 
 import (
 	"context"
-	"demo/over/namespaces"
-	"demo/over/protobuf"
-	"demo/over/snapshots"
-	"demo/over/typeurl/v2"
+	"demo/pkg/namespaces"
+	"demo/pkg/protobuf"
+	"demo/pkg/snapshots"
+	"demo/pkg/typeurl/v2"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/opencontainers/image-spec/identity"
 
-	"demo/over/containers"
-	"demo/over/content"
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/oci"
+	"demo/pkg/containers"
+	"demo/pkg/content"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
+	"demo/pkg/oci"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"io"
 
-	"demo/over/content"
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/images/archive"
-	"demo/over/platforms"
+	"demo/pkg/content"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
+	"demo/pkg/images/archive"
+	"demo/pkg/platforms"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

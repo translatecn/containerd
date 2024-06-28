@@ -1,8 +1,8 @@
 package sandboxes
 
 import (
-	"demo/over/defaults"
-	"demo/over/log"
+	"demo/pkg/defaults"
+	"demo/pkg/log"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,7 +10,7 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/oci"
+	"demo/pkg/oci"
 	"github.com/urfave/cli"
 )
 

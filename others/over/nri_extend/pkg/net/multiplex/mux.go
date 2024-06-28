@@ -11,7 +11,7 @@ import (
 	"time"
 
 	nrinet "demo/others/over/nri_extend/pkg/net"
-	"demo/over/ttrpc"
+	"demo/pkg/ttrpc"
 )
 
 // Mux multiplexes several logical connections over a single net.Conn.

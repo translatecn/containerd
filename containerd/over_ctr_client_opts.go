@@ -1,12 +1,12 @@
 package containerd
 
 import (
-	"demo/over/snapshots"
+	"demo/pkg/snapshots"
 	"time"
 
-	"demo/over/images"
-	"demo/over/platforms"
-	"demo/over/remotes"
+	"demo/pkg/images"
+	"demo/pkg/platforms"
+	"demo/pkg/remotes"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"google.golang.org/grpc"

@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	pluginutils "demo/over/plugin"
+	pluginutils "demo/pkg/plugin"
 	"fmt"
 	"os"
 	"sort"
@@ -9,8 +9,8 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/api/types"
-	"demo/over/platforms"
+	"demo/pkg/api/types"
+	"demo/pkg/platforms"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/codes"

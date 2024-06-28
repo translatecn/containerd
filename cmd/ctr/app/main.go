@@ -17,8 +17,8 @@ import (
 	versionCmd "demo/cmd/ctr/commands/over/version"
 	"demo/cmd/ctr/commands/run"
 	"demo/cmd/ctr/commands/tasks"
-	"demo/over/namespaces"
-	"demo/over/version"
+	"demo/pkg/namespaces"
+	"demo/pkg/version"
 	"fmt"
 	"io"
 

@@ -7,7 +7,7 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/progress"
+	"demo/pkg/progress"
 
 	"github.com/opencontainers/image-spec/identity"
 	"github.com/urfave/cli"

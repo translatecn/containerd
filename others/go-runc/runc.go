@@ -3,7 +3,7 @@ package runc
 import (
 	"bytes"
 	"context"
-	"demo/over/sys/reaper"
+	"demo/pkg/sys/reaper"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -106,63 +106,6 @@ func (o *ExecOpts) args() (out []string, err error) {
 		out = append(out, "--pid-file", abs)
 	}
 	return out, nil
-}
-
-// Exec executes an additional process inside the container based on a full
-// OCI Process specification
-func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts *ExecOpts) error {
-	if opts.Started != nil {
-		defer close(opts.Started)
-	}
-	f, err := ioutil.TempFile(os.Getenv("XDG_RUNTIME_DIR"), "runc-process") // /run/user/0/runc-process231728371283
-	if err != nil {
-		return err
-	}
-	defer os.Remove(f.Name())
-	err = json.NewEncoder(f).Encode(spec)
-	f.Close()
-	if err != nil {
-		return err
-	}
-	args := []string{"exec", "--process", f.Name()}
-	if opts != nil {
-		oargs, err := opts.args()
-		if err != nil {
-			return err
-		}
-		args = append(args, oargs...)
-	}
-	cmd := r.command(context, append(args, id)...)
-	if opts != nil && opts.IO != nil {
-		opts.Set(cmd)
-	}
-	if cmd.Stdout == nil && cmd.Stderr == nil {
-		data, err := cmdOutput(cmd, true, opts.Started)
-		defer putBuf(data)
-		if err != nil {
-			return fmt.Errorf("%w: %s", err, data.String())
-		}
-		return nil
-	}
-	ec, err := reaper.Default.Start(cmd)
-	if err != nil {
-		return err
-	}
-	if opts.Started != nil {
-		opts.Started <- cmd.Process.Pid
-	}
-	if opts != nil && opts.IO != nil {
-		if c, ok := opts.IO.(StartCloser); ok {
-			if err := c.CloseAfterStart(); err != nil {
-				return err
-			}
-		}
-	}
-	status, err := reaper.Default.Wait(cmd, ec)
-	if err == nil && status != 0 {
-		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
-	}
-	return err
 }
 
 // Run runs the create, start, delete lifecycle of the container
@@ -652,4 +595,78 @@ func (r *Runc) runOrError(cmd *exec.Cmd) error {
 
 func (r *Runc) Start(context context.Context, id string) error {
 	return r.runOrError(r.command(context, "start", id))
+}
+
+func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts *ExecOpts) error {
+	if opts.Started != nil {
+		defer close(opts.Started)
+	}
+	f, err := ioutil.TempFile(os.Getenv("XDG_RUNTIME_DIR"), "runc-process") // /run/user/0/runc-process231728371283
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	err = json.NewEncoder(f).Encode(spec)
+	f.Close()
+	if err != nil {
+		return err
+	}
+	args := []string{"exec", "--process", f.Name()}
+	if opts != nil {
+		oargs, err := opts.args()
+		if err != nil {
+			return err
+		}
+		args = append(args, oargs...)
+	}
+	cmd := r.command(context, append(args, id)...)
+	if opts != nil && opts.IO != nil {
+		opts.Set(cmd)
+	}
+	// [
+	//    "runc",
+	//    "--root",
+	//    "/run/containerd/runc/k8s.io",
+	//    "--log",
+	//    "/run/containerd/io.containerd.runtime.v2.task/k8s.io/6bc26838e82b38643e97e1ce06ec3c83364ee3fae6e1a37d2273a8e5230506bb/log.json",
+	//    "--log-format",
+	//    "json",
+	//    "--systemd-cgroup",
+	//    "exec",
+	//    "--process",
+	//    "/run/user/0/runc-process2890942832",
+	//    "--console-socket",
+	//    "/run/user/0/pty3600371483/pty.sock",
+	//    "--detach",
+	//    "--pid-file",
+	//    "/run/containerd/io.containerd.runtime.v2.task/k8s.io/6bc26838e82b38643e97e1ce06ec3c83364ee3fae6e1a37d2273a8e5230506bb/f2d74d95f731273a91f5cfd5cececb1e9bd8cade40e64601504dec80d19d155a.pid",
+	//    "6bc26838e82b38643e97e1ce06ec3c83364ee3fae6e1a37d2273a8e5230506bb"
+	//  ]
+	if cmd.Stdout == nil && cmd.Stderr == nil {
+		data, err := cmdOutput(cmd, true, opts.Started)
+		defer putBuf(data)
+		if err != nil {
+			return fmt.Errorf("%w: %s", err, data.String())
+		}
+		return nil
+	}
+	ec, err := reaper.Default.Start(cmd)
+	if err != nil {
+		return err
+	}
+	if opts.Started != nil {
+		opts.Started <- cmd.Process.Pid
+	}
+	if opts != nil && opts.IO != nil {
+		if c, ok := opts.IO.(StartCloser); ok {
+			if err := c.CloseAfterStart(); err != nil {
+				return err
+			}
+		}
+	}
+	status, err := reaper.Default.Wait(cmd, ec)
+	if err == nil && status != 0 {
+		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
+	}
+	return err
 }

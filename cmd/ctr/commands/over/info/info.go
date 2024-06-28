@@ -2,8 +2,8 @@ package info
 
 import (
 	"demo/cmd/ctr/commands"
-	api "demo/over/api/services/introspection/v1"
-	ptypes "demo/over/protobuf/types"
+	api "demo/pkg/api/services/introspection/v1"
+	ptypes "demo/pkg/protobuf/types"
 	"github.com/urfave/cli"
 )
 

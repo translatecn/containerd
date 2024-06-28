@@ -1,8 +1,8 @@
 package namespaces
 
 import (
-	"demo/over/namespaces"
-	"demo/over/runtime/opts"
+	"demo/pkg/namespaces"
+	"demo/pkg/runtime/opts"
 	"github.com/urfave/cli"
 )
 

@@ -2,8 +2,9 @@ package process
 
 import (
 	"context"
-	"demo/over/fifo"
-	"demo/over/stdio"
+	"demo/others/go-runc"
+	"demo/pkg/fifo"
+	"demo/pkg/stdio"
 	"fmt"
 	"io"
 	"os"
@@ -14,9 +15,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	runc "demo/others/go-runc"
-	"demo/over/console"
-	"demo/over/errdefs"
+	"demo/pkg/console"
+	"demo/pkg/errdefs"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -152,6 +152,31 @@ func (e *execProcess) Start(ctx context.Context) error {
 	return e.execState.Start(ctx)
 }
 
+func (e *execProcess) openStdin(path string) error {
+	sc, err := fifo.OpenFifo(context.Background(), path, syscall.O_WRONLY|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return fmt.Errorf("failed to open stdin fifo %s: %w", path, err)
+	}
+	e.stdin = sc
+	e.closers = append(e.closers, sc)
+	return nil
+}
+
+func (e *execProcess) Status(ctx context.Context) (string, error) {
+	s, err := e.parent.Status(ctx)
+	if err != nil {
+		return "", err
+	}
+	// if the container as a whole is in the pausing/paused state, so are all
+	// other processes inside the container, use container state here
+	switch s {
+	case "paused", "pausing":
+		return s, nil
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.execState.Status(ctx)
+}
 func (e *execProcess) start(ctx context.Context) (err error) {
 	// The reaper may receive exit signal right after
 	// the container is started, before the e.pid is updated.
@@ -186,11 +211,11 @@ func (e *execProcess) start(ctx context.Context) (err error) {
 	if socket != nil {
 		opts.ConsoleSocket = socket
 	}
-	if err := e.parent.runtime.Exec(ctx, e.parent.id, e.spec, opts); err != nil {
+	if err := e.parent.runtime.Exec(ctx, e.parent.id, e.spec, opts); err != nil { // runc
 		close(e.waitBlock)
 		return e.parent.runtimeError(err, "OCI runtime exec failed")
 	}
-	if e.stdio.Stdin != "" {
+	if e.stdio.Stdin != "" { // /run/containerd/io.containerd.grpc.v1.cri/containers/0363a8e5c3d14b495ca56f7241989c91f58c4ca05d4235656a2f3489a701ce7a/io/2262752319/d3b13278c285e8a6aad026623e8a74826678423657ea465b24a753d4587c7a46-stdin
 		if err := e.openStdin(e.stdio.Stdin); err != nil {
 			return err
 		}
@@ -216,30 +241,4 @@ func (e *execProcess) start(ctx context.Context) (err error) {
 	}
 	e.pid.pid = pid
 	return nil
-}
-
-func (e *execProcess) openStdin(path string) error {
-	sc, err := fifo.OpenFifo(context.Background(), path, syscall.O_WRONLY|syscall.O_NONBLOCK, 0)
-	if err != nil {
-		return fmt.Errorf("failed to open stdin fifo %s: %w", path, err)
-	}
-	e.stdin = sc
-	e.closers = append(e.closers, sc)
-	return nil
-}
-
-func (e *execProcess) Status(ctx context.Context) (string, error) {
-	s, err := e.parent.Status(ctx)
-	if err != nil {
-		return "", err
-	}
-	// if the container as a whole is in the pausing/paused state, so are all
-	// other processes inside the container, use container state here
-	switch s {
-	case "paused", "pausing":
-		return s, nil
-	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.execState.Status(ctx)
 }

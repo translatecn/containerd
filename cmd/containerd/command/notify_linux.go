@@ -2,7 +2,7 @@ package command
 
 import (
 	"context"
-	"demo/over/log"
+	"demo/pkg/log"
 	sd "github.com/coreos/go-systemd/v22/daemon"
 )
 

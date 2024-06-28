@@ -10,11 +10,11 @@ import (
 	"github.com/urfave/cli"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/images/archive"
-	"demo/over/platforms"
-	"demo/over/transfer"
-	tarchive "demo/over/transfer/archive"
-	"demo/over/transfer/image"
+	"demo/pkg/images/archive"
+	"demo/pkg/platforms"
+	"demo/pkg/transfer"
+	tarchive "demo/pkg/transfer/archive"
+	"demo/pkg/transfer/image"
 )
 
 var exportCommand = cli.Command{

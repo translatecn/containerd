@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"demo/over/containers"
-	"demo/over/errdefs"
-	"demo/over/mount"
+	"demo/pkg/containers"
+	"demo/pkg/errdefs"
+	"demo/pkg/mount"
 	"github.com/opencontainers/image-spec/identity"
 )
 

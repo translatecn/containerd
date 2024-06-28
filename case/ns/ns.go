@@ -1,8 +1,8 @@
 package main
 
 import (
-	"demo/over/my_mount"
-	cnins "demo/over/ns"
+	"demo/pkg/my_mount"
+	cnins "demo/pkg/ns"
 	"fmt"
 	"golang.org/x/sys/unix"
 	"os"

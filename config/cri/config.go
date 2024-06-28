@@ -2,9 +2,9 @@ package cri
 
 import (
 	"context"
-	"demo/over/deprecation"
-	"demo/over/log"
-	"demo/over/plugin"
+	"demo/pkg/deprecation"
+	"demo/pkg/log"
+	"demo/pkg/plugin"
 	"errors"
 	"fmt"
 	"net/url"
@@ -361,9 +361,6 @@ type PluginConfig struct {
 	//
 	// For example, the value can be '5h', '2h30m', '10s'.
 	DrainExecSyncIOTimeout string `toml:"drain_exec_sync_io_timeout" json:"drainExecSyncIOTimeout"`
-	// ImagePullWithSyncFs is an experimental setting. It's to force sync
-	// filesystem during unpacking to ensure that data integrity.
-	ImagePullWithSyncFs bool `toml:"image_pull_with_sync_fs" json:"imagePullWithSyncFs"`
 	// IgnoreDeprecationWarnings is the list of the deprecation IDs (such as "io.containerd.deprecation/pull-schema-1-image")
 	// that should be ignored for checking "ContainerdHasNoDeprecationWarnings" condition.
 	IgnoreDeprecationWarnings []string `toml:"ignore_deprecation_warnings" json:"ignoreDeprecationWarnings"`

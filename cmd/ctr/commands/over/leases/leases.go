@@ -1,7 +1,7 @@
 package leases
 
 import (
-	leases2 "demo/over/leases"
+	leases2 "demo/pkg/leases"
 	"fmt"
 	"os"
 	"sort"

@@ -2,8 +2,8 @@ package commands
 
 import (
 	"context"
-	"demo/over/namespaces"
-	"demo/over/typeurl/v2"
+	"demo/pkg/namespaces"
+	"demo/pkg/typeurl/v2"
 	"fmt"
 
 	"demo/containerd"

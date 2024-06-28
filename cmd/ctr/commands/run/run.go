@@ -2,7 +2,7 @@ package run
 
 import (
 	gocontext "context"
-	clabels "demo/over/labels"
+	clabels "demo/pkg/labels"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -12,10 +12,10 @@ import (
 	"demo/cmd/ctr/commands/tasks"
 	"demo/containerd"
 	gocni "demo/others/go-cni"
-	"demo/over/cio"
-	"demo/over/console"
-	"demo/over/containers"
-	"demo/over/oci"
+	"demo/pkg/cio"
+	"demo/pkg/console"
+	"demo/pkg/containers"
+	"demo/pkg/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

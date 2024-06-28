@@ -1,7 +1,7 @@
 package images
 
 import (
-	"demo/over/log"
+	"demo/pkg/log"
 	"fmt"
 	"io"
 	"os"
@@ -12,11 +12,11 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/images/archive"
-	"demo/over/platforms"
-	"demo/over/transfer"
-	tarchive "demo/over/transfer/archive"
-	"demo/over/transfer/image"
+	"demo/pkg/images/archive"
+	"demo/pkg/platforms"
+	"demo/pkg/transfer"
+	tarchive "demo/pkg/transfer/archive"
+	"demo/pkg/transfer/image"
 )
 
 var importCommand = cli.Command{

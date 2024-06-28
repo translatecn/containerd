@@ -2,9 +2,9 @@ package snapshots
 
 import (
 	gocontext "context"
-	"demo/over/log"
-	"demo/over/rootfs"
-	"demo/over/snapshots"
+	"demo/pkg/log"
+	"demo/pkg/rootfs"
+	"demo/pkg/snapshots"
 	"errors"
 	"fmt"
 	"io"
@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/content"
-	"demo/over/diff"
-	"demo/over/mount"
-	"demo/over/progress"
+	"demo/pkg/content"
+	"demo/pkg/diff"
+	"demo/pkg/mount"
+	"demo/pkg/progress"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"

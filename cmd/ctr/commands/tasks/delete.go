@@ -4,8 +4,8 @@ import (
 	gocontext "context"
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/cio"
-	"demo/over/log"
+	"demo/pkg/cio"
+	"demo/pkg/log"
 	"github.com/urfave/cli"
 )
 

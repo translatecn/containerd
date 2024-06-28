@@ -16,7 +16,7 @@ import (
 	"demo/others/over/nri_extend/pkg/api"
 	"demo/others/over/nri_extend/pkg/log"
 	"demo/others/over/nri_extend/pkg/net/multiplex"
-	"demo/over/ttrpc"
+	"demo/pkg/ttrpc"
 )
 
 const (

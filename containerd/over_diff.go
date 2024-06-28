@@ -1,9 +1,9 @@
 package containerd
 
 import (
-	diffapi "demo/over/api/services/diff/v1"
-	"demo/over/diff"
-	"demo/over/diff/proxy"
+	diffapi "demo/pkg/api/services/diff/v1"
+	"demo/pkg/diff"
+	"demo/pkg/diff/proxy"
 )
 
 // DiffService handles the computation and application of diffs

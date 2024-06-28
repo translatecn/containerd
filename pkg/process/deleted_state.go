@@ -2,12 +2,12 @@ package process
 
 import (
 	"context"
-	google_protobuf "demo/over/protobuf/types"
+	google_protobuf "demo/pkg/protobuf/types"
 	"errors"
 	"fmt"
 
-	"demo/over/console"
-	"demo/over/errdefs"
+	"demo/pkg/console"
+	"demo/pkg/errdefs"
 )
 
 type deletedState struct {

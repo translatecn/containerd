@@ -2,12 +2,12 @@ package encryption
 
 import (
 	"context"
-	"demo/over/typeurl"
+	"demo/pkg/typeurl"
 	"fmt"
 
 	"demo/containerd"
 	"demo/others/imgcrypt"
-	"demo/over/diff"
+	"demo/pkg/diff"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

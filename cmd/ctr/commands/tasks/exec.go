@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/cio"
-	"demo/over/console"
-	"demo/over/oci"
+	"demo/pkg/cio"
+	"demo/pkg/console"
+	"demo/pkg/oci"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

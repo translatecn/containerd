@@ -2,8 +2,8 @@ package main
 
 import (
 	"crypto"
-	"demo/over/hasher"
-	"demo/over/seed"
+	"demo/pkg/hasher"
+	"demo/pkg/seed"
 	"fmt"
 	"os"
 

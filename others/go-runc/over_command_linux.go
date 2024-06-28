@@ -2,8 +2,8 @@ package runc
 
 import (
 	"context"
-	"demo/over/drop"
-	"demo/over/write"
+	"demo/pkg/drop"
+	"demo/pkg/write"
 	"os"
 	"os/exec"
 	"strings"

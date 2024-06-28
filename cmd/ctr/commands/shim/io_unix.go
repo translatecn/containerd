@@ -2,7 +2,7 @@ package shim
 
 import (
 	gocontext "context"
-	"demo/over/fifo"
+	"demo/pkg/fifo"
 	"io"
 	"os"
 	"sync"

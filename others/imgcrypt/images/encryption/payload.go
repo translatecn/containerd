@@ -3,7 +3,7 @@ package encryption
 import (
 	"reflect"
 
-	"demo/over/diff"
+	"demo/pkg/diff"
 	"github.com/gogo/protobuf/types"
 )
 

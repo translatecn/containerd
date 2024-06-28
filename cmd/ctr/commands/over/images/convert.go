@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/images/converter"
-	"demo/over/images/converter/uncompress"
-	"demo/over/platforms"
+	"demo/pkg/images/converter"
+	"demo/pkg/images/converter/uncompress"
+	"demo/pkg/platforms"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"
 )

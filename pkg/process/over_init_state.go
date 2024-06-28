@@ -2,7 +2,7 @@ package process
 
 import (
 	"context"
-	google_protobuf "demo/over/protobuf/types"
+	google_protobuf "demo/pkg/protobuf/types"
 	"errors"
 	"fmt"
 

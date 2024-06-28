@@ -5,8 +5,8 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/cio"
-	"demo/over/console"
+	"demo/pkg/cio"
+	"demo/pkg/console"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

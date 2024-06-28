@@ -4,7 +4,7 @@ package api
 
 import (
 	context "context"
-	ttrpc "demo/over/ttrpc"
+	ttrpc "demo/pkg/ttrpc"
 )
 
 type RuntimeService interface {

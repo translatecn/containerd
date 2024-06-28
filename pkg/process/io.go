@@ -2,11 +2,11 @@ package process
 
 import (
 	"context"
-	fifo2 "demo/over/fifo"
-	"demo/over/log"
-	"demo/over/my_mk"
-	"demo/over/namespaces"
-	"demo/over/stdio"
+	fifo2 "demo/pkg/fifo"
+	"demo/pkg/log"
+	"demo/pkg/my_mk"
+	"demo/pkg/namespaces"
+	"demo/pkg/stdio"
 	"fmt"
 	"io"
 	"net/url"

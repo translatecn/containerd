@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	tasks "demo/over/api/services/tasks/v1"
+	tasks "demo/pkg/api/services/tasks/v1"
 	"github.com/urfave/cli"
 )
 

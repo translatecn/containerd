@@ -1,15 +1,15 @@
 package images
 
 import (
-	leases2 "demo/over/leases"
+	leases2 "demo/pkg/leases"
 	"fmt"
 	"time"
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/errdefs"
-	"demo/over/mount"
-	"demo/over/platforms"
+	"demo/pkg/errdefs"
+	"demo/pkg/mount"
+	"demo/pkg/platforms"
 	"github.com/opencontainers/image-spec/identity"
 	"github.com/urfave/cli"
 )

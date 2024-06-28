@@ -2,14 +2,14 @@ package containerd
 
 import (
 	"context"
-	"demo/over/protobuf/proto"
-	ptypes "demo/over/protobuf/types"
+	"demo/pkg/protobuf/proto"
+	ptypes "demo/pkg/protobuf/types"
 	"errors"
 	"fmt"
 
-	"demo/over/containers"
-	"demo/over/content"
-	"demo/over/images"
+	"demo/pkg/containers"
+	"demo/pkg/content"
+	"demo/pkg/images"
 	"github.com/opencontainers/image-spec/identity"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 )

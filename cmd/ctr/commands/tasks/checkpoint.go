@@ -2,8 +2,8 @@ package tasks
 
 import (
 	"demo/config/runc"
-	"demo/over/api/runctypes"
-	"demo/over/plugin"
+	"demo/pkg/api/runctypes"
+	"demo/pkg/plugin"
 	"errors"
 	"fmt"
 

@@ -23,8 +23,8 @@ import (
 	"net/url"
 	"os"
 
-	internalapi "demo/over/api/cri"
-	pb "demo/over/api/cri/v1"
+	internalapi "demo/pkg/api/cri"
+	pb "demo/pkg/api/cri/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
@@ -93,7 +93,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 		return err
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", URL)
-
+	// s.servePortForward
 	readyChan := make(chan struct{})
 
 	logrus.Debugf("Ports to forword: %v", opts.ports)

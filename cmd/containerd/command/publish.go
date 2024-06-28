@@ -2,10 +2,10 @@ package command
 
 import (
 	gocontext "context"
-	dialer2 "demo/over/dialer"
-	"demo/over/namespaces"
-	"demo/over/protobuf/proto"
-	"demo/over/protobuf/types"
+	dialer2 "demo/pkg/dialer"
+	"demo/pkg/namespaces"
+	"demo/pkg/protobuf/proto"
+	"demo/pkg/protobuf/types"
 	"fmt"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
@@ -14,8 +14,8 @@ import (
 	"os"
 	"time"
 
-	eventsapi "demo/over/api/services/events/v1"
-	"demo/over/errdefs"
+	eventsapi "demo/pkg/api/services/events/v1"
+	"demo/pkg/errdefs"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 )

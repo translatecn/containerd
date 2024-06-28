@@ -6,8 +6,8 @@ import (
 	"github.com/urfave/cli"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/errdefs"
-	"demo/over/transfer/image"
+	"demo/pkg/errdefs"
+	"demo/pkg/transfer/image"
 )
 
 var tagCommand = cli.Command{

@@ -1,7 +1,7 @@
 package version
 
 import (
-	"demo/over/version"
+	"demo/pkg/version"
 	"fmt"
 	"os"
 

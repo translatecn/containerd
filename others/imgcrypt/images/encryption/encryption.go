@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"demo/over/images"
+	"demo/pkg/images"
 	"github.com/containers/ocicrypt"
 	encconfig "github.com/containers/ocicrypt/config"
 	encocispec "github.com/containers/ocicrypt/spec"

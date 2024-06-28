@@ -1,8 +1,8 @@
 package containerd
 
 import (
-	pb "demo/over/api/cri/v1"
-	"demo/over/cri/sbserver"
+	pb "demo/pkg/api/cri/v1"
+	"demo/pkg/cri/sbserver"
 )
 
 func main() {

@@ -2,15 +2,15 @@ package main
 
 import (
 	"crypto"
-	"demo/over/hasher"
-	"demo/over/seed"
+	"demo/pkg/hasher"
+	"demo/pkg/seed"
 	"fmt"
 	"os"
 
 	"demo/cmd/containerd/command"
 	//nolint:staticcheck // Global math/rand seed is deprecated, but still used by external dependencies
 
-	_ "demo/over/plugins/containerd"
+	_ "demo/pkg/plugins/containerd"
 )
 
 func init() {

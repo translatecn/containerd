@@ -2,10 +2,10 @@ package commands
 
 import (
 	gocontext "context"
-	epoch2 "demo/over/epoch"
-	"demo/over/log"
-	"demo/over/namespaces"
-	ptypes "demo/over/protobuf/types"
+	epoch2 "demo/pkg/epoch"
+	"demo/pkg/log"
+	"demo/pkg/namespaces"
+	ptypes "demo/pkg/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"

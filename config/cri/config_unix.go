@@ -2,12 +2,12 @@ package cri
 
 import (
 	"demo/containerd"
-	"demo/over/cri/streaming"
+	"demo/pkg/cri/streaming"
 	"github.com/pelletier/go-toml"
 )
 
 // DefaultConfig returns default configurations of cri plugin.
-func DefaultConfig() PluginConfig {
+func DefaultConfig() PluginConfig { // ✅
 	defaultRuncV2Opts := `
 	# NoPivotRoot disables pivot root when creating a container.
 	NoPivotRoot = false
@@ -91,6 +91,5 @@ func DefaultConfig() PluginConfig {
 		CDISpecDirs:              []string{"/etc/cdi", "/var/run/cdi"},
 		ImagePullProgressTimeout: defaultImagePullProgressTimeoutDuration.String(),
 		DrainExecSyncIOTimeout:   "0s",
-		ImagePullWithSyncFs:      false,
 	}
 }

@@ -2,12 +2,12 @@ package containerd
 
 import (
 	"context"
-	"demo/over/namespaces"
-	"demo/over/protobuf/types"
+	"demo/pkg/namespaces"
+	"demo/pkg/protobuf/types"
 	"strings"
 
-	api "demo/over/api/services/namespaces/v1"
-	"demo/over/errdefs"
+	api "demo/pkg/api/services/namespaces/v1"
+	"demo/pkg/errdefs"
 )
 
 // NewNamespaceStoreFromClient returns a new namespace store

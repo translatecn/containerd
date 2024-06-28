@@ -2,17 +2,17 @@ package containerd
 
 import (
 	"context"
-	"demo/over/protobuf"
-	"demo/over/streaming"
-	"demo/over/typeurl/v2"
+	"demo/pkg/protobuf"
+	"demo/pkg/streaming"
+	"demo/pkg/typeurl/v2"
 	"errors"
 	"io"
 
-	streamingapi "demo/over/api/services/streaming/v1"
-	transferapi "demo/over/api/services/transfer/v1"
-	"demo/over/errdefs"
-	"demo/over/transfer"
-	"demo/over/transfer/proxy"
+	streamingapi "demo/pkg/api/services/streaming/v1"
+	transferapi "demo/pkg/api/services/transfer/v1"
+	"demo/pkg/errdefs"
+	"demo/pkg/transfer"
+	"demo/pkg/transfer/proxy"
 )
 
 func (c *Client) Transfer(ctx context.Context, src interface{}, dest interface{}, opts ...transfer.Opt) error {

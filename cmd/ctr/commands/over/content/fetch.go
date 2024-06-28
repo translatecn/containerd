@@ -2,7 +2,7 @@ package content
 
 import (
 	"context"
-	"demo/over/log"
+	"demo/pkg/log"
 	"fmt"
 	"io"
 	"net/http/httptrace"
@@ -13,12 +13,12 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	"demo/over/content"
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/platforms"
-	"demo/over/progress"
-	"demo/over/remotes"
+	"demo/pkg/content"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
+	"demo/pkg/platforms"
+	"demo/pkg/progress"
+	"demo/pkg/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/urfave/cli"

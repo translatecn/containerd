@@ -2,15 +2,15 @@ package events
 
 import (
 	"demo/cmd/ctr/commands"
-	"demo/over/events"
-	"demo/over/log"
-	"demo/over/typeurl/v2"
+	"demo/pkg/events"
+	"demo/pkg/log"
+	"demo/pkg/typeurl/v2"
 	"encoding/json"
 	"fmt"
 	"github.com/urfave/cli"
 
 	// Register grpc event types
-	_ "demo/over/api/events"
+	_ "demo/pkg/api/events"
 )
 
 // Command is the cli command for displaying containerd events

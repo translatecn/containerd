@@ -2,10 +2,10 @@ package process
 
 import (
 	"context"
-	"demo/over/fifo"
-	"demo/over/log"
-	google_protobuf "demo/over/protobuf/types"
-	stdio2 "demo/over/stdio"
+	"demo/pkg/fifo"
+	"demo/pkg/log"
+	google_protobuf "demo/pkg/protobuf/types"
+	stdio2 "demo/pkg/stdio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,8 +16,8 @@ import (
 	"time"
 
 	runc "demo/others/go-runc"
-	"demo/over/console"
-	"demo/over/mount"
+	"demo/pkg/console"
+	"demo/pkg/mount"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 )

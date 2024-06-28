@@ -1,8 +1,8 @@
 package tasks
 
 import (
-	"demo/over/protobuf/proto"
-	"demo/over/typeurl/v2"
+	"demo/pkg/protobuf/proto"
+	"demo/pkg/typeurl/v2"
 	"encoding/json"
 	"errors"
 	"fmt"

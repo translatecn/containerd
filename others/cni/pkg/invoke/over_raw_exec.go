@@ -17,8 +17,8 @@ package invoke
 import (
 	"bytes"
 	"context"
-	"demo/over/drop"
-	"demo/over/write"
+	"demo/pkg/drop"
+	"demo/pkg/write"
 	"encoding/json"
 	"fmt"
 	"io"

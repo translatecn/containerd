@@ -13,7 +13,7 @@ rm -rf /var/lib/cni/*
 rm -rf /etc/cdi/*     # 静态配置
 rm -rf /var/run/cdi/* # 动态配置
 
-
+#/opt/cni/bin
 
 mkdir -p /etc/cni/net.d
 mkdir -p /run/flannel

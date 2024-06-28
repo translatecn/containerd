@@ -2,7 +2,7 @@ package command
 
 import (
 	"bytes"
-	"demo/over/oci"
+	"demo/pkg/oci"
 	"encoding/json"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"

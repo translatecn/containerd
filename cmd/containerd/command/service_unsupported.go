@@ -1,7 +1,7 @@
 package command
 
 import (
-	"demo/over/plugins/containerd/content"
+	"demo/pkg/plugins/containerd/content"
 	"github.com/urfave/cli"
 )
 

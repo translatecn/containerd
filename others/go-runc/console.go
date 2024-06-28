@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"demo/over/console"
+	"demo/pkg/console"
 	"golang.org/x/sys/unix"
 )
 

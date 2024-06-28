@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"syscall"
 
-	"demo/over/content"
-	"demo/over/images"
+	"demo/pkg/content"
+	"demo/pkg/images"
 	"github.com/moby/sys/signal"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )

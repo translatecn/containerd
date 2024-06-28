@@ -2,11 +2,11 @@ package containerd
 
 import (
 	"context"
-	"demo/over/containers"
-	"demo/over/oci"
-	"demo/over/protobuf/types"
-	api "demo/over/sandbox"
-	"demo/over/typeurl/v2"
+	"demo/pkg/containers"
+	"demo/pkg/oci"
+	"demo/pkg/protobuf/types"
+	api "demo/pkg/sandbox"
+	"demo/pkg/typeurl/v2"
 	"errors"
 	"fmt"
 	"time"

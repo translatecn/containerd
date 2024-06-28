@@ -1,7 +1,7 @@
 package images
 
 import (
-	"demo/over/log"
+	"demo/pkg/log"
 	"errors"
 	"fmt"
 	"os"
@@ -10,10 +10,10 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/platforms"
-	"demo/over/progress"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
+	"demo/pkg/platforms"
+	"demo/pkg/progress"
 	"github.com/urfave/cli"
 )
 

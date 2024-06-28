@@ -2,8 +2,8 @@ package tasks
 
 import (
 	"demo/cmd/ctr/commands"
-	"demo/over/cio"
-	"demo/over/console"
+	"demo/pkg/cio"
+	"demo/pkg/console"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

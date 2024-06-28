@@ -1,7 +1,7 @@
 package content
 
 import (
-	"demo/over/log"
+	"demo/pkg/log"
 	"errors"
 	"fmt"
 	"io"
@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/content"
-	"demo/over/errdefs"
-	"demo/over/remotes"
+	"demo/pkg/content"
+	"demo/pkg/errdefs"
+	"demo/pkg/remotes"
 	units "github.com/docker/go-units"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"

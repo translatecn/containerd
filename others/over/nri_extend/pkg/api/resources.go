@@ -1,7 +1,7 @@
 package api
 
 import (
-	cri "demo/over/api/cri/v1"
+	cri "demo/pkg/api/cri/v1"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 )
 

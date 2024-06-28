@@ -2,8 +2,8 @@ package command
 
 import (
 	"context"
-	"demo/over/log"
-	"demo/over/plugins/containerd/content"
+	"demo/pkg/log"
+	"demo/pkg/plugins/containerd/content"
 	"os"
 	"path/filepath"
 

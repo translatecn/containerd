@@ -2,12 +2,12 @@ package shim
 
 import (
 	gocontext "context"
-	"demo/over/api/runtime/task/v2"
-	"demo/over/console"
-	"demo/over/namespaces"
-	"demo/over/plugins/shim/shim"
-	ptypes "demo/over/protobuf/types"
-	"demo/over/typeurl/v2"
+	"demo/pkg/api/runtime/task/v2"
+	"demo/pkg/console"
+	"demo/pkg/namespaces"
+	"demo/pkg/plugins/shim/shim"
+	ptypes "demo/pkg/protobuf/types"
+	"demo/pkg/typeurl/v2"
 	"errors"
 	"fmt"
 	"net"
@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/ttrpc"
+	"demo/pkg/ttrpc"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

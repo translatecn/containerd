@@ -1,7 +1,7 @@
 package process
 
 import (
-	google_protobuf "demo/over/protobuf/types"
+	google_protobuf "demo/pkg/protobuf/types"
 )
 
 // Mount holds filesystem mount configuration

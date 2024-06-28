@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"net/url"
 
-	internalapi "demo/over/api/cri"
-	pb "demo/over/api/cri/v1"
+	internalapi "demo/pkg/api/cri"
+	pb "demo/pkg/api/cri/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )

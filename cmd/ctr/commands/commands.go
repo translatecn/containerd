@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"demo/over/atomicfile"
-	"demo/over/defaults"
+	"demo/pkg/atomicfile"
+	"demo/pkg/defaults"
 	"encoding/json"
 	"fmt"
 	"os"

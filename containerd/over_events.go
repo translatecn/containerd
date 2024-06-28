@@ -2,12 +2,12 @@ package containerd
 
 import (
 	"context"
-	"demo/over/protobuf"
-	"demo/over/typeurl/v2"
+	"demo/pkg/protobuf"
+	"demo/pkg/typeurl/v2"
 
-	eventsapi "demo/over/api/services/events/v1"
-	"demo/over/errdefs"
-	"demo/over/events"
+	eventsapi "demo/pkg/api/services/events/v1"
+	"demo/pkg/errdefs"
+	"demo/pkg/events"
 )
 
 // EventService handles the publish, forward and subscribe of events.

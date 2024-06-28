@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"syscall"
 
-	"demo/over/api/types"
-	"demo/over/content"
-	"demo/over/errdefs"
-	"demo/over/images"
+	"demo/pkg/api/types"
+	"demo/pkg/content"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )

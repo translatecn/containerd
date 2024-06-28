@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"demo/over/typeurl/v2"
+	"demo/pkg/typeurl/v2"
 	"errors"
 	"fmt"
 	"os"

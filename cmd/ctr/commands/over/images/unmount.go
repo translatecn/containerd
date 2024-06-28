@@ -1,12 +1,12 @@
 package images
 
 import (
-	"demo/over/leases"
+	"demo/pkg/leases"
 	"fmt"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/errdefs"
-	"demo/over/mount"
+	"demo/pkg/errdefs"
+	"demo/pkg/mount"
 	"github.com/urfave/cli"
 )
 

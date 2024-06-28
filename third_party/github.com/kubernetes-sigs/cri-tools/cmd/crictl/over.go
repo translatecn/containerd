@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	internalapi "demo/over/api/cri"
-	pb "demo/over/api/cri/v1"
-	"demo/over/cri/remote"
+	internalapi "demo/pkg/api/cri"
+	pb "demo/pkg/api/cri/v1"
+	"demo/pkg/cri/remote"
 	"errors"
 	"fmt"
 	"github.com/docker/go-units"

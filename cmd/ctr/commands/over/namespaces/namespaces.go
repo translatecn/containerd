@@ -1,7 +1,7 @@
 package namespaces
 
 import (
-	"demo/over/log"
+	"demo/pkg/log"
 	"errors"
 	"fmt"
 	"os"
@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/errdefs"
+	"demo/pkg/errdefs"
 	"github.com/urfave/cli"
 )
 

@@ -2,15 +2,15 @@ package containerd
 
 import (
 	"context"
-	"demo/over/protobuf"
-	ptypes "demo/over/protobuf/types"
-	"demo/over/typeurl/v2"
+	"demo/pkg/protobuf"
+	ptypes "demo/pkg/protobuf/types"
+	"demo/pkg/typeurl/v2"
 	"errors"
 	"io"
 
-	containersapi "demo/over/api/services/containers/v1"
-	"demo/over/containers"
-	"demo/over/errdefs"
+	containersapi "demo/pkg/api/services/containers/v1"
+	"demo/pkg/containers"
+	"demo/pkg/errdefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

@@ -2,20 +2,20 @@ package containerd
 
 import (
 	"context"
-	"demo/over/ctr_tracing"
-	"demo/over/platforms"
-	"demo/over/unpack"
+	"demo/pkg/ctr_tracing"
+	"demo/pkg/platforms"
+	"demo/pkg/unpack"
 	"errors"
 	"fmt"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/sync/semaphore"
 
-	"demo/over/errdefs"
-	"demo/over/images"
-	"demo/over/remotes"
-	"demo/over/remotes/docker"
-	"demo/over/remotes/docker/schema1" //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
+	"demo/pkg/remotes"
+	"demo/pkg/remotes/docker"
+	"demo/pkg/remotes/docker/schema1" //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
 )
 
 const (

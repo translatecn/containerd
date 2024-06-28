@@ -1,7 +1,7 @@
 package server
 
 import (
-	"demo/over/plugin"
+	"demo/pkg/plugin"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,7 +10,7 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 
-	"demo/over/errdefs"
+	"demo/pkg/errdefs"
 )
 
 // NOTE: Any new map fields added also need to be handled in mergeConfig.

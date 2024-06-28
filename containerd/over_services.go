@@ -1,24 +1,24 @@
 package containerd
 
 import (
-	"demo/over/api/services/diff/v1"
-	"demo/over/api/services/tasks/v1"
-	"demo/over/leases"
-	"demo/over/namespaces"
-	"demo/over/plugin"
-	srv "demo/over/plugins"
-	"demo/over/plugins/containerd/service/introspection"
-	sandbox2 "demo/over/sandbox"
-	"demo/over/snapshots"
+	"demo/pkg/api/services/diff/v1"
+	"demo/pkg/api/services/tasks/v1"
+	"demo/pkg/leases"
+	"demo/pkg/namespaces"
+	"demo/pkg/plugin"
+	srv "demo/pkg/plugins"
+	"demo/pkg/plugins/containerd/service/introspection"
+	sandbox2 "demo/pkg/sandbox"
+	"demo/pkg/snapshots"
 	"fmt"
 
-	containersapi "demo/over/api/services/containers/v1"
-	imagesapi "demo/over/api/services/images/v1"
-	introspectionapi "demo/over/api/services/introspection/v1"
-	namespacesapi "demo/over/api/services/namespaces/v1"
-	"demo/over/containers"
-	"demo/over/content"
-	"demo/over/images"
+	containersapi "demo/pkg/api/services/containers/v1"
+	imagesapi "demo/pkg/api/services/images/v1"
+	introspectionapi "demo/pkg/api/services/introspection/v1"
+	namespacesapi "demo/pkg/api/services/namespaces/v1"
+	"demo/pkg/containers"
+	"demo/pkg/content"
+	"demo/pkg/images"
 )
 
 type services struct {

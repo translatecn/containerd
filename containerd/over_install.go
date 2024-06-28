@@ -10,10 +10,10 @@ import (
 	"runtime"
 	"strings"
 
-	"demo/over/archive"
-	"demo/over/archive/compression"
-	"demo/over/content"
-	"demo/over/images"
+	"demo/pkg/archive"
+	"demo/pkg/archive/compression"
+	"demo/pkg/content"
+	"demo/pkg/images"
 )
 
 // Install a binary image into the opt service.

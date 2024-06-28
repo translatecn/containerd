@@ -2,11 +2,11 @@ package process
 
 import (
 	"context"
-	"demo/over/stdio"
+	"demo/pkg/stdio"
 	"io"
 	"time"
 
-	"demo/over/console"
+	"demo/pkg/console"
 )
 
 // Process on a system

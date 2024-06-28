@@ -1,7 +1,7 @@
 package main
 
 import (
-	"demo/over/typeurl"
+	"demo/pkg/typeurl"
 	"fmt"
 	"io"
 	"os"

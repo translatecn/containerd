@@ -5,8 +5,8 @@ import (
 	gocontext "context"
 	"crypto/tls"
 	"crypto/x509"
-	"demo/over/console"
-	"demo/over/log"
+	"demo/pkg/console"
+	"demo/pkg/log"
 	"errors"
 	"fmt"
 	"io"
@@ -16,10 +16,10 @@ import (
 	"os"
 	"strings"
 
-	"demo/over/remotes"
-	"demo/over/remotes/docker"
-	"demo/over/remotes/docker/config"
-	"demo/over/transfer/registry"
+	"demo/pkg/remotes"
+	"demo/pkg/remotes/docker"
+	"demo/pkg/remotes/docker/config"
+	"demo/pkg/transfer/registry"
 	"github.com/urfave/cli"
 )
 

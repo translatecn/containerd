@@ -6,9 +6,9 @@ import (
 	"github.com/urfave/cli"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/containers"
-	"demo/over/oci"
-	"demo/over/platforms"
+	"demo/pkg/containers"
+	"demo/pkg/oci"
+	"demo/pkg/platforms"
 )
 
 // Command is the parent for all OCI related tools under 'oci'

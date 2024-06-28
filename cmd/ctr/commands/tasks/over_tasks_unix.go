@@ -2,15 +2,15 @@ package tasks
 
 import (
 	gocontext "context"
-	"demo/over/log"
+	"demo/pkg/log"
 	"errors"
 	"net/url"
 	"os"
 	"os/signal"
 
 	"demo/containerd"
-	"demo/over/cio"
-	"demo/over/console"
+	"demo/pkg/cio"
+	"demo/pkg/console"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 )

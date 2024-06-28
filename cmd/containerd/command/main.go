@@ -3,11 +3,11 @@ package command
 import (
 	gocontext "context"
 	serconfig "demo/config/server"
-	"demo/over/defaults"
-	"demo/over/log"
-	"demo/over/plugins/containerd/content"
-	"demo/over/sys"
-	"demo/over/version"
+	"demo/pkg/defaults"
+	"demo/pkg/log"
+	"demo/pkg/plugins/containerd/content"
+	"demo/pkg/sys"
+	"demo/pkg/version"
 	"fmt"
 	"io"
 	"net"
@@ -17,9 +17,9 @@ import (
 	"runtime"
 	"time"
 
-	"demo/over/errdefs"
-	_ "demo/over/metrics" // import containerd build info
-	"demo/over/mount"
+	"demo/pkg/errdefs"
+	_ "demo/pkg/metrics" // import containerd build info
+	"demo/pkg/mount"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc/grpclog"
 )

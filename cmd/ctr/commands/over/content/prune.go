@@ -1,14 +1,14 @@
 package content
 
 import (
-	leases2 "demo/over/leases"
-	"demo/over/log"
+	leases2 "demo/pkg/leases"
+	"demo/pkg/log"
 	"strings"
 	"time"
 	"unicode"
 
 	"demo/cmd/ctr/commands"
-	"demo/over/content"
+	"demo/pkg/content"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

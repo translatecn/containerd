@@ -23,8 +23,8 @@ import (
 	"net/url"
 	"time"
 
-	internalapi "demo/over/api/cri"
-	pb "demo/over/api/cri/v1"
+	internalapi "demo/pkg/api/cri"
+	pb "demo/pkg/api/cri/v1"
 	mobyterm "github.com/moby/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -125,6 +125,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse
 func Exec(client internalapi.RuntimeService, opts execOptions) error {
+	// 通过http 获取链接，重新发起http连接， 将其升级为spdy   s.serveExec
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,

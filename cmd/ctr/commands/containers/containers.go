@@ -2,8 +2,8 @@ package containers
 
 import (
 	"context"
-	"demo/over/log"
-	"demo/over/typeurl/v2"
+	"demo/pkg/log"
+	"demo/pkg/typeurl/v2"
 	"fmt"
 	"os"
 	"strings"
@@ -12,9 +12,9 @@ import (
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/run"
 	"demo/containerd"
-	"demo/over/cio"
-	"demo/over/containers"
-	"demo/over/errdefs"
+	"demo/pkg/cio"
+	"demo/pkg/containers"
+	"demo/pkg/errdefs"
 	"github.com/urfave/cli"
 )
 

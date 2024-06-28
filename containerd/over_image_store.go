@@ -2,14 +2,14 @@ package containerd
 
 import (
 	"context"
-	"demo/over/epoch"
-	"demo/over/protobuf"
-	ptypes "demo/over/protobuf/types"
+	"demo/pkg/epoch"
+	"demo/pkg/protobuf"
+	ptypes "demo/pkg/protobuf/types"
 
-	imagesapi "demo/over/api/services/images/v1"
-	"demo/over/api/types"
-	"demo/over/errdefs"
-	"demo/over/images"
+	imagesapi "demo/pkg/api/services/images/v1"
+	"demo/pkg/api/types"
+	"demo/pkg/errdefs"
+	"demo/pkg/images"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"

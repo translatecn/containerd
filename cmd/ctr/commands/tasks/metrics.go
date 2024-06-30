@@ -10,8 +10,8 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	v1 "demo/others/cgroups/v3/cgroup1/stats"
-	v2 "demo/others/cgroups/v3/cgroup2/stats"
+	v1 "demo/pkg/cgroups/v3/cgroup1/stats"
+	v2 "demo/pkg/cgroups/v3/cgroup2/stats"
 	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
 	"github.com/urfave/cli"
 )

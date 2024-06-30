@@ -874,11 +874,11 @@
       <recent name="$PROJECT_DIR$/pkg/netns" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/over" />
       <recent name="$PROJECT_DIR$/pkg" />
+      <recent name="$PROJECT_DIR$/others" />
+      <recent name="$PROJECT_DIR$/others/over" />
+      <recent name="$PROJECT_DIR$/over" />
       <recent name="$PROJECT_DIR$/pkg/cri" />
-      <recent name="$PROJECT_DIR$/pkg/cri/over" />
-      <recent name="$PROJECT_DIR$/third_party/over" />
     </key>
   </component>
   <component name="RunManager" selected="Go Remote.containerd">
@@ -1056,17 +1056,17 @@
           <option name="timeStamp" value="45" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/pkg/nri_extend/client.go</url>
           <line>176</line>
           <option name="timeStamp" value="60" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/pkg/nri_extend/client.go</url>
           <line>177</line>
           <option name="timeStamp" value="61" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/others/over/nri_extend/client.go</url>
+          <url>file://$PROJECT_DIR$/pkg/nri_extend/client.go</url>
           <line>77</line>
           <option name="timeStamp" value="66" />
         </line-breakpoint>
@@ -1234,6 +1234,86 @@
           <url>file://$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools/cmd/crictl/over_exec.go</url>
           <line>138</line>
           <option name="timeStamp" value="521" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_stats_linux.go</url>
+          <line>57</line>
+          <option name="timeStamp" value="526" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_stats_linux.go</url>
+          <line>58</line>
+          <option name="timeStamp" value="527" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/namespace.go</url>
+          <line>24</line>
+          <option name="timeStamp" value="532" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/namespace.go</url>
+          <line>28</line>
+          <option name="timeStamp" value="533" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/namespace.go</url>
+          <line>20</line>
+          <option name="timeStamp" value="536" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>282</line>
+          <option name="timeStamp" value="540" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>283</line>
+          <option name="timeStamp" value="541" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>284</line>
+          <option name="timeStamp" value="542" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>285</line>
+          <option name="timeStamp" value="543" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>286</line>
+          <option name="timeStamp" value="544" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>287</line>
+          <option name="timeStamp" value="545" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_cni.go</url>
+          <line>288</line>
+          <option name="timeStamp" value="546" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
+          <line>115</line>
+          <option name="timeStamp" value="550" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
+          <line>120</line>
+          <option name="timeStamp" value="551" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
+          <line>139</line>
+          <option name="timeStamp" value="552" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
+          <line>113</line>
+          <option name="timeStamp" value="553" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

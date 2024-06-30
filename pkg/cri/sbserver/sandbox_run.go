@@ -3,7 +3,7 @@ package sbserver
 import (
 	"context"
 	criconfig "demo/config/cri"
-	"demo/others/go-cni"
+	"demo/others/over/go-cni"
 	sandbox3 "demo/pkg/cri/store/sandbox"
 	util2 "demo/pkg/cri/util"
 	"demo/pkg/log"

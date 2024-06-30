@@ -1,13 +1,13 @@
 package main
 
 import (
+	"demo/others/over/imgcrypt"
+	"demo/others/over/imgcrypt/images/encryption"
 	"demo/pkg/typeurl"
 	"fmt"
 	"io"
 	"os"
 
-	"demo/others/imgcrypt"
-	"demo/others/imgcrypt/images/encryption"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	"github.com/urfave/cli"

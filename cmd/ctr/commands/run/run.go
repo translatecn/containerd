@@ -2,6 +2,7 @@ package run
 
 import (
 	gocontext "context"
+	"demo/others/over/go-cni"
 	clabels "demo/pkg/labels"
 	"encoding/csv"
 	"errors"
@@ -11,7 +12,6 @@ import (
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/tasks"
 	"demo/containerd"
-	gocni "demo/others/go-cni"
 	"demo/pkg/cio"
 	"demo/pkg/console"
 	"demo/pkg/containers"
@@ -164,9 +164,9 @@ var Command = cli.Command{
 				return err
 			}
 		}
-		var network gocni.CNI
+		var network cni.CNI
 		if enableCNI {
-			if network, err = gocni.New(gocni.WithDefaultConf); err != nil {
+			if network, err = cni.New(cni.WithDefaultConf); err != nil {
 				return err
 			}
 		}

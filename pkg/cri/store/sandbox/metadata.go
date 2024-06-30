@@ -1,10 +1,10 @@
 package sandbox
 
 import (
+	"demo/others/over/go-cni"
 	"encoding/json"
 	"fmt"
 
-	cni "demo/others/go-cni"
 	runtime "demo/pkg/api/cri/v1"
 )
 

@@ -2,8 +2,8 @@ package sbserver
 
 import (
 	"context"
-	"demo/others/cgroups/v3"
 	"demo/pkg/apparmor"
+	"demo/pkg/cgroups/v3"
 	"demo/pkg/log"
 	"demo/pkg/my_mk"
 	"demo/pkg/seccomp"

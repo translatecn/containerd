@@ -72,7 +72,7 @@ func (c *CriService) stopPodSandbox(ctx context.Context, sandbox sandbox2.Sandbo
 	if sandbox.NetNS != nil {
 		netStop := time.Now()
 		// Use empty netns path if netns is not available. This is defined in:
-		// https://demo/others/cni/blob/v0.7.0-alpha1/SPEC.md
+		// https://demo/pkg/cni/blob/v0.7.0-alpha1/SPEC.md
 		if closed, err := sandbox.NetNS.Closed(); err != nil {
 			return fmt.Errorf("failed to check network namespace closed: %w", err)
 		} else if closed {

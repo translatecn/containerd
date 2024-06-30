@@ -1,7 +1,7 @@
 package cgroups
 
 import (
-	"demo/others/cgroups/v3"
+	"demo/pkg/cgroups/v3"
 	"demo/pkg/events"
 	v1 "demo/pkg/metrics/cgroups/v1"
 	v2 "demo/pkg/metrics/cgroups/v2"

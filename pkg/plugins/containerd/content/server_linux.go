@@ -3,13 +3,13 @@ package content
 import (
 	"context"
 	srvconfig "demo/config/server"
-	"demo/others/cgroups/v3"
+	"demo/pkg/cgroups/v3"
 	"demo/pkg/log"
 	"demo/pkg/sys"
 	"os"
 
-	cgroup1 "demo/others/cgroups/v3/cgroup1"
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	cgroup1 "demo/pkg/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/ttrpc"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )

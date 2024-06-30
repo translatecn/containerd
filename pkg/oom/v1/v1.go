@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"sync"
 
-	"demo/others/cgroups/v3/cgroup1"
 	eventstypes "demo/pkg/api/events"
+	"demo/pkg/cgroups/v3/cgroup1"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )

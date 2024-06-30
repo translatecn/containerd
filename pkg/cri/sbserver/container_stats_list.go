@@ -12,11 +12,11 @@ import (
 	"reflect"
 	"time"
 
-	cg1 "demo/others/cgroups/v3/cgroup1/stats"
-	cg2 "demo/others/cgroups/v3/cgroup2/stats"
 	runtime "demo/pkg/api/cri/v1"
 	"demo/pkg/api/services/tasks/v1"
 	"demo/pkg/api/types"
+	cg1 "demo/pkg/cgroups/v3/cgroup1/stats"
+	cg2 "demo/pkg/cgroups/v3/cgroup2/stats"
 	"demo/pkg/errdefs"
 	wstats "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/stats"
 )

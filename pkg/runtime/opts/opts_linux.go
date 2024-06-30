@@ -2,9 +2,9 @@ package opts
 
 import (
 	"context"
-	"demo/others/cgroups/v3"
-	cgroup1 "demo/others/cgroups/v3/cgroup1"
-	cgroup2 "demo/others/cgroups/v3/cgroup2"
+	"demo/pkg/cgroups/v3"
+	cgroup1 "demo/pkg/cgroups/v3/cgroup1"
+	cgroup2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/namespaces"
 )
 

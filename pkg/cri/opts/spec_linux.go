@@ -2,7 +2,7 @@ package opts
 
 import (
 	"context"
-	"demo/others/cgroups/v3"
+	"demo/pkg/cgroups/v3"
 	ctrdutil "demo/pkg/cri/util"
 	"demo/pkg/log"
 	"errors"

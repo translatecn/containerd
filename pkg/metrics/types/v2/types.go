@@ -1,7 +1,7 @@
 package v2
 
 import (
-	v2 "demo/others/cgroups/v3/cgroup2/stats"
+	v2 "demo/pkg/cgroups/v3/cgroup2/stats"
 )
 
 type (

@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	criconfig "demo/config/cri"
+	"demo/others/over/imgcrypt"
+	"demo/others/over/imgcrypt/images/encryption"
 	tracing "demo/pkg/ctr_tracing"
 	"demo/pkg/log"
 	distribution "demo/pkg/reference/docker"
@@ -23,8 +25,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"demo/others/imgcrypt"
-	"demo/others/imgcrypt/images/encryption"
 	runtime "demo/pkg/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 

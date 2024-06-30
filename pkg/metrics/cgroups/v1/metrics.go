@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	cgroups "demo/others/cgroups/v3/cgroup1"
+	cgroups "demo/pkg/cgroups/v3/cgroup1"
 	cmetrics "demo/pkg/metrics"
 	"demo/pkg/metrics/cgroups/common"
 	v1 "demo/pkg/metrics/types/v1"

@@ -3,7 +3,7 @@ package task
 import (
 	"context"
 	runcconfig "demo/config/runc"
-	"demo/others/cgroups/v3"
+	"demo/pkg/cgroups/v3"
 	"demo/pkg/namespaces"
 	"demo/pkg/oom"
 	oomv1 "demo/pkg/oom/v1"
@@ -21,11 +21,11 @@ import (
 	"os"
 	"sync"
 
-	"demo/others/cgroups/v3/cgroup1"
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	eventstypes "demo/pkg/api/events"
 	taskAPI "demo/pkg/api/runtime/task/v2"
 	"demo/pkg/api/types/task"
+	"demo/pkg/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/errdefs"
 	"demo/pkg/runtime/v2/runc"
 	"demo/pkg/ttrpc"

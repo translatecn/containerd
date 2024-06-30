@@ -2,8 +2,8 @@ package v1
 
 import (
 	"context"
-	cgroups "demo/others/cgroups/v3/cgroup1"
 	eventstypes "demo/pkg/api/events"
+	cgroups "demo/pkg/cgroups/v3/cgroup1"
 	"demo/pkg/errdefs"
 	"demo/pkg/events"
 	"demo/pkg/log"

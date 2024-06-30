@@ -10,7 +10,7 @@
 package hcsschema
 
 import (
-	v1 "demo/others/cgroups/stats/v1"
+	v1 "demo/pkg/cgroups/stats/v1"
 )
 
 type Properties struct {

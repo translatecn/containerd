@@ -2,13 +2,13 @@ package tasks
 
 import (
 	"context"
+	"demo/others/over/go-cni"
 	"demo/pkg/typeurl/v2"
 	"errors"
 	"fmt"
 
 	"demo/cmd/ctr/commands"
 	"demo/containerd"
-	gocni "demo/others/go-cni"
 	"github.com/moby/sys/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -32,9 +32,9 @@ func RemoveCniNetworkIfExist(ctx context.Context, container containerd.Container
 	}
 	networkMetaData := data.(*commands.NetworkMetaData)
 
-	var network gocni.CNI
+	var network cni.CNI
 	if networkMetaData.EnableCni {
-		if network, err = gocni.New(gocni.WithDefaultConf); err != nil {
+		if network, err = cni.New(cni.WithDefaultConf); err != nil {
 			return err
 		}
 		if err := network.Remove(ctx, commands.FullID(ctx, container), ""); err != nil {

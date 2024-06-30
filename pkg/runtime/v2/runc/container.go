@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"demo/others/cgroups/v3"
-	"demo/others/cgroups/v3/cgroup1"
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
+	"demo/pkg/cgroups/v3"
+	"demo/pkg/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/errdefs"
 	"github.com/sirupsen/logrus"
 )

@@ -3,10 +3,10 @@ package manager
 import (
 	"context"
 	runcconfig "demo/config/runc"
-	"demo/others/cgroups/v3"
-	"demo/others/cgroups/v3/cgroup1"
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	runcC "demo/others/go-runc"
+	"demo/pkg/cgroups/v3"
+	"demo/pkg/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/drop"
 	"demo/pkg/log"
 	"demo/pkg/mount"

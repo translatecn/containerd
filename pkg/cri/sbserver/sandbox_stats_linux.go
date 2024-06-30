@@ -2,16 +2,16 @@ package sbserver
 
 import (
 	"context"
-	"demo/others/cgroups/v3"
+	"demo/pkg/cgroups/v3"
 	sandbox2 "demo/pkg/cri/store/sandbox"
 	"demo/pkg/log"
 	"demo/pkg/ns"
 	"fmt"
 	"time"
 
-	"demo/others/cgroups/v3/cgroup1"
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	runtime "demo/pkg/api/cri/v1"
+	"demo/pkg/cgroups/v3/cgroup1"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"demo/pkg/errdefs"
 	"github.com/vishvananda/netlink"
 )

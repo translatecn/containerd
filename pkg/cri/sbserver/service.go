@@ -2,7 +2,7 @@ package sbserver
 
 import (
 	criconfig "demo/config/cri"
-	"demo/others/go-cni"
+	"demo/others/over/go-cni"
 	"demo/pkg/atomic"
 	"demo/pkg/cri/nri"
 	containerstore "demo/pkg/cri/store/container"

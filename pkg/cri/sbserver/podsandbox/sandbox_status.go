@@ -2,7 +2,7 @@ package podsandbox
 
 import (
 	"context"
-	"demo/others/go-cni"
+	"demo/others/over/go-cni"
 	sandbox2 "demo/pkg/cri/store/sandbox"
 	"demo/pkg/sandbox"
 	"demo/pkg/typeurl/v2"

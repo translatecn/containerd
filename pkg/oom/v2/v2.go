@@ -7,8 +7,8 @@ import (
 	"demo/pkg/runtime"
 	"fmt"
 
-	cgroupsv2 "demo/others/cgroups/v3/cgroup2"
 	eventstypes "demo/pkg/api/events"
+	cgroupsv2 "demo/pkg/cgroups/v3/cgroup2"
 	"github.com/sirupsen/logrus"
 )
 

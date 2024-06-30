@@ -1,7 +1,7 @@
 package client
 
 import (
-	"demo/others/cgroups/v3/cgroup1"
+	"demo/pkg/cgroups/v3/cgroup1"
 	"fmt"
 	"os/exec"
 	"syscall"

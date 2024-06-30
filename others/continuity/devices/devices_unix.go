@@ -19,7 +19,7 @@ func DeviceInfo(fi os.FileInfo) (uint64, uint64, error) {
 	return uint64(unix.Major(dev)), uint64(unix.Minor(dev)), nil
 }
 
-// mknod provides a shortcut for syscall.Mknod
+// Mknod mknod provides a shortcut for syscall.Mknod
 func Mknod(p string, mode os.FileMode, maj, min int) error {
 	var (
 		m   = syscallMode(mode.Perm())

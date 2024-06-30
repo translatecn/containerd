@@ -1,5 +1,5 @@
 disabled_plugins = []
-imports = ["./cmd/containerd/config.toml"]
+imports = []
 oom_score = 0
 plugin_dir = ""
 required_plugins = []

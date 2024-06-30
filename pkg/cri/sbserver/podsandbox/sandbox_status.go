@@ -2,8 +2,8 @@ package podsandbox
 
 import (
 	"context"
-	"demo/others/over/go-cni"
 	sandbox2 "demo/pkg/cri/store/sandbox"
+	"demo/pkg/go-cni"
 	"demo/pkg/sandbox"
 	"demo/pkg/typeurl/v2"
 	"encoding/json"

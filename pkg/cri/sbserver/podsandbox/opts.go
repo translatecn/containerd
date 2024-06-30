@@ -3,9 +3,9 @@ package podsandbox
 import (
 	"context"
 	"demo/containerd"
-	"demo/others/over/nri_extend"
-	v1 "demo/others/over/nri_extend/types/v1"
 	"demo/pkg/log"
+	"demo/pkg/nri_extend"
+	v1 "demo/pkg/nri_extend/types/v1"
 )
 
 // WithNRISandboxDelete calls delete for a sandbox'd task

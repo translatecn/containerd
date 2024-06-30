@@ -1,7 +1,7 @@
 package sandbox
 
 import (
-	"demo/others/over/go-cni"
+	"demo/pkg/go-cni"
 	"encoding/json"
 	"fmt"
 

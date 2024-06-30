@@ -1,7 +1,7 @@
 package adaptation
 
 import (
-	"demo/others/over/nri_extend/pkg/api"
+	"demo/pkg/nri_extend/pkg/api"
 )
 
 //

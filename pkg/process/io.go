@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	runc "demo/others/go-runc"
+	runc "demo/pkg/go-runc"
 	"github.com/hashicorp/go-multierror"
 )
 

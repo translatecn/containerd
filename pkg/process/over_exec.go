@@ -2,8 +2,8 @@ package process
 
 import (
 	"context"
-	"demo/others/go-runc"
 	"demo/pkg/fifo"
+	"demo/pkg/go-runc"
 	"demo/pkg/stdio"
 	"fmt"
 	"io"

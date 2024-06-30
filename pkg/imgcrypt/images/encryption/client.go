@@ -2,7 +2,7 @@ package encryption
 
 import (
 	"context"
-	"demo/others/over/imgcrypt"
+	"demo/pkg/imgcrypt"
 	"demo/pkg/typeurl"
 	"fmt"
 

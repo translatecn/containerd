@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	nrinet "demo/others/over/nri_extend/pkg/net"
+	nrinet "demo/pkg/nri_extend/pkg/net"
 	"demo/pkg/ttrpc"
 )
 

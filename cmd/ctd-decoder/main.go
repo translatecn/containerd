@@ -1,8 +1,8 @@
 package main
 
 import (
-	"demo/others/over/imgcrypt"
-	"demo/others/over/imgcrypt/images/encryption"
+	"demo/pkg/imgcrypt"
+	"demo/pkg/imgcrypt/images/encryption"
 	"demo/pkg/typeurl"
 	"fmt"
 	"io"

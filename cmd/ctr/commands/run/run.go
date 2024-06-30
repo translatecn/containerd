@@ -2,7 +2,7 @@ package run
 
 import (
 	gocontext "context"
-	"demo/others/over/go-cni"
+	"demo/pkg/go-cni"
 	clabels "demo/pkg/labels"
 	"encoding/csv"
 	"errors"

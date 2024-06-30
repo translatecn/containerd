@@ -2,7 +2,6 @@ package sbserver
 
 import (
 	criconfig "demo/config/cri"
-	"demo/others/over/go-cni"
 	"demo/pkg/atomic"
 	"demo/pkg/cri/nri"
 	containerstore "demo/pkg/cri/store/container"
@@ -12,6 +11,7 @@ import (
 	snapshotstore "demo/pkg/cri/store/snapshot"
 	"demo/pkg/cri/streaming"
 	ctrdutil "demo/pkg/cri/util"
+	"demo/pkg/go-cni"
 	"demo/pkg/kmutex"
 	"demo/pkg/oci"
 	"demo/pkg/plugin"

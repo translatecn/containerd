@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	nri "demo/others/over/nri_extend/pkg/adaptation"
 	"demo/pkg/errdefs"
+	nri "demo/pkg/nri_extend/pkg/adaptation"
 	"github.com/sirupsen/logrus"
 )
 

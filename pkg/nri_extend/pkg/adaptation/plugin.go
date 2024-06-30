@@ -2,7 +2,7 @@ package adaptation
 
 import (
 	"context"
-	"demo/others/over/nri_extend/pkg/net"
+	"demo/pkg/nri_extend/pkg/net"
 	"errors"
 	"fmt"
 	stdnet "net"
@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"demo/others/over/nri_extend/pkg/api"
-	"demo/others/over/nri_extend/pkg/log"
-	"demo/others/over/nri_extend/pkg/net/multiplex"
+	"demo/pkg/nri_extend/pkg/api"
+	"demo/pkg/nri_extend/pkg/log"
+	"demo/pkg/nri_extend/pkg/net/multiplex"
 	"demo/pkg/ttrpc"
 )
 

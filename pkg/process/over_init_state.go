@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	runc "demo/others/go-runc"
+	runc "demo/pkg/go-runc"
 	"github.com/sirupsen/logrus"
 )
 

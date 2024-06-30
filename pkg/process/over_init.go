@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	runc "demo/others/go-runc"
 	"demo/pkg/console"
+	runc "demo/pkg/go-runc"
 	"demo/pkg/mount"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"

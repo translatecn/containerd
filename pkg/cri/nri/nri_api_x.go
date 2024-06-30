@@ -20,9 +20,9 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-tools/generate"
 
-	"demo/others/over/nri_extend/pkg/api"
-	nrigen "demo/others/over/nri_extend/pkg/runtime-tools/generate"
 	"demo/pkg/nri"
+	"demo/pkg/nri_extend/pkg/api"
+	nrigen "demo/pkg/nri_extend/pkg/runtime-tools/generate"
 )
 
 type API struct {

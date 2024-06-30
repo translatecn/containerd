@@ -11,8 +11,8 @@ import (
 	"sort"
 	"sync"
 
-	"demo/others/over/nri_extend/pkg/api"
-	"demo/others/over/nri_extend/pkg/log"
+	"demo/pkg/nri_extend/pkg/api"
+	"demo/pkg/nri_extend/pkg/log"
 	"demo/pkg/ttrpc"
 )
 

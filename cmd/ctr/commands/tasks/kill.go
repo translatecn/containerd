@@ -2,7 +2,7 @@ package tasks
 
 import (
 	"context"
-	"demo/others/over/go-cni"
+	"demo/pkg/go-cni"
 	"demo/pkg/typeurl/v2"
 	"errors"
 	"fmt"

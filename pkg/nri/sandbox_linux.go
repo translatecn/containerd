@@ -1,7 +1,7 @@
 package nri
 
 import (
-	nri "demo/others/over/nri_extend/pkg/adaptation"
+	nri "demo/pkg/nri_extend/pkg/adaptation"
 )
 
 func podSandboxToNRI(pod PodSandbox) *nri.PodSandbox {

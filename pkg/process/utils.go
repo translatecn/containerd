@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	runc "demo/others/go-runc"
 	"demo/pkg/errdefs"
+	runc "demo/pkg/go-runc"
 	"golang.org/x/sys/unix"
 )
 

@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"sync"
 
-	types "demo/others/over/nri_extend/types/v1"
+	types "demo/pkg/nri_extend/types/v1"
 
 	oci "github.com/opencontainers/runtime-spec/specs-go"
 )

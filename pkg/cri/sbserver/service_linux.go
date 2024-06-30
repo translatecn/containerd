@@ -1,8 +1,8 @@
 package sbserver
 
 import (
-	"demo/others/over/go-cni"
 	cap2 "demo/pkg/cap"
+	"demo/pkg/go-cni"
 	"demo/pkg/userns"
 	"fmt"
 

@@ -3,7 +3,7 @@ package nri
 import (
 	"time"
 
-	nri "demo/others/over/nri_extend/pkg/adaptation"
+	nri "demo/pkg/nri_extend/pkg/adaptation"
 )
 
 // Config data for NRI.

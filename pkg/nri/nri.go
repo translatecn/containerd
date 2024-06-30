@@ -10,7 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	nri "demo/others/over/nri_extend/pkg/adaptation"
+	nri "demo/pkg/nri_extend/pkg/adaptation"
 )
 
 // API implements a common API for interfacing NRI from containerd. It is

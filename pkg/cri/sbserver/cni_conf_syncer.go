@@ -1,7 +1,7 @@
 package sbserver
 
 import (
-	"demo/others/over/go-cni"
+	"demo/pkg/go-cni"
 	"demo/pkg/my_mk"
 	"fmt"
 	"path/filepath"

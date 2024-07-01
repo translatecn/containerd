@@ -148,10 +148,11 @@ func newCommand(ctx context.Context, id, containerdAddress, containerdTTRPCAddre
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true, // 将一个进程从原来所属的进程组迁移到pgid对应的进程组
 	}
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
 	write.AppendRunLog("shim: ---------->ENV: ", drop.DropEnv(cmd.Env))
 	write.AppendRunLog("shim: ---------->Args: ", cmd.Args)
-	write.AppendRunLog("shim: ---------->Path: ", cmd.Path)
 	write.AppendRunLog("shim: ---------->Process: ", cmd.Process)
 	write.AppendRunLog("shim: ---------->Dir: ", cmd.Dir)
 

@@ -528,6 +528,8 @@ type request struct {
 
 func (r *request) do(ctx context.Context) (*http.Response, error) {
 	u := r.host.Scheme + "://" + r.host.Host + r.path
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	write.AppendRunLog("", r.method+" "+u)
 
 	req, err := http.NewRequestWithContext(ctx, r.method, u, nil)

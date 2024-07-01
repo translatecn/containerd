@@ -6,9 +6,90 @@
   <component name="ChangeListManager">
     <list default="true" id="a0a5fafa-c684-4e3a-b7ba-d5c11f33ec98" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.sh" beforeDir="false" afterPath="$PROJECT_DIR$/build.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/debug.sh" beforeDir="false" afterPath="$PROJECT_DIR$/debug.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0bf2c407f664a8c6821547e6bf3b03423e12f0fb9ce625276093e2fb300358b5-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0bf2c407f664a8c6821547e6bf3b03423e12f0fb9ce625276093e2fb300358b5-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0bf2c407f664a8c6821547e6bf3b03423e12f0fb9ce625276093e2fb300358b5-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0bf2c407f664a8c6821547e6bf3b03423e12f0fb9ce625276093e2fb300358b5-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0d52cb84551ecbbf98025ba2b287db3e2aa3c57bf9be52ae22c403b539014d38-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0d52cb84551ecbbf98025ba2b287db3e2aa3c57bf9be52ae22c403b539014d38-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0d52cb84551ecbbf98025ba2b287db3e2aa3c57bf9be52ae22c403b539014d38-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/0d52cb84551ecbbf98025ba2b287db3e2aa3c57bf9be52ae22c403b539014d38-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/228353be30b09d9a90c64a59b69b1a0cb3b2c1faa87f775a8b7852eb0f0d7d36-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/228353be30b09d9a90c64a59b69b1a0cb3b2c1faa87f775a8b7852eb0f0d7d36-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/228353be30b09d9a90c64a59b69b1a0cb3b2c1faa87f775a8b7852eb0f0d7d36-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/228353be30b09d9a90c64a59b69b1a0cb3b2c1faa87f775a8b7852eb0f0d7d36-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/32bba55d779e3020c01443ce4846b307c914cc19c1ad96c402a800d3a7c4b953-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/32bba55d779e3020c01443ce4846b307c914cc19c1ad96c402a800d3a7c4b953-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/32bba55d779e3020c01443ce4846b307c914cc19c1ad96c402a800d3a7c4b953-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/32bba55d779e3020c01443ce4846b307c914cc19c1ad96c402a800d3a7c4b953-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/64ce7096471c7936c6ec6f33119d196f9982d65038fb4c7800bcd9f91d12fe08-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/64ce7096471c7936c6ec6f33119d196f9982d65038fb4c7800bcd9f91d12fe08-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/64ce7096471c7936c6ec6f33119d196f9982d65038fb4c7800bcd9f91d12fe08-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/64ce7096471c7936c6ec6f33119d196f9982d65038fb4c7800bcd9f91d12fe08-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/93b091029537e6c54bc667494398619928bdcbba93992e3f2427de728df2f3d6-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/93b091029537e6c54bc667494398619928bdcbba93992e3f2427de728df2f3d6-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/93b091029537e6c54bc667494398619928bdcbba93992e3f2427de728df2f3d6-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/93b091029537e6c54bc667494398619928bdcbba93992e3f2427de728df2f3d6-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/93b091029537e6c54bc667494398619928bdcbba93992e3f2427de728df2f3d6-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/d07774e51e22ff6f361cd235d80f6bc49311d03f5075eb7342d48bde27242994-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/d07774e51e22ff6f361cd235d80f6bc49311d03f5075eb7342d48bde27242994-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/d07774e51e22ff6f361cd235d80f6bc49311d03f5075eb7342d48bde27242994-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/d07774e51e22ff6f361cd235d80f6bc49311d03f5075eb7342d48bde27242994-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/e65592ca0a5233804c97314fb83dca7a1f3dd2c7c837bf117e6d0ba68b7e2231-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/e65592ca0a5233804c97314fb83dca7a1f3dd2c7c837bf117e6d0ba68b7e2231-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/e65592ca0a5233804c97314fb83dca7a1f3dd2c7c837bf117e6d0ba68b7e2231-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/e65592ca0a5233804c97314fb83dca7a1f3dd2c7c837bf117e6d0ba68b7e2231-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/ef031be50ad0fdbbd2bf11cda2458e304c64426e724b7d4e8353ba9cc4994af2-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/ef031be50ad0fdbbd2bf11cda2458e304c64426e724b7d4e8353ba9cc4994af2-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/ef031be50ad0fdbbd2bf11cda2458e304c64426e724b7d4e8353ba9cc4994af2-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/ef031be50ad0fdbbd2bf11cda2458e304c64426e724b7d4e8353ba9cc4994af2-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fbb7fcd161be7f715adceb1b32b3f452ff6857dc2e46dbe19c3360f9bdda7b65-RunPodSandbox-req.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fbb7fcd161be7f715adceb1b32b3f452ff6857dc2e46dbe19c3360f9bdda7b65-RunPodSandbox-sandboxInfo.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fbb7fcd161be7f715adceb1b32b3f452ff6857dc2e46dbe19c3360f9bdda7b65-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fbb7fcd161be7f715adceb1b32b3f452ff6857dc2e46dbe19c3360f9bdda7b65-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fbb7fcd161be7f715adceb1b32b3f452ff6857dc2e46dbe19c3360f9bdda7b65-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-NewContainer.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-Task-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-Task-Start.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-container-Create.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/run.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/run.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cni/pkg/invoke/over_raw_exec.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cni/pkg/invoke/over_raw_exec.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/container_create.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/container_create.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/go-runc/over_command_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/go-runc/over_command_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/images/archive/exporter.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/images/archive/exporter.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/metadata/containers.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/metadata/containers.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/my_mount/mount.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/my_mount/mount.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/plugins/containerd/content/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/plugins/containerd/content/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/plugins/containerd/service/tasks/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/plugins/containerd/service/tasks/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/plugins/shim/shim/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/plugins/shim/shim/util.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/remotes/docker/resolver.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/remotes/docker/resolver.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/runtime/v2/runc/container.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/runtime/v2/runc/container.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/runtime/v2/runc/manager/manager_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/runtime/v2/runc/manager/manager_linux.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/write/write.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/write/write.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run.log" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync.sh" beforeDir="false" afterPath="$PROJECT_DIR$/sync_bak.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +150,7 @@
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/Users/acejilam/Desktop/todo/containerd",
+    "last_opened_file_path": "/Users/acejilam/Desktop/containerd",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
@@ -93,7 +174,7 @@
       <recent name="$PROJECT_DIR$/pkg/cri" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build x.go">
+  <component name="RunManager" selected="Go Remote.containerd">
     <configuration name="crictl info" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="containerd" />
       <working_directory value="$PROJECT_DIR$/third_party/github.com/kubernetes-sigs/cri-tools" />
@@ -221,8 +302,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-33c477a475b1-e0158606a674-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-241.17011.92" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-GO-241.17011.92" />
+        <option value="bundled-gosdk-33c477a475b1-e0158606a674-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-241.18034.61" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-GO-241.18034.61" />
       </set>
     </attachedChunks>
   </component>
@@ -373,24 +454,9 @@
           <option name="timeStamp" value="414" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/io/logger.go</url>
-          <line>117</line>
-          <option name="timeStamp" value="439" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/io/logger.go</url>
-          <line>141</line>
-          <option name="timeStamp" value="440" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/cri/sbserver/over_container_attach.go</url>
           <line>53</line>
           <option name="timeStamp" value="452" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/container_update_resources.go</url>
-          <line>20</line>
-          <option name="timeStamp" value="466" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/cri/sbserver/update_runtime_config.go</url>
@@ -406,11 +472,6 @@
           <url>file://$PROJECT_DIR$/pkg/containerd/over_client.go</url>
           <line>852</line>
           <option name="timeStamp" value="479" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/write/write.go</url>
-          <line>18</line>
-          <option name="timeStamp" value="496" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/runtime/v2/runc/platform.go</url>
@@ -484,21 +545,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
-          <line>115</line>
-          <option name="timeStamp" value="550" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
-          <line>120</line>
-          <option name="timeStamp" value="551" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
-          <line>139</line>
-          <option name="timeStamp" value="552" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/go-cni/over_opts.go</url>
           <line>113</line>
           <option name="timeStamp" value="553" />
         </line-breakpoint>
@@ -516,6 +562,16 @@
           <url>file://$PROJECT_DIR$/vendor/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/exporter.go</url>
           <line>29</line>
           <option name="timeStamp" value="556" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/plugins/containerd/content/server.go</url>
+          <line>331</line>
+          <option name="timeStamp" value="559" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/write/write.go</url>
+          <line>16</line>
+          <option name="timeStamp" value="562" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

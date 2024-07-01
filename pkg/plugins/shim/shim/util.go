@@ -90,10 +90,11 @@ func Command(ctx context.Context, config *CommandConfig) (*exec.Cmd, error) {
 		}
 		cmd.Stdin = bytes.NewReader(d)
 	}
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
 	write.AppendRunLog("---------->ENV: ", drop.DropEnv(cmd.Env))
 	write.AppendRunLog("---------->Args: ", cmd.Args)
-	write.AppendRunLog("---------->Path: ", cmd.Path)
 	write.AppendRunLog("---------->Process: ", cmd.Process)
 	write.AppendRunLog("---------->Dir: ", cmd.Dir)
 

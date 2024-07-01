@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
 
 func WriteFile(filename string, data interface{}) error {
@@ -12,7 +13,6 @@ func WriteFile(filename string, data interface{}) error {
 }
 
 func AppendRunLog(flag string, info interface{}) {
-
 	// 打开文件，如果文件不存在则创建
 	file, err := os.OpenFile("/tmp/run.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -33,13 +33,18 @@ func AppendRunLog(flag string, info interface{}) {
 		marshal, _ = json.MarshalIndent(info, "  ", "  ")
 	}
 	content := ``
-	if len(marshal) != 0 {
-		content = flag + "\n" + string(marshal) + "\n"
-	} else {
-		content = flag + "\n"
+	if len(marshal) != 0 && string(marshal) != "null" {
+		if len(flag) > 0 {
+			content = flag + "         " + string(marshal) + "\n"
+		} else {
+			content = string(marshal) + "\n"
+		}
+		_, err = file.WriteString(content)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-	_, err = file.WriteString(content)
-	if err != nil {
-		fmt.Println(err)
-	}
+
 }
+
+var WriteLock sync.Mutex

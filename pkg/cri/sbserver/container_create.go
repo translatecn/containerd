@@ -11,7 +11,6 @@ import (
 	util2 "demo/pkg/cri/util"
 	"demo/pkg/log"
 	"demo/pkg/typeurl/v2"
-	"demo/pkg/write"
 	"errors"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
@@ -786,7 +785,6 @@ func (c *CriService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		container2.WithContainer(cntr),
 		container2.WithContainerIO(containerIO),
 	)
-	write.WriteFile(fmt.Sprintf("%s-NewContainer.json", container.ID), container)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internal container object for %q: %w", id, err)

@@ -74,7 +74,7 @@ export DEBUG=1
 #      public.ecr.aws/zinclabs/openobserve:latest
 
 cp -rf ctr_bin /usr/local/bin/ctr
-dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./containerd_bin -- -c ./cmd/containerd/config.toml
+dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec /usr/bin/containerd -- -c /etc/containerd/config.toml
 #dlv --listen=:12345 --headless=true --api-version=2 --accept-multiclient exec ./ctr_bin -- i export nginx.img docker.m.daocloud.io/library/nginx:alpine
 #dlv --listen=:12345 --headless=true --api-version=2 --accept-multiclient exec ./ctr_bin -- i mount docker.m.daocloud.io/library/nginx:alpine /123
 #dlv --listen=:12345 --headless=true --api-version=2 --accept-multiclient exec ./ctr_bin -- i pull docker.m.daocloud.io/library/nginx:alpine &

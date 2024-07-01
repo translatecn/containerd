@@ -294,7 +294,8 @@ func (c *Container) HasPid(pid int) bool {
 func newInit(ctx context.Context, path, workDir, namespace string, platform stdio2.Platform,
 	r *process3.CreateConfig, options *runc.Options, rootfs string) (*process3.Init, error) {
 	runtime := process3.NewRunc(options.Root, path, namespace, options.BinaryName, options.SystemdCgroup)
-	write.AppendRunLog("NewRunc:", "🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠🦠")
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	p := process3.New(r.ID, runtime, stdio2.Stdio{
 		Stdin:    r.Stdin,
 		Stdout:   r.Stdout,

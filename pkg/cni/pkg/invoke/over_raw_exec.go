@@ -36,12 +36,18 @@ type RawExec struct {
 func (e *RawExec) ExecPlugin(ctx context.Context, pluginPath string, stdinData []byte, environ []string) ([]byte, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
-	write.AppendRunLog("", "---------------- ExecPlugin Args ----------------")
-	write.AppendRunLog("bin: ", pluginPath)
-	write.AppendRunLog("env: ", drop.DropEnv(environ))
-	write.AppendRunLog("input: ", string(stdinData))
+	func() {
+		write.WriteLock.Lock()
+		defer write.WriteLock.Unlock()
+		write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
+		write.AppendRunLog("", "---------------- ExecPlugin Args ----------------")
+		write.AppendRunLog("bin: ", pluginPath)
+		write.AppendRunLog("env: ", drop.DropEnv(environ))
+		write.AppendRunLog("input: ", string(stdinData))
+	}()
 	defer func() {
+		write.WriteLock.Lock()
+		defer write.WriteLock.Unlock()
 		write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
 		write.AppendRunLog("", "---------------- ExecPlugin Result ----------------")
 		write.AppendRunLog("stdout: ", stdout.String())

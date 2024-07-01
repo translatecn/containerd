@@ -10,7 +10,6 @@ import (
 	"demo/pkg/netns"
 	sandbox2 "demo/pkg/sandbox"
 	"demo/pkg/typeurl/v2"
-	"demo/pkg/write"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +42,6 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	// Generate unique id and name for the sandbox and reserve the name.
 	id := util2.GenerateID()
-	write.WriteFile(fmt.Sprintf("%s-RunPodSandbox-req.json", id), config)
 	metadata := config.GetMetadata()
 	if metadata == nil {
 		return nil, errors.New("sandbox config must include metadata")
@@ -307,7 +305,6 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	// Send CONTAINER_STARTED event with ContainerId equal to SandboxId.
 	c.generateAndSendContainerEvent(ctx, id, id, runtime.ContainerEventType_CONTAINER_STARTED_EVENT)
-	write.WriteFile(fmt.Sprintf("%s-RunPodSandbox-sandboxInfo.json", id), sandbox)
 	sandboxRuntimeCreateTimer.WithValues(labels["oci_runtime_type"]).UpdateSince(runtimeStart)
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil

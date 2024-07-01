@@ -510,7 +510,10 @@ func writeTar(ctx context.Context, tw *tar.Writer, recordsWithEmpty []tarRecord)
 	sort.Slice(records, func(i, j int) bool {
 		return records[i].Header.Name < records[j].Header.Name
 	})
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	for _, record := range records {
+
 		write.AppendRunLog("", "mount"+fmt.Sprintf("export: name:%s size:%d mode:%v\n", record.Header.Name,
 			record.Header.Size, record.Header.Mode))
 	}

@@ -276,10 +276,7 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 	of := reflect.TypeOf(info.Server)
 	path := fmt.Sprintf(`new(%s).`, of.Elem()) + strings.Split(info.FullMethod, "/")[2]
 	resp, err := handler(ctx, req)
-	if strings.Contains(info.FullMethod, "Status") || strings.Contains(info.FullMethod, "/List") {
-		return resp, err
-	}
-	write.AppendRunLog("", info.FullMethod)
+
 	logGRPCJson(info.FullMethod, req, resp, err, path)
 	return resp, err
 }
@@ -306,13 +303,38 @@ func logGRPCJson(method string, request, reply interface{}, err error, path stri
 	if err != nil {
 		logMessage.Error = err.Error()
 	}
-
 	msg, err := json.MarshalIndent(logMessage, "", "    ")
 	if err != nil {
 		logMessage.Error = err.Error()
 	}
+	skips := []string{
+		"RunPodSandbox",
+		"CreateContainer",
+		"StopPodSandbox",
+		"RemovePodSandbox",
+		"/containerd.services.tasks.v1.Tasks/Get",
+		"/containerd.services.containers.v1.Containers/Get",
+		"Version",
+		"StopContainer",
+		"StartContainer",
+		"RemoveContainer",
+		"Status",
+		"ImageFsInfo",
+		"/List",
+	}
+	skipFlag := false
+	for _, skip := range skips {
+		if strings.Contains(strings.ToLower(method), strings.ToLower(skip)) {
+			skipFlag = true
+		}
+	}
+	if skipFlag {
 
-	write.AppendRunLog("", string(msg))
+	} else {
+		write.WriteLock.Lock()
+		defer write.WriteLock.Unlock()
+		write.AppendRunLog(method, string(msg))
+	}
 }
 
 // recordConfigDeprecations attempts to record use of any deprecated config field.  Failures are logged and ignored.

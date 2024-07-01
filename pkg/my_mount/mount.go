@@ -8,6 +8,8 @@ import (
 )
 
 func Mount(source string, target string, fstype string, flags uintptr, data string) (err error) {
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	if fstype == "overlay" {
 		write.AppendRunLog("", fmt.Sprintf("mount %v %v %v", flag2str(fstype, int64(flags)), data, target))
 	} else {

@@ -8,7 +8,6 @@ import (
 	"demo/pkg/protobuf/proto"
 	"demo/pkg/protobuf/types"
 	"demo/pkg/typeurl/v2"
-	"demo/pkg/write"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -101,7 +100,6 @@ func (s *containerStore) List(ctx context.Context, fs ...string) ([]containers.C
 }
 
 func (s *containerStore) Create(ctx context.Context, container containers.Container) (containers.Container, error) {
-	write.WriteFile(fmt.Sprintf("%s-container-Create.json", container.ID), container)
 	namespace, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
 		return containers.Container{}, err

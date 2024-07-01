@@ -23,11 +23,11 @@ func (r *Runc) command(context context.Context, args ...string) *exec.Cmd {
 	if r.PdeathSignal != 0 {
 		cmd.SysProcAttr.Pdeathsig = r.PdeathSignal
 	}
-
+	write.WriteLock.Lock()
+	defer write.WriteLock.Unlock()
 	write.AppendRunLog("⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️", "")
 	write.AppendRunLog("========> runc  ENV: ", drop.DropEnv(cmd.Env))
 	write.AppendRunLog("========> runc  Args: ", cmd.Args)
-	write.AppendRunLog("========> runc  Path: ", cmd.Path)
 	write.AppendRunLog("========> runc  Process: ", cmd.Process)
 	write.AppendRunLog("========> runc  Dir: ", cmd.Dir)
 

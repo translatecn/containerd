@@ -1,6 +1,7 @@
 package container
 
 import (
+	"demo/pkg/continuity"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"demo/others/continuity"
 	runtime "demo/pkg/api/cri/v1"
 )
 

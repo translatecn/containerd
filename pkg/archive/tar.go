@@ -16,8 +16,8 @@ import (
 	"syscall"
 	"time"
 
-	"demo/others/continuity/fs"
 	"demo/pkg/archive/tarheader"
+	"demo/pkg/continuity/fs"
 )
 
 var bufPool = &sync.Pool{
@@ -481,7 +481,7 @@ func mkparent(ctx context.Context, path, root string, parents []string) error {
 // writer through HandleChange method.
 //
 // This should be used combining with continuity's diff computing functionality
-// (e.g. `fs.Change` of demo/others/continuity/fs).
+// (e.g. `fs.Change` of demo/pkg/continuity/fs).
 //
 // See also https://github.com/opencontainers/image-spec/blob/main/layer.md for details
 // about OCI layers
@@ -532,7 +532,7 @@ func NewChangeWriter(w io.Writer, source string, opts ...ChangeWriterOpt) *Chang
 
 // HandleChange receives filesystem change information and reflect that information to
 // the result tar stream. This function implements `fs.ChangeFunc` of continuity
-// (demo/others/continuity/fs) and should be used with that package.
+// (demo/pkg/continuity/fs) and should be used with that package.
 func (cw *ChangeWriter) HandleChange(k fs.ChangeKind, p string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err

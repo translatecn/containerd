@@ -5,7 +5,7 @@ import (
 	"os"
 	"syscall"
 
-	"demo/others/continuity/sysx"
+	"demo/pkg/continuity/sysx"
 	"golang.org/x/sys/unix"
 )
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"syscall"
 
-	"demo/others/continuity/sysx"
+	"demo/pkg/continuity/sysx"
 )
 
 // detectDirDiff returns diff dir options if a directory could

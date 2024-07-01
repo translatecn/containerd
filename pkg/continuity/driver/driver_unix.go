@@ -1,13 +1,12 @@
 package driver
 
 import (
+	"demo/pkg/continuity/devices"
+	"demo/pkg/continuity/sysx"
 	"errors"
 	"fmt"
 	"os"
 	"sort"
-
-	"demo/others/continuity/devices"
-	"demo/others/continuity/sysx"
 )
 
 func (d *driver) Mknod(path string, mode os.FileMode, major, minor int) error {

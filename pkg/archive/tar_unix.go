@@ -11,8 +11,8 @@ import (
 	"strings"
 	"syscall"
 
-	"demo/others/continuity/fs"
-	"demo/others/continuity/sysx"
+	"demo/pkg/continuity/fs"
+	"demo/pkg/continuity/sysx"
 	"golang.org/x/sys/unix"
 )
 

@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"demo/others/continuity/fs"
+	"demo/pkg/continuity/fs"
 
 	"demo/containerd"
 	"demo/pkg/containers"

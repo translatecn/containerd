@@ -13,7 +13,7 @@ import (
 	"strings"
 	"syscall"
 
-	"demo/others/continuity/fs"
+	"demo/pkg/continuity/fs"
 	"demo/pkg/mount"
 	"github.com/sirupsen/logrus"
 )

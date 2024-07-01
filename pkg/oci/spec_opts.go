@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"demo/others/continuity/fs"
 	"demo/pkg/containers"
 	"demo/pkg/content"
+	"demo/pkg/continuity/fs"
 	"demo/pkg/images"
 	"demo/pkg/mount"
 	"demo/pkg/platforms"

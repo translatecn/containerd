@@ -14,8 +14,8 @@ import (
 	runtime "demo/pkg/api/cri/v1"
 	"github.com/sirupsen/logrus"
 
-	"demo/containerd"
 	eventtypes "demo/pkg/api/events"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"demo/pkg/oci"
 	osinterface "demo/pkg/os"

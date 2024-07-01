@@ -2,7 +2,7 @@ package podsandbox
 
 import (
 	"context"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/log"
 	"demo/pkg/nri_extend"
 	v1 "demo/pkg/nri_extend/types/v1"

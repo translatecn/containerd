@@ -3,7 +3,7 @@ package podsandbox
 import (
 	"sync"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 )
 
 type Status struct {

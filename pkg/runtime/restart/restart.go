@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"github.com/sirupsen/logrus"
 )
 

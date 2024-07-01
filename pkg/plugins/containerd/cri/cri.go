@@ -16,7 +16,7 @@ import (
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"k8s.io/klog/v2"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/sbserver"
 	nriservice "demo/pkg/nri"
 )

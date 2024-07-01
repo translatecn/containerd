@@ -2,7 +2,7 @@ package local
 
 import (
 	"context"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/content"
 	"demo/pkg/errdefs"
 	"demo/pkg/images"

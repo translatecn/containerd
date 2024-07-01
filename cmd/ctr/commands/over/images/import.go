@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/images/archive"
 	"demo/pkg/platforms"
 	"demo/pkg/transfer"

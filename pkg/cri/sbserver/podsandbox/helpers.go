@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/oci"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"

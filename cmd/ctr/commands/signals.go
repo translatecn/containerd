@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"github.com/sirupsen/logrus"
 )

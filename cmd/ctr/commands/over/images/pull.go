@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/images"
 	"demo/pkg/platforms"
 	"demo/pkg/progress"

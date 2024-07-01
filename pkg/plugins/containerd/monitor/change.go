@@ -10,8 +10,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"demo/containerd"
 	"demo/pkg/cio"
+	"demo/pkg/containerd"
 )
 
 type stopChange struct {

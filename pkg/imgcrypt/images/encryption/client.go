@@ -6,7 +6,7 @@ import (
 	"demo/pkg/typeurl"
 	"fmt"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/diff"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

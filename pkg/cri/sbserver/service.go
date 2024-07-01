@@ -27,8 +27,8 @@ import (
 	"sync"
 	"time"
 
-	"demo/containerd"
 	runtime "demo/pkg/api/cri/v1"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/sbserver/podsandbox"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"

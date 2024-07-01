@@ -14,7 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 )
 
 type duration struct {

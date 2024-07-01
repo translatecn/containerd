@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/annotations"
 	"demo/pkg/cri/sbserver/bandwidth"
 	"demo/pkg/cri/sbserver/podsandbox"

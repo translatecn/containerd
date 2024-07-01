@@ -11,7 +11,7 @@ import (
 	"fmt"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/errdefs"
 )

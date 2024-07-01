@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"github.com/urfave/cli"
 )

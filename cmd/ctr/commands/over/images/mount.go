@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"demo/pkg/mount"
 	"demo/pkg/platforms"

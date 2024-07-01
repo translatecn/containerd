@@ -3,8 +3,8 @@ package tasks
 import (
 	gocontext "context"
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
 	"demo/pkg/cio"
+	"demo/pkg/containerd"
 	"demo/pkg/log"
 	"github.com/urfave/cli"
 )

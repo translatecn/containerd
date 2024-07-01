@@ -6,7 +6,7 @@ import (
 	"demo/pkg/typeurl/v2"
 	"fmt"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 )
 
 func init() {

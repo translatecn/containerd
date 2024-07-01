@@ -19,8 +19,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/selinux/go-selinux"
 
-	"demo/containerd"
 	containerdio "demo/pkg/cio"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/annotations"
 	"demo/pkg/errdefs"
 )

@@ -28,7 +28,7 @@ import (
 	runtime "demo/pkg/api/cri/v1"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/annotations"
 	crilabels "demo/pkg/cri/labels"
 	"demo/pkg/errdefs"

@@ -4,7 +4,7 @@ import "runtime"
 
 var (
 	// Package is filled at linking time
-	Package = "demo/containerd"
+	Package = "demo/pkg/containerd"
 
 	// Version holds the complete version number. Filled in at linking time.
 	Version = "1.7.17+unknown"

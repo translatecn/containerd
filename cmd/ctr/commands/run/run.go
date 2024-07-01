@@ -11,9 +11,9 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/tasks"
-	"demo/containerd"
 	"demo/pkg/cio"
 	"demo/pkg/console"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"

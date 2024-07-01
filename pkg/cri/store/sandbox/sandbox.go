@@ -7,7 +7,7 @@ import (
 	"demo/pkg/netns"
 	"sync"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"demo/pkg/truncindex"
 )

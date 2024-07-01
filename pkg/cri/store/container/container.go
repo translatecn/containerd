@@ -7,8 +7,8 @@ import (
 	"demo/pkg/cri/store/stats"
 	"sync"
 
-	"demo/containerd"
 	runtime "demo/pkg/api/cri/v1"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"demo/pkg/truncindex"
 )

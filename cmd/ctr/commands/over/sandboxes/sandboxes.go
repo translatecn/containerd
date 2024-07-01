@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/oci"
 	"github.com/urfave/cli"
 )

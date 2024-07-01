@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
 )

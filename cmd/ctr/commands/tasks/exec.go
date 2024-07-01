@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"errors"
 	"io"
 	"net/url"

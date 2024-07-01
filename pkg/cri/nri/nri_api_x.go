@@ -2,9 +2,9 @@ package nri
 
 import (
 	"context"
-	"demo/containerd"
 	cri "demo/pkg/api/cri/v1"
 	"demo/pkg/blockio"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/cri/annotations"
 	"demo/pkg/cri/constants"

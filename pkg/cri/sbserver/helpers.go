@@ -24,8 +24,8 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 
-	"demo/containerd"
 	runtime "demo/pkg/api/cri/v1"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/errdefs"
 	runhcsoptions "demo/third_party/github.com/Microsoft/hcsshim/cmd/containerd-shim-runhcs-v1/options"

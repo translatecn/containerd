@@ -5,9 +5,9 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/tasks"
-	"demo/containerd"
 	"demo/pkg/cio"
 	"demo/pkg/console"
+	"demo/pkg/containerd"
 	"demo/pkg/errdefs"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

@@ -11,8 +11,8 @@ import (
 
 	"demo/cmd/ctr/commands"
 	"demo/cmd/ctr/commands/run"
-	"demo/containerd"
 	"demo/pkg/cio"
+	"demo/pkg/containerd"
 	"demo/pkg/containers"
 	"demo/pkg/errdefs"
 	"github.com/urfave/cli"

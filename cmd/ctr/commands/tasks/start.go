@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
 	"demo/pkg/cio"
 	"demo/pkg/console"
+	"demo/pkg/containerd"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

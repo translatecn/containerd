@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/content"
 	"demo/pkg/errdefs"
 	"demo/pkg/images"

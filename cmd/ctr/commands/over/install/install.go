@@ -2,7 +2,7 @@ package install
 
 import (
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"github.com/urfave/cli"
 )
 

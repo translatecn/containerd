@@ -1,7 +1,7 @@
 package transfer
 
 import (
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/diff"
 	"demo/pkg/errdefs"
 	"demo/pkg/leases"

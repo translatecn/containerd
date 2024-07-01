@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"github.com/moby/sys/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"

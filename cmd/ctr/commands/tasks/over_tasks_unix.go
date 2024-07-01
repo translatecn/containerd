@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/signal"
 
-	"demo/containerd"
 	"demo/pkg/cio"
 	"demo/pkg/console"
+	"demo/pkg/containerd"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 )

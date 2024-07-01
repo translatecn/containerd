@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/cri/labels"
 	"demo/pkg/errdefs"
 	"k8s.io/apimachinery/pkg/util/sets"

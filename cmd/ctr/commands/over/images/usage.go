@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 
 	"demo/cmd/ctr/commands"
-	"demo/containerd"
+	"demo/pkg/containerd"
 	"demo/pkg/progress"
 
 	"github.com/opencontainers/image-spec/identity"

@@ -1,0 +1,156 @@
+{
+    "ID": "32bba55d779e3020c01443ce4846b307c914cc19c1ad96c402a800d3a7c4b953",
+    "Name": "kube-apiserver_kube-apiserver-vm_kube-system_0930a17ddf7fea6e9d40648ac246f9b4_8",
+    "SandboxID": "413dedd43d0982bef47d385c7c7cd1ce191103a2bc7557c51ac1ddfa9d4bcb9f",
+    "Config": {
+      "metadata": {
+        "name": "kube-apiserver",
+        "attempt": 8
+      },
+      "image": {
+        "image": "sha256:0137c32dad8492d6d9698527534986ebbfced24bdadb8eb32d779d29ba2d4b70"
+      },
+      "command": [
+        "kube-apiserver",
+        "--advertise-address=172.16.244.147",
+        "--allow-privileged=true",
+        "--audit-log-format=json",
+        "--audit-log-maxage=7",
+        "--audit-log-maxbackup=10",
+        "--audit-log-maxsize=100",
+        "--audit-log-path=/var/log/kubernetes/audit.log",
+        "--audit-policy-file=/etc/kubernetes/audit-policy.yml",
+        "--authorization-mode=Node,RBAC",
+        "--client-ca-file=/etc/kubernetes/pki/ca.crt",
+        "--enable-admission-plugins=NodeRestriction",
+        "--enable-aggregator-routing=true",
+        "--enable-bootstrap-token-auth=true",
+        "--etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt",
+        "--etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt",
+        "--etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key",
+        "--etcd-servers=https://127.0.0.1:2379",
+        "--feature-gates=EphemeralContainers=true",
+        "--kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt",
+        "--kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key",
+        "--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+        "--proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt",
+        "--proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key",
+        "--requestheader-allowed-names=front-proxy-client",
+        "--requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt",
+        "--requestheader-extra-headers-prefix=X-Remote-Extra-",
+        "--requestheader-group-headers=X-Remote-Group",
+        "--requestheader-username-headers=X-Remote-User",
+        "--secure-port=6443",
+        "--service-account-issuer=https://kubernetes.default.svc.cluster.local",
+        "--service-account-key-file=/etc/kubernetes/pki/sa.pub",
+        "--service-account-signing-key-file=/etc/kubernetes/pki/sa.key",
+        "--service-cluster-ip-range=10.96.0.0/22",
+        "--tls-cert-file=/etc/kubernetes/pki/apiserver.crt",
+        "--tls-private-key-file=/etc/kubernetes/pki/apiserver.key"
+      ],
+      "mounts": [
+        {
+          "container_path": "/etc/kubernetes",
+          "host_path": "/etc/kubernetes"
+        },
+        {
+          "container_path": "/var/log/kubernetes",
+          "host_path": "/var/log/kubernetes"
+        },
+        {
+          "container_path": "/etc/ssl/certs",
+          "host_path": "/etc/ssl/certs",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/pki",
+          "host_path": "/etc/pki",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/kubernetes/pki",
+          "host_path": "/etc/kubernetes/pki",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/localtime",
+          "host_path": "/etc/localtime",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/hosts",
+          "host_path": "/var/lib/kubelet/pods/0930a17ddf7fea6e9d40648ac246f9b4/etc-hosts"
+        },
+        {
+          "container_path": "/dev/termination-log",
+          "host_path": "/var/lib/kubelet/pods/0930a17ddf7fea6e9d40648ac246f9b4/containers/kube-apiserver/99c7d90b"
+        }
+      ],
+      "labels": {
+        "io.kubernetes.container.name": "kube-apiserver",
+        "io.kubernetes.pod.name": "kube-apiserver-vm",
+        "io.kubernetes.pod.namespace": "kube-system",
+        "io.kubernetes.pod.uid": "0930a17ddf7fea6e9d40648ac246f9b4"
+      },
+      "annotations": {
+        "io.kubernetes.container.hash": "270b8942",
+        "io.kubernetes.container.restartCount": "8",
+        "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+        "io.kubernetes.container.terminationMessagePolicy": "File",
+        "io.kubernetes.pod.terminationGracePeriod": "30"
+      },
+      "log_path": "kube-apiserver/8.log",
+      "linux": {
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 256,
+          "oom_score_adj": -997,
+          "hugepage_limits": [
+            {
+              "page_size": "2MB"
+            },
+            {
+              "page_size": "1GB"
+            }
+          ]
+        },
+        "security_context": {
+          "namespace_options": {
+            "network": 2,
+            "pid": 1
+          },
+          "run_as_user": {},
+          "masked_paths": [
+            "/proc/acpi",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/sys/firmware"
+          ],
+          "readonly_paths": [
+            "/proc/asound",
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ],
+          "seccomp": {},
+          "seccomp_profile_path": "runtime/default"
+        }
+      }
+    },
+    "ImageRef": "sha256:0137c32dad8492d6d9698527534986ebbfced24bdadb8eb32d779d29ba2d4b70",
+    "LogPath": "/var/log/pods/kube-system_kube-apiserver-vm_0930a17ddf7fea6e9d40648ac246f9b4/kube-apiserver/8.log",
+    "StopSignal": "",
+    "ProcessLabel": "",
+    "Status": {},
+    "Container": {},
+    "IO": {},
+    "IsStopSignaledWithTimeout": 0,
+    "Stats": null
+  }

@@ -1,0 +1,120 @@
+{
+    "ID": "64ce7096471c7936c6ec6f33119d196f9982d65038fb4c7800bcd9f91d12fe08",
+    "Name": "etcd_etcd-vm_kube-system_88f1009065abcd09cae34b0910d1835c_11",
+    "SandboxID": "60bd8b39cfe1f0f996837f4932f076dd0ccbac0985d5c87875151323b37bc37c",
+    "Config": {
+      "metadata": {
+        "name": "etcd",
+        "attempt": 11
+      },
+      "image": {
+        "image": "sha256:fce326961ae2d51a5f726883fd59d2a8c2ccc3e45d3bb859882db58e422e59e7"
+      },
+      "command": [
+        "etcd",
+        "--advertise-client-urls=https://172.16.244.147:2379",
+        "--cert-file=/etc/kubernetes/pki/etcd/server.crt",
+        "--client-cert-auth=true",
+        "--data-dir=/var/lib/etcd",
+        "--experimental-initial-corrupt-check=true",
+        "--experimental-watch-progress-notify-interval=5s",
+        "--initial-advertise-peer-urls=https://172.16.244.147:2380",
+        "--initial-cluster=vm=https://172.16.244.147:2380",
+        "--key-file=/etc/kubernetes/pki/etcd/server.key",
+        "--listen-client-urls=https://127.0.0.1:2379,https://172.16.244.147:2379",
+        "--listen-metrics-urls=http://0.0.0.0:2381",
+        "--listen-peer-urls=https://172.16.244.147:2380",
+        "--name=vm",
+        "--peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt",
+        "--peer-client-cert-auth=true",
+        "--peer-key-file=/etc/kubernetes/pki/etcd/peer.key",
+        "--peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt",
+        "--snapshot-count=10000",
+        "--trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt"
+      ],
+      "mounts": [
+        {
+          "container_path": "/var/lib/etcd",
+          "host_path": "/var/lib/etcd"
+        },
+        {
+          "container_path": "/etc/kubernetes/pki/etcd",
+          "host_path": "/etc/kubernetes/pki/etcd"
+        },
+        {
+          "container_path": "/etc/hosts",
+          "host_path": "/var/lib/kubelet/pods/88f1009065abcd09cae34b0910d1835c/etc-hosts"
+        },
+        {
+          "container_path": "/dev/termination-log",
+          "host_path": "/var/lib/kubelet/pods/88f1009065abcd09cae34b0910d1835c/containers/etcd/baf04651"
+        }
+      ],
+      "labels": {
+        "io.kubernetes.container.name": "etcd",
+        "io.kubernetes.pod.name": "etcd-vm",
+        "io.kubernetes.pod.namespace": "kube-system",
+        "io.kubernetes.pod.uid": "88f1009065abcd09cae34b0910d1835c"
+      },
+      "annotations": {
+        "io.kubernetes.container.hash": "ab451293",
+        "io.kubernetes.container.restartCount": "11",
+        "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+        "io.kubernetes.container.terminationMessagePolicy": "File",
+        "io.kubernetes.pod.terminationGracePeriod": "30"
+      },
+      "log_path": "etcd/11.log",
+      "linux": {
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 102,
+          "oom_score_adj": -997,
+          "hugepage_limits": [
+            {
+              "page_size": "2MB"
+            },
+            {
+              "page_size": "1GB"
+            }
+          ]
+        },
+        "security_context": {
+          "namespace_options": {
+            "network": 2,
+            "pid": 1
+          },
+          "run_as_user": {},
+          "masked_paths": [
+            "/proc/acpi",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/sys/firmware"
+          ],
+          "readonly_paths": [
+            "/proc/asound",
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ],
+          "seccomp": {},
+          "seccomp_profile_path": "runtime/default"
+        }
+      }
+    },
+    "ImageRef": "sha256:fce326961ae2d51a5f726883fd59d2a8c2ccc3e45d3bb859882db58e422e59e7",
+    "LogPath": "/var/log/pods/kube-system_etcd-vm_88f1009065abcd09cae34b0910d1835c/etcd/11.log",
+    "StopSignal": "",
+    "ProcessLabel": "",
+    "Status": {},
+    "Container": {},
+    "IO": {},
+    "IsStopSignaledWithTimeout": 0,
+    "Stats": null
+  }

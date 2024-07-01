@@ -1,0 +1,218 @@
+{
+    "ID": "e65592ca0a5233804c97314fb83dca7a1f3dd2c7c837bf117e6d0ba68b7e2231",
+    "Name": "install-cni_kube-flannel-ds-w9wmr_kube-system_f6f3932f-a261-4433-8b8b-b43ce9ced7df_0",
+    "SandboxID": "7dec47585fd0068b67d5516ece9131d32ad8093e74e7681cd2efad62f8d3cda6",
+    "Config": {
+      "metadata": {
+        "name": "install-cni"
+      },
+      "image": {
+        "image": "sha256:e45ac70e0a6d1e40137f3e729f08a296ff102aa1a7d3d0e60a4c8a6dc3a2ba0c"
+      },
+      "command": [
+        "cp"
+      ],
+      "args": [
+        "-f",
+        "/etc/kube-flannel/cni-conf.json",
+        "/etc/cni/net.d/10-flannel.conflist"
+      ],
+      "envs": [
+        {
+          "key": "KUBERNETES_PORT_443_TCP",
+          "value": "tcp://10.96.0.1:443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_ADDR",
+          "value": "10.96.0.1"
+        },
+        {
+          "key": "KUBE_DNS_SERVICE_PORT",
+          "value": "53"
+        },
+        {
+          "key": "KUBE_DNS_SERVICE_PORT_METRICS",
+          "value": "9153"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_TCP_PROTO",
+          "value": "tcp"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_PORT",
+          "value": "443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_PORT",
+          "value": "443"
+        },
+        {
+          "key": "KUBE_DNS_SERVICE_PORT_DNS",
+          "value": "53"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_UDP",
+          "value": "udp://10.96.0.10:53"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_TCP",
+          "value": "tcp://10.96.0.10:53"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_TCP_PORT",
+          "value": "53"
+        },
+        {
+          "key": "KUBERNETES_PORT",
+          "value": "tcp://10.96.0.1:443"
+        },
+        {
+          "key": "KUBE_DNS_SERVICE_PORT_DNS_TCP",
+          "value": "53"
+        },
+        {
+          "key": "KUBE_DNS_PORT",
+          "value": "udp://10.96.0.10:53"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_UDP_ADDR",
+          "value": "10.96.0.10"
+        },
+        {
+          "key": "KUBE_DNS_PORT_9153_TCP_PORT",
+          "value": "9153"
+        },
+        {
+          "key": "KUBE_DNS_SERVICE_HOST",
+          "value": "10.96.0.10"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_PORT_HTTPS",
+          "value": "443"
+        },
+        {
+          "key": "KUBERNETES_PORT_443_TCP_PROTO",
+          "value": "tcp"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_UDP_PROTO",
+          "value": "udp"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_UDP_PORT",
+          "value": "53"
+        },
+        {
+          "key": "KUBE_DNS_PORT_53_TCP_ADDR",
+          "value": "10.96.0.10"
+        },
+        {
+          "key": "KUBE_DNS_PORT_9153_TCP",
+          "value": "tcp://10.96.0.10:9153"
+        },
+        {
+          "key": "KUBE_DNS_PORT_9153_TCP_PROTO",
+          "value": "tcp"
+        },
+        {
+          "key": "KUBERNETES_SERVICE_HOST",
+          "value": "10.96.0.1"
+        },
+        {
+          "key": "KUBE_DNS_PORT_9153_TCP_ADDR",
+          "value": "10.96.0.10"
+        }
+      ],
+      "mounts": [
+        {
+          "container_path": "/etc/cni/net.d",
+          "host_path": "/etc/cni/net.d"
+        },
+        {
+          "container_path": "/etc/kube-flannel/",
+          "host_path": "/var/lib/kubelet/pods/f6f3932f-a261-4433-8b8b-b43ce9ced7df/volumes/kubernetes.io~configmap/flannel-cfg",
+          "readonly": true
+        },
+        {
+          "container_path": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "host_path": "/var/lib/kubelet/pods/f6f3932f-a261-4433-8b8b-b43ce9ced7df/volumes/kubernetes.io~projected/kube-api-access-xddbq",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/hosts",
+          "host_path": "/var/lib/kubelet/pods/f6f3932f-a261-4433-8b8b-b43ce9ced7df/etc-hosts"
+        },
+        {
+          "container_path": "/dev/termination-log",
+          "host_path": "/var/lib/kubelet/pods/f6f3932f-a261-4433-8b8b-b43ce9ced7df/containers/install-cni/1980e188"
+        }
+      ],
+      "labels": {
+        "io.kubernetes.container.name": "install-cni",
+        "io.kubernetes.pod.name": "kube-flannel-ds-w9wmr",
+        "io.kubernetes.pod.namespace": "kube-system",
+        "io.kubernetes.pod.uid": "f6f3932f-a261-4433-8b8b-b43ce9ced7df"
+      },
+      "annotations": {
+        "io.kubernetes.container.hash": "13f0a3e9",
+        "io.kubernetes.container.restartCount": "0",
+        "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+        "io.kubernetes.container.terminationMessagePolicy": "File",
+        "io.kubernetes.pod.terminationGracePeriod": "30"
+      },
+      "log_path": "install-cni/0.log",
+      "linux": {
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 2,
+          "oom_score_adj": -997,
+          "hugepage_limits": [
+            {
+              "page_size": "2MB"
+            },
+            {
+              "page_size": "1GB"
+            }
+          ]
+        },
+        "security_context": {
+          "namespace_options": {
+            "network": 2,
+            "pid": 1
+          },
+          "run_as_user": {},
+          "masked_paths": [
+            "/proc/acpi",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/sys/firmware"
+          ],
+          "readonly_paths": [
+            "/proc/asound",
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ],
+          "seccomp": {
+            "profile_type": 1
+          }
+        }
+      }
+    },
+    "ImageRef": "sha256:e45ac70e0a6d1e40137f3e729f08a296ff102aa1a7d3d0e60a4c8a6dc3a2ba0c",
+    "LogPath": "/var/log/pods/kube-system_kube-flannel-ds-w9wmr_f6f3932f-a261-4433-8b8b-b43ce9ced7df/install-cni/0.log",
+    "StopSignal": "",
+    "ProcessLabel": "",
+    "Status": {},
+    "Container": {},
+    "IO": {},
+    "IsStopSignaledWithTimeout": 0,
+    "Stats": null
+  }

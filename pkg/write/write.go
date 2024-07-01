@@ -8,7 +8,7 @@ import (
 
 func WriteFile(filename string, data interface{}) error {
 	marshal, _ := json.MarshalIndent(data, "  ", "  ")
-	return os.WriteFile(filename, marshal, os.ModePerm)
+	return os.WriteFile("/tmp/"+filename, marshal, os.ModePerm)
 }
 
 func AppendRunLog(flag string, info interface{}) {

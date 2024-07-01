@@ -1,0 +1,59 @@
+{
+    "ID": "a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e",
+    "Name": "kube-controller-manager-vm_kube-system_dce056a5482e56f1655bf74bcea6cf06_4",
+    "Config": {
+      "metadata": {
+        "name": "kube-controller-manager-vm",
+        "uid": "dce056a5482e56f1655bf74bcea6cf06",
+        "namespace": "kube-system",
+        "attempt": 4
+      },
+      "log_directory": "/var/log/pods/kube-system_kube-controller-manager-vm_dce056a5482e56f1655bf74bcea6cf06",
+      "dns_config": {
+        "servers": [
+          "172.16.244.2"
+        ],
+        "searches": [
+          "localdomain"
+        ]
+      },
+      "labels": {
+        "component": "kube-controller-manager",
+        "io.kubernetes.pod.name": "kube-controller-manager-vm",
+        "io.kubernetes.pod.namespace": "kube-system",
+        "io.kubernetes.pod.uid": "dce056a5482e56f1655bf74bcea6cf06",
+        "tier": "control-plane"
+      },
+      "annotations": {
+        "kubernetes.io/config.hash": "dce056a5482e56f1655bf74bcea6cf06",
+        "kubernetes.io/config.seen": "2024-07-01T18:59:35.634616883+08:00",
+        "kubernetes.io/config.source": "file"
+      },
+      "linux": {
+        "cgroup_parent": "/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-poddce056a5482e56f1655bf74bcea6cf06.slice",
+        "security_context": {
+          "namespace_options": {
+            "network": 2,
+            "pid": 1
+          },
+          "seccomp": {},
+          "seccomp_profile_path": "runtime/default"
+        },
+        "overhead": {},
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 204
+        }
+      }
+    },
+    "NetNSPath": "",
+    "IP": "",
+    "AdditionalIPs": null,
+    "RuntimeHandler": "",
+    "CNIResult": null,
+    "ProcessSelinuxLabel": "",
+    "Status": {},
+    "Container": {},
+    "NetNS": null,
+    "Stats": null
+  }

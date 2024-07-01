@@ -1,0 +1,45 @@
+{
+    "metadata": {
+      "name": "kube-scheduler-vm",
+      "uid": "3ed4a90a09213ed41deb7241ea4c90e7",
+      "namespace": "kube-system",
+      "attempt": 4
+    },
+    "log_directory": "/var/log/pods/kube-system_kube-scheduler-vm_3ed4a90a09213ed41deb7241ea4c90e7",
+    "dns_config": {
+      "servers": [
+        "172.16.244.2"
+      ],
+      "searches": [
+        "localdomain"
+      ]
+    },
+    "labels": {
+      "component": "kube-scheduler",
+      "io.kubernetes.pod.name": "kube-scheduler-vm",
+      "io.kubernetes.pod.namespace": "kube-system",
+      "io.kubernetes.pod.uid": "3ed4a90a09213ed41deb7241ea4c90e7",
+      "tier": "control-plane"
+    },
+    "annotations": {
+      "kubernetes.io/config.hash": "3ed4a90a09213ed41deb7241ea4c90e7",
+      "kubernetes.io/config.seen": "2024-07-01T18:59:35.634617814+08:00",
+      "kubernetes.io/config.source": "file"
+    },
+    "linux": {
+      "cgroup_parent": "/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod3ed4a90a09213ed41deb7241ea4c90e7.slice",
+      "security_context": {
+        "namespace_options": {
+          "network": 2,
+          "pid": 1
+        },
+        "seccomp": {},
+        "seccomp_profile_path": "runtime/default"
+      },
+      "overhead": {},
+      "resources": {
+        "cpu_period": 100000,
+        "cpu_shares": 102
+      }
+    }
+  }

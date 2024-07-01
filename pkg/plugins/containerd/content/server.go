@@ -275,8 +275,11 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	of := reflect.TypeOf(info.Server)
 	path := fmt.Sprintf(`new(%s).`, of.Elem()) + strings.Split(info.FullMethod, "/")[2]
-	write.AppendRunLog("", info.FullMethod)
 	resp, err := handler(ctx, req)
+	if strings.Contains(info.FullMethod, "Status") || strings.Contains(info.FullMethod, "/List") {
+		return resp, err
+	}
+	write.AppendRunLog("", info.FullMethod)
 	logGRPCJson(info.FullMethod, req, resp, err, path)
 	return resp, err
 }

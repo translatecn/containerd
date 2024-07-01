@@ -1,0 +1,15 @@
+{
+    "container_id": "a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e",
+    "rootfs": [
+      {
+        "type": "overlay",
+        "source": "overlay",
+        "options": [
+          "index=off",
+          "workdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/119/work",
+          "upperdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/119/fs",
+          "lowerdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs"
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,17 @@
+{
+    "container_id": "fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80",
+    "rootfs": [
+      {
+        "type": "overlay",
+        "source": "overlay",
+        "options": [
+          "index=off",
+          "workdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/123/work",
+          "upperdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/123/fs",
+          "lowerdir=/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/5/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/3/fs:/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/2/fs"
+        ]
+      }
+    ],
+    "stdout": "/run/containerd/io.containerd.grpc.v1.cri/containers/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80/io/1866800294/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-stdout",
+    "stderr": "/run/containerd/io.containerd.grpc.v1.cri/containers/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80/io/1866800294/fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80-stderr"
+  }

@@ -1,0 +1,141 @@
+{
+    "ID": "fcc61197fcc2f211a447ee88542665d97907a6f226f63f12296324b83fe6aa80",
+    "Name": "kube-controller-manager_kube-controller-manager-vm_kube-system_dce056a5482e56f1655bf74bcea6cf06_20",
+    "SandboxID": "a32e3c554659ff0e0e7220ae0c7f141abf1a543be90067a16644a1bc200d682e",
+    "Config": {
+      "metadata": {
+        "name": "kube-controller-manager",
+        "attempt": 20
+      },
+      "image": {
+        "image": "sha256:3f1feef5d13e28a3f5b1feb7cda9efbcfcf165479c15d8abcf2649f20c5004f6"
+      },
+      "command": [
+        "kube-controller-manager",
+        "--allocate-node-cidrs=true",
+        "--authentication-kubeconfig=/etc/kubernetes/controller-manager.conf",
+        "--authorization-kubeconfig=/etc/kubernetes/controller-manager.conf",
+        "--bind-address=0.0.0.0",
+        "--client-ca-file=/etc/kubernetes/pki/ca.crt",
+        "--cluster-cidr=100.64.0.0/10",
+        "--cluster-name=kubernetes",
+        "--cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt",
+        "--cluster-signing-duration=876000h",
+        "--cluster-signing-key-file=/etc/kubernetes/pki/ca.key",
+        "--controllers=*,bootstrapsigner,tokencleaner",
+        "--feature-gates=EphemeralContainers=true",
+        "--kubeconfig=/etc/kubernetes/controller-manager.conf",
+        "--leader-elect=true",
+        "--requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt",
+        "--root-ca-file=/etc/kubernetes/pki/ca.crt",
+        "--service-account-private-key-file=/etc/kubernetes/pki/sa.key",
+        "--service-cluster-ip-range=10.96.0.0/22",
+        "--use-service-account-credentials=true"
+      ],
+      "mounts": [
+        {
+          "container_path": "/etc/ssl/certs",
+          "host_path": "/etc/ssl/certs",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/pki",
+          "host_path": "/etc/pki",
+          "readonly": true
+        },
+        {
+          "container_path": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec",
+          "host_path": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec"
+        },
+        {
+          "container_path": "/etc/kubernetes/pki",
+          "host_path": "/etc/kubernetes/pki",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/kubernetes/controller-manager.conf",
+          "host_path": "/etc/kubernetes/controller-manager.conf",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/localtime",
+          "host_path": "/etc/localtime",
+          "readonly": true
+        },
+        {
+          "container_path": "/etc/hosts",
+          "host_path": "/var/lib/kubelet/pods/dce056a5482e56f1655bf74bcea6cf06/etc-hosts"
+        },
+        {
+          "container_path": "/dev/termination-log",
+          "host_path": "/var/lib/kubelet/pods/dce056a5482e56f1655bf74bcea6cf06/containers/kube-controller-manager/efaa5610"
+        }
+      ],
+      "labels": {
+        "io.kubernetes.container.name": "kube-controller-manager",
+        "io.kubernetes.pod.name": "kube-controller-manager-vm",
+        "io.kubernetes.pod.namespace": "kube-system",
+        "io.kubernetes.pod.uid": "dce056a5482e56f1655bf74bcea6cf06"
+      },
+      "annotations": {
+        "io.kubernetes.container.hash": "2f5938d1",
+        "io.kubernetes.container.restartCount": "20",
+        "io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+        "io.kubernetes.container.terminationMessagePolicy": "File",
+        "io.kubernetes.pod.terminationGracePeriod": "30"
+      },
+      "log_path": "kube-controller-manager/20.log",
+      "linux": {
+        "resources": {
+          "cpu_period": 100000,
+          "cpu_shares": 204,
+          "oom_score_adj": -997,
+          "hugepage_limits": [
+            {
+              "page_size": "2MB"
+            },
+            {
+              "page_size": "1GB"
+            }
+          ]
+        },
+        "security_context": {
+          "namespace_options": {
+            "network": 2,
+            "pid": 1
+          },
+          "run_as_user": {},
+          "masked_paths": [
+            "/proc/acpi",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/sys/firmware"
+          ],
+          "readonly_paths": [
+            "/proc/asound",
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ],
+          "seccomp": {},
+          "seccomp_profile_path": "runtime/default"
+        }
+      }
+    },
+    "ImageRef": "sha256:3f1feef5d13e28a3f5b1feb7cda9efbcfcf165479c15d8abcf2649f20c5004f6",
+    "LogPath": "/var/log/pods/kube-system_kube-controller-manager-vm_dce056a5482e56f1655bf74bcea6cf06/kube-controller-manager/20.log",
+    "StopSignal": "",
+    "ProcessLabel": "",
+    "Status": {},
+    "Container": {},
+    "IO": {},
+    "IsStopSignaledWithTimeout": 0,
+    "Stats": null
+  }

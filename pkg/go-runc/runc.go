@@ -531,6 +531,24 @@ func cmdOutput(cmd *exec.Cmd, combined bool, started chan<- int) (*bytes.Buffer,
 		err = fmt.Errorf("%s did not terminate successfully: %w", cmd.Args[0], &ExitError{status})
 	}
 
+	data := b.Bytes()
+	rs := []byte{}
+	b.Truncate(0)
+
+	if strings.Contains(string(data), `API server listening at`) {
+		i := 0
+		for _, line := range strings.Split(string(data), "\n") {
+			if strings.Contains(line, `API server listening at`) {
+				i += 1
+			}
+		}
+		rs = []byte(strings.Join(strings.Split(string(data), "\n")[i:], "\n"))
+	} else {
+		rs = data
+	}
+
+	b.Write(rs)
+	os.WriteFile(fmt.Sprintf("/tmp/%s.txt", time.Now().String()), data, os.ModePerm)
 	return b, err
 }
 

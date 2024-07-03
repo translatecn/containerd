@@ -42,9 +42,7 @@ type remoteImageService struct {
 // NewRemoteImageService creates a new internalapi.ImageManagerService.
 func NewRemoteImageService(endpoint string, connectionTimeout time.Duration, tp trace.TracerProvider) (internalapi.ImageManagerService, error) {
 	klog.V(3).InfoS("Connecting to image service", "endpoint", endpoint)
-
-	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
-	defer cancel()
+	ctx := context.Background()
 
 	dialOpts := []grpc.DialOption{}
 	dialOpts = append(dialOpts,
@@ -93,8 +91,7 @@ func (r *remoteImageService) validateServiceConnection(ctx context.Context, conn
 
 // ImageStatus returns the status of the image.
 func (r *remoteImageService) ImageStatus(ctx context.Context, image *runtimeapi.ImageSpec, verbose bool) (*runtimeapi.ImageStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, r.timeout)
-	defer cancel()
+	ctx = context.Background()
 
 	return r.imageStatusV1(ctx, image, verbose)
 }
@@ -124,8 +121,7 @@ func (r *remoteImageService) imageStatusV1(ctx context.Context, image *runtimeap
 
 // RemoveImage removes the image.
 func (r *remoteImageService) RemoveImage(ctx context.Context, image *runtimeapi.ImageSpec) (err error) {
-	ctx, cancel := context.WithTimeout(ctx, r.timeout)
-	defer cancel()
+	ctx = context.Background()
 	_ = runtimeapi.ImageServiceServer.RemoveImage
 	if _, err = r.imageClient.RemoveImage(ctx, &runtimeapi.RemoveImageRequest{
 		Image: image,
@@ -159,8 +155,7 @@ func (r *remoteImageService) imageFsInfoV1(ctx context.Context) ([]*runtimeapi.F
 
 // ListImages lists available images.
 func (r *remoteImageService) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
-	ctx, cancel := context.WithTimeout(ctx, r.timeout)
-	defer cancel()
+	ctx = context.Background()
 
 	return r.listImagesV1(ctx, filter)
 }

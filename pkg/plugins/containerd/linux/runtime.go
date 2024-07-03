@@ -205,9 +205,8 @@ func (r *Runtime) Create(ctx context.Context, id string, opts runtime.CreateOpts
 	}
 	defer func() {
 		if err != nil {
-			deferCtx, deferCancel := context.WithTimeout(cleanup.Background(ctx), cleanupTimeout)
-			defer deferCancel()
-			if kerr := s.KillShim(deferCtx); kerr != nil {
+			ctx = context.Background()
+			if kerr := s.KillShim(ctx); kerr != nil {
 				log.G(ctx).WithError(kerr).Error("failed to kill shim")
 			}
 		}

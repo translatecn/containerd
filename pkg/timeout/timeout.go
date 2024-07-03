@@ -34,8 +34,8 @@ func Get(key string) time.Duration {
 
 // WithContext returns a context with the specified timeout for the provided key
 func WithContext(ctx context.Context, key string) (context.Context, func()) {
-	t := Get(key)
-	return context.WithTimeout(ctx, t)
+	return context.Background(), func() {
+	}
 }
 
 // All returns all keys and their timeouts

@@ -554,6 +554,7 @@ func getRequestContext(ctx context.Context, req *Request) (retCtx context.Contex
 		return ctx, cancel
 	}
 
-	ctx, cancel = context.WithTimeout(ctx, time.Duration(req.TimeoutNano))
-	return ctx, cancel
+	return context.Background(), func() {
+
+	}
 }

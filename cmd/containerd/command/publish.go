@@ -8,6 +8,7 @@ import (
 	"demo/pkg/protobuf/types"
 	"fmt"
 	"github.com/urfave/cli"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"io"
 	"net"
@@ -90,8 +91,7 @@ func connect(address string, d func(gocontext.Context, string) (net.Conn, error)
 		grpc.FailOnNonTempDialError(true),
 		grpc.WithConnectParams(connParams),
 	}
-	ctx, cancel := gocontext.WithTimeout(gocontext.Background(), 2*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, dialer2.DialAddress(address), gopts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial %q: %w", address, err)

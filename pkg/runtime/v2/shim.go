@@ -192,8 +192,7 @@ func makeConnection(ctx context.Context, params shim.BootstrapParams, onClose fu
 
 		return ttrpc.NewClient(conn, ttrpc.WithOnClose(onClose)), nil
 	case "grpc":
-		ctx, cancel := context.WithTimeout(ctx, time.Second*100)
-		defer cancel()
+		ctx = context.Background()
 
 		gopts := []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),

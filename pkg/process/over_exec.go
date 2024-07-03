@@ -220,8 +220,7 @@ func (e *execProcess) start(ctx context.Context) (err error) {
 			return err
 		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	ctx = context.Background()
 	if socket != nil {
 		console, err := socket.ReceiveMaster()
 		if err != nil {

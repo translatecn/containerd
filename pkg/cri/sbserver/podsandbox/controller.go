@@ -103,8 +103,7 @@ func (c *Controller) waitSandboxExit(ctx context.Context, id string, exitCh <-ch
 
 		err = func() error {
 			dctx := ctrdutil.NamespacedContext()
-			dctx, dcancel := context.WithTimeout(dctx, handleEventTimeout)
-			defer dcancel()
+			ctx = context.Background()
 
 			sb, err := c.sandboxStore.Get(id)
 			if err == nil {

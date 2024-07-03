@@ -163,8 +163,7 @@ func (c *CriService) stopContainer(ctx context.Context, container containerstore
 			log.G(ctx).Infof("Skipping the sending of signal %v to container %q because a prior stop with timeout>0 request already sent the signal", sig, id)
 		}
 
-		sigTermCtx, sigTermCtxCancel := context.WithTimeout(ctx, timeout)
-		defer sigTermCtxCancel()
+		sigTermCtx := context.Background()
 		err = c.waitContainerStop(sigTermCtx, container)
 		if err == nil {
 			// Container stopped on first signal no need for SIGKILL

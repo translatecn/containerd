@@ -75,8 +75,7 @@ func (c *controllerLocal) cleanupShim(ctx context.Context, sandboxID string, svc
 			Error("failed to shutdown sandbox")
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	ctx = context.Background()
 
 	dErr := c.shims.Delete(ctx, sandboxID)
 	if dErr != nil {

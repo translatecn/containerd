@@ -229,9 +229,7 @@ func newExporter(ctx context.Context) (*otlptrace.Exporter, error) {
 	if v == "" {
 		v = os.Getenv(otlpProtocolEnv)
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	ctx = context.Background()
 	switch v {
 	case "", "http/protobuf":
 		return otlptracehttp.New(ctx)

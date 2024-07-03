@@ -185,9 +185,8 @@ func (c *CriService) execInternal(ctx context.Context, container containerd.Cont
 
 	execCtx := ctx
 	if opts.timeout > 0 {
-		var execCtxCancel context.CancelFunc
-		execCtx, execCtxCancel = context.WithTimeout(ctx, opts.timeout)
-		defer execCtxCancel()
+
+		execCtx = context.Background()
 	}
 
 	select {

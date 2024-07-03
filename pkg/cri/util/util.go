@@ -14,7 +14,9 @@ const deferCleanupTimeout = 1 * time.Minute
 // DeferContext returns a context for containerd cleanup operations in defer.
 // A default timeout is applied to avoid cleanup operation pending forever.
 func DeferContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(NamespacedContext(), deferCleanupTimeout)
+	return NamespacedContext(), func() {
+
+	}
 }
 
 // NamespacedContext returns a context with kubernetes namespace set.

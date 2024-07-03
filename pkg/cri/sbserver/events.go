@@ -115,8 +115,6 @@ func (em *eventMonitor) startSandboxExitMonitor(ctx context.Context, id string, 
 
 			err = func() error {
 				dctx := ctrdutil.NamespacedContext()
-				dctx, dcancel := context.WithTimeout(dctx, handleEventTimeout)
-				defer dcancel()
 
 				sb, err := em.c.sandboxStore.Get(e.GetSandboxID())
 				if err == nil {
@@ -239,8 +237,6 @@ func (em *eventMonitor) stop() {
 // handleEvent handles a containerd event.
 func (em *eventMonitor) handleEvent(any interface{}) error {
 	ctx := ctrdutil.NamespacedContext()
-	ctx, cancel := context.WithTimeout(ctx, handleEventTimeout)
-	defer cancel()
 
 	switch e := any.(type) {
 	case *eventtypes.TaskExit:
@@ -447,8 +443,6 @@ func (em *eventMonitor) startContainerExitMonitor(ctx context.Context, id string
 
 			err = func() error {
 				dctx := ctrdutil.NamespacedContext()
-				dctx, dcancel := context.WithTimeout(dctx, handleEventTimeout)
-				defer dcancel()
 
 				cntr, err := em.c.containerStore.Get(e.ID)
 				if err == nil {

@@ -211,8 +211,7 @@ const loadContainerTimeout = 10 * time.Second
 
 // loadContainer loads container from containerd and status checkpoint.
 func (c *CriService) loadContainer(ctx context.Context, cntr containerd.Container) (container2.Container, error) {
-	ctx, cancel := context.WithTimeout(ctx, loadContainerTimeout)
-	defer cancel()
+	ctx = context.Background()
 	id := cntr.ID()
 	containerDir := c.getContainerRootDir(id)
 	volatileContainerDir := c.getVolatileContainerRootDir(id)

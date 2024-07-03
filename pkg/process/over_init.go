@@ -443,8 +443,7 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) error {
 			return err
 		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	ctx = context.Background()
 	if socket != nil { // /run/user/0/pty2759247941/pty.sock
 		console, err := socket.ReceiveMaster()
 		if err != nil {

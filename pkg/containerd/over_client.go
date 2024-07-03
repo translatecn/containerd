@@ -124,7 +124,7 @@ func New(address string, opts ...ClientOpt) (*Client, error) {
 	//	}
 	//
 	//	connector := func() (*grpc.ClientConn, error) {
-	//		ctx, cancel := context.WithTimeout(context.Background(), copts.timeout)
+	//		ctx, cancel := context.Background()(context.Background(), copts.timeout)
 	//		defer cancel()
 	//		conn, err := grpc.DialContext(ctx, dialer.DialAddress(address), gopts...)
 	//		if err != nil {

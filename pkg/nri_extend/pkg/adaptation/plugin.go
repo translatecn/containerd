@@ -291,8 +291,7 @@ func (p *plugin) UpdateContainers(ctx context.Context, req *UpdateContainersRequ
 
 // configure the plugin and subscribe it for the events it requested.
 func (p *plugin) configure(ctx context.Context, name, version, config string) error {
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
+	ctx = context.Background()
 
 	rpl, err := p.stub.Configure(ctx, &ConfigureRequest{
 		Config:         config,
@@ -322,8 +321,7 @@ func (p *plugin) createContainer(ctx context.Context, req *CreateContainerReques
 		return nil, nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
+	ctx = context.Background()
 
 	rpl, err := p.stub.CreateContainer(ctx, req)
 	if err != nil {
@@ -345,8 +343,7 @@ func (p *plugin) updateContainer(ctx context.Context, req *UpdateContainerReques
 		return nil, nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
+	ctx = context.Background()
 
 	rpl, err := p.stub.UpdateContainer(ctx, req)
 	if err != nil {
@@ -367,10 +364,7 @@ func (p *plugin) stopContainer(ctx context.Context, req *StopContainerRequest) (
 	if !p.events.IsSet(Event_STOP_CONTAINER) {
 		return nil, nil
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
-
+	ctx = context.Background()
 	rpl, err := p.stub.StopContainer(ctx, req)
 	if err != nil {
 		if isFatalError(err) {
@@ -406,8 +400,7 @@ func (p *plugin) StateChange(ctx context.Context, evt *StateChangeEvent) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
+	ctx = context.Background()
 
 	_, err := p.stub.StateChange(ctx, evt)
 	if err != nil {
@@ -498,8 +491,7 @@ func (r *Adaptation) newLaunchedPlugin(dir, idx, base, cfg string) (p *plugin, r
 func (p *plugin) synchronize(ctx context.Context, pods []*PodSandbox, containers []*Container) ([]*ContainerUpdate, error) {
 	log.Infof(ctx, "synchronizing plugin %s", p.name())
 
-	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
-	defer cancel()
+	ctx = context.Background()
 
 	req := &SynchronizeRequest{
 		Pods:       pods,

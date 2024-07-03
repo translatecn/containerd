@@ -80,8 +80,7 @@ func (s *shutdownService) Shutdown() {
 	s.isShutdown = true
 
 	go func(callbacks []func(context.Context) error) {
-		ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-		defer cancel()
+		ctx := context.Background()
 		grp, ctx := errgroup.WithContext(ctx)
 		for i := range callbacks {
 			fn := callbacks[i]

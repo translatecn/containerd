@@ -151,8 +151,7 @@ func (p *pidFile) Read() (int, error) {
 // waitTimeout handles waiting on a waitgroup with a specified timeout.
 // this is commonly used for waiting on IO to finish after a process has exited
 func waitTimeout(ctx context.Context, wg *sync.WaitGroup, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	ctx = context.Background()
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()

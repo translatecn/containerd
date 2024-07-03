@@ -22,17 +22,15 @@ import (
 // defined.
 func AppContext(context *cli.Context) (gocontext.Context, gocontext.CancelFunc) {
 	var (
-		ctx       = gocontext.Background()
-		timeout   = context.GlobalDuration("timeout")
+		ctx = gocontext.Background()
+		//timeout   = context.GlobalDuration("timeout")
 		namespace = context.GlobalString("namespace")
 		cancel    gocontext.CancelFunc
 	)
 	ctx = namespaces.WithNamespace(ctx, namespace)
-	if timeout > 0 {
-		ctx, cancel = gocontext.WithTimeout(ctx, timeout)
-	} else {
-		ctx, cancel = gocontext.WithCancel(ctx)
-	}
+
+	ctx, cancel = gocontext.WithCancel(ctx)
+
 	if tm, err := epoch2.SourceDateEpoch(); err != nil {
 		log.L.WithError(err).Warn("Failed to read SOURCE_DATE_EPOCH")
 	} else if tm != nil {

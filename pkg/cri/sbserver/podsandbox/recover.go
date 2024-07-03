@@ -30,8 +30,7 @@ import (
 const loadContainerTimeout = 10 * time.Second
 
 func (c *Controller) RecoverContainer(ctx context.Context, cntr containerd.Container) (sandbox2.Sandbox, error) {
-	ctx, cancel := context.WithTimeout(ctx, loadContainerTimeout)
-	defer cancel()
+	ctx = context.Background()
 	var sandbox sandbox2.Sandbox
 	// Load sandbox metadata.
 	exts, err := cntr.Extensions(ctx)

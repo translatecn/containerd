@@ -30,7 +30,6 @@ func Background(ctx context.Context) context.Context {
 // Do runs the provided function with a context in which the
 // errors are cleared out and will timeout after 10 seconds.
 func Do(ctx context.Context, do func(context.Context)) {
-	ctx, cancel := context.WithTimeout(clearCancel{ctx}, 10*time.Second)
+	ctx = context.Background()
 	do(ctx)
-	cancel()
 }

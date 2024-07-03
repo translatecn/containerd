@@ -120,9 +120,9 @@ func (l *RemoteEventsPublisher) Publish(ctx context.Context, topic string, event
 func (l *RemoteEventsPublisher) forwardRequest(ctx context.Context, req *v1.ForwardRequest) error {
 	service, err := l.client.EventsService()
 	if err == nil {
-		fCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		_, err = service.Forward(fCtx, req)
-		cancel()
+		ctx = context.Background()
+		_, err = service.Forward(ctx, req)
+
 		if err == nil {
 			return nil
 		}
@@ -143,9 +143,9 @@ func (l *RemoteEventsPublisher) forwardRequest(ctx context.Context, req *v1.Forw
 	}
 
 	// try again with a fresh context, otherwise we may get a context timeout unexpectedly.
-	fCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	_, err = service.Forward(fCtx, req)
-	cancel()
+	ctx = context.Background()
+	_, err = service.Forward(ctx, req)
+
 	if err != nil {
 		return err
 	}

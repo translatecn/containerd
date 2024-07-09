@@ -750,7 +750,7 @@
             "log_directory": "/var/log/pods/kube-system_coredns-57575c5f89-zn69l_deb68f01-dc4b-459d-8142-6a7a9f153d49",
             "dns_config": {
               "servers": [
-                "172.16.244.2"
+                "172.16.244.147"
               ],
               "searches": [
                 "localdomain"

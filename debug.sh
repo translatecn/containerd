@@ -54,9 +54,9 @@ source /etc/profile
 rm -rf containerd_bin ctr_bin || echo success
 
 # shellcheck disable=SC2046
-go build -o containerd_bin ./cmd/containerd/main.go
-go build -o ctr_bin ./cmd/ctr/main.go
-go build -o containerd-shim-runc-v2 ./cmd/containerd-shim-runc-v2
+CGO_ENABLED=0 go build -o containerd_bin ./cmd/containerd/main.go
+CGO_ENABLED=0 go build -o ctr_bin ./cmd/ctr/main.go
+CGO_ENABLED=0 go build -o containerd-shim-runc-v2 ./cmd/containerd-shim-runc-v2
 
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig/envconfig.go
 # err := bsp.e.ExportSpans(ctx, bsp.batch)

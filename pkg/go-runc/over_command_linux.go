@@ -17,10 +17,10 @@ func (r *Runc) command(context context.Context, args ...string) *exec.Cmd {
 	//}
 	command := "/usr/bin/runc"
 
-	x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", command, "--"}
-	x = append(x, r.args()...)
-	cmd := exec.Command("dlv", append(x, args...)...)
-	//cmd := exec.Command(command, append(r.args(), args...)...)
+	//x := []string{"--listen=:22345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", command, "--"}
+	//x = append(x, r.args()...)
+	//cmd := exec.Command("dlv", append(x, args...)...)
+	cmd := exec.Command(command, append(r.args(), args...)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: r.Setpgid,
 	}

@@ -139,7 +139,7 @@ func (c *CriService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		if c.config.NetNSMountsUnderStateDir {
 			netnsMountDir = filepath.Join(c.config.StateDir, "netns")
 		}
-		sandbox.NetNS, err = netns.NewNetNS(netnsMountDir)
+		sandbox.NetNS, err = netns.NewNetNS(netnsMountDir) // 创建新的ns 并切换到这里
 		if err != nil {
 			return nil, fmt.Errorf("failed to create network namespace for sandbox %q: %w", id, err)
 		}

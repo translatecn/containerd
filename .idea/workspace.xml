@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="a0a5fafa-c684-4e3a-b7ba-d5c11f33ec98" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/ctr/commands/containers/examples/pause.json" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/ctr/commands/containers/examples/pause.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug.sh" beforeDir="false" afterPath="$PROJECT_DIR$/debug.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/go-runc/over_command_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/go-runc/over_command_linux.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.work.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.work.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cri/sbserver/sandbox_run.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/netns/netns_linux.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/netns/netns_linux.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -196,9 +196,6 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Remote.containerd" />
-      <item itemvalue="Go Remote.shim (1)" />
-      <item itemvalue="Go Remote.shim" />
       <item itemvalue="Go 构建.crictl info" />
       <item itemvalue="Go 构建.crictl inspect" />
       <item itemvalue="Go 构建.crictl pods" />
@@ -208,6 +205,9 @@
       <item itemvalue="Go 构建.go build main.go" />
       <item itemvalue="Go 构建.go build url.go" />
       <item itemvalue="Go 构建.go build x.go" />
+      <item itemvalue="Go Remote.containerd" />
+      <item itemvalue="Go Remote.shim (1)" />
+      <item itemvalue="Go Remote.shim" />
     </list>
   </component>
   <component name="SharedIndexes">
@@ -376,11 +376,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_stats_linux.go</url>
-          <line>57</line>
-          <option name="timeStamp" value="526" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_stats_linux.go</url>
           <line>58</line>
           <option name="timeStamp" value="527" />
         </line-breakpoint>
@@ -418,6 +413,16 @@
           <url>file://$PROJECT_DIR$/pkg/plugins/shim/shim/util.go</url>
           <line>68</line>
           <option name="timeStamp" value="570" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/cri/sbserver/sandbox_stats_linux.go</url>
+          <line>57</line>
+          <option name="timeStamp" value="571" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/ns/ns.go</url>
+          <line>187</line>
+          <option name="timeStamp" value="574" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

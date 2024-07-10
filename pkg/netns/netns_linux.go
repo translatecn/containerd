@@ -156,12 +156,10 @@ type NetNS struct {
 	path string
 }
 
-// NewNetNS creates a network namespace.
 func NewNetNS(baseDir string) (*NetNS, error) {
 	return NewNetNSFromPID(baseDir, 0)
 }
 
-// NewNetNS returns the netns from pid or a new netns if pid is 0.
 func NewNetNSFromPID(baseDir string, pid uint32) (*NetNS, error) {
 	path, err := newNS(baseDir, pid)
 	if err != nil {
